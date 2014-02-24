@@ -16,7 +16,7 @@ define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Fun
     function onKeyDown ( evt ) {
 
         if ( util.isAcceptableKeyCode( evt.keyCode ) == false || util.isModifier( evt ) ) {
-            if ( util.isMovementKeyCode( evt.keyCode ) == false ) {
+            if ( util.isMovementKeyCode( evt.keyCode ) == false && util.isModifier( evt ) == false ) {
                 evt.preventDefault();
             }
             this._requireHandlePress = false;

@@ -1,5 +1,5 @@
 (function() { 
-var global = new Function('return this')();var parentDefine = global.define || (function(factory){ window.chuanr = factory(); }) ;/**
+var global = new Function('return this')();var parentDefine = global.define || (function(factory){ var ret = factory();typeof module != 'undefined' && (module.exports = ret) ||(global.chuanr = ret); }) ;/**
  * @license almond 0.2.9 Copyright (c) 2011-2014, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
  * see: http://github.com/jrburke/almond for details
@@ -430,26 +430,258 @@ define('Formatter',[],function () {
 
     var EX_NO_PATTERN = 'No pattern specified';
 
-    function Ctor( patterns ){
+    /* Private */
+    function format( ) {
+        // pick the input, apply the first hit pattern
+
+        var pattern, 
+            matched = false,
+            cache = this._cache,
+            resultObject,
+            bestMatchResultObject,
+            bestMatchPattern;
+
+        console.log('input', cache);
+
+        for( var i = 0; i < this.patterns.length; i++ ) {
+            pattern = this.patterns[ i ];
+            if ( resultObject = pattern.match( cache ) ) {
+                if ( resultObject.matched ) {
+                    bestMatchResultObject = resultObject;
+                    bestMatchPattern = pattern;
+                    matched = true;
+                    break;
+                }
+                else if ( 
+                    bestMatchResultObject == null || 
+                    resultObject.counts.matched > bestMatchResultObject.counts.matched ) {
+                    bestMatchResultObject = resultObject;
+                    bestMatchPattern = pattern;
+                }
+            }
+        }
+
+        if ( bestMatchPattern != null && bestMatchResultObject ) {
+            console.log( bestMatchPattern.toString(), bestMatchResultObject)
+            this._current = { 
+                pattern: bestMatchPattern,
+                result: bestMatchResultObject
+            };
+
+            return bestMatchResultObject.result;
+        }
+        else {
+            return null;
+        }
+    }
+
+    /* Public */
+
+    function Ctor( patterns ) {
         if ( patterns == null || (patterns.length >>> 0) <= 0 ) {
             throw EX_NO_PATTERN;
         }
 
+        this._cache = '';
+        this._current = null;
         this.patterns = patterns;
     }
 
     var p = Ctor.prototype;
 
-    p.input = function(input) {
+    /**
+     * handle user input
+     * @param input {
+            key: this._keyCode,
+            char: this._charCode,
+            del: util.isDelKey( this._keyCode ),
+            back: util.isBackSpaceKey( this._keyCode ),
+            caret: this._caret
+        }
+     */
+    p.input = function( input ) {
+        var cache = this._cache;
 
+        var caret = {
+            begin: input.caret.begin,
+            end: input.caret.end
+        };
+        var injection = '';
+
+        if ( input.caret.begin == input.caret.end ) {
+            if ( input.del ) {
+                caret.end += 1;
+            }
+            else if ( input.back ) {
+                caret.begin -= 1;
+            }   
+        }
+        
+        if ( input.char != null ) {
+
+            injection = String.fromCharCode( input.char );
+
+        }
+
+        cache = 
+            cache.substring( 0, caret.begin ) + injection +
+            cache.substring( caret.end , cache.length);
+
+        this._cache = cache;
+
+    };
+
+    p.output = function() {
+        return format.call( this );
     };
 
     return Ctor;
 });
+define( 'PatternFunction/digit',[],function () {
+    var ret = function(input, param){
+
+        if ( param == null || param == false ) {
+            param = "0-9";
+        }
+        
+        return new RegExp("^[" + param + "]$").test( input );
+    };
+
+    return ret;
+});
+define('../lib/boe/src/boe/util',[],function(){
+    
+    
+    var global = (Function("return this"))();
+
+    var OBJECT_PROTO = global.Object.prototype;
+    var ARRAY_PROTO = global.Array.prototype;
+    var FUNCTION_PROTO = global.Function.prototype;
+    var FUNCTION = 'function';
+
+    var ret = {
+        mixinAsStatic: function(target, fn){
+            for(var key in fn){
+                if (!fn.hasOwnProperty(key)){
+                    continue;
+                }
+
+                target[key] = ret.bind.call(FUNCTION_PROTO.call, fn[key]);
+            }
+
+            return target;
+        },
+        type: function(obj){
+            var typ = OBJECT_PROTO.toString.call(obj);
+            var closingIndex = typ.indexOf(']');
+            return typ.substring(8, closingIndex);
+        },
+        mixin: function(target, source, map){
+
+            // in case only source specified
+            if (source == null){
+                source = target;
+                target= {};
+            }
+
+            for(var key in source){
+                if (!source.hasOwnProperty(key)){
+                    continue;
+                }
+
+                target[key] = ( typeof map == FUNCTION ? map( key, source[key] ) : source[key] );
+            }
+
+            return target;
+        },
+        bind: function(context) {
+            var slice = ARRAY_PROTO.slice;
+            var __method = this, args = slice.call(arguments);
+            args.shift();
+            return function wrapper() {
+                if (this instanceof wrapper){
+                    context = this;
+                }
+                return __method.apply(context, args.concat(slice.call(arguments)));
+            };
+        },
+        slice: function(arr) {
+            return ARRAY_PROTO.slice.call(arr);
+        },
+        g: global
+    };
+
+    return ret;
+});
+define('../lib/boe/src/boe/Object/clone',['../util'], function(util){
+
+    var FUNCTION = 'function';
+    var OBJECT = 'object';
+    var FUNCTION_PROTO = util.g.Function.prototype;
+
+    var objectCache = [];
+    var traverseMark = '__boeObjectClone_Traversed';
+
+    function boeObjectClone( deep ){
+        var ret,
+            obj = this;
+
+        if ( traverseMark in this ) {
+            // current object is already traversed
+            // no need to clone, return the clone directly
+            return this[traverseMark];
+        }
+
+        // push to stack
+        objectCache.push( this );
+
+        // clone starts
+        if (typeof this == FUNCTION) {
+            ret = window.eval("true?(" + FUNCTION_PROTO.toString.call(this) + "):false");
+        }
+        else if (util.type(this) == "Array") {
+            ret = [];
+        }
+        else {
+            ret = {};
+        }
+
+        this[traverseMark] = ret;
+
+        for( var key in this ) {
+
+            if ( this.hasOwnProperty(key) == false || key == traverseMark ) {
+                // if it is the traverseMark on the proto, skip it
+                continue;
+            }
+
+            var cur = this[key];
+
+            if ( deep && (typeof cur == OBJECT || typeof cur == FUNCTION) ) {
+                ret[key] = boeObjectClone.call( cur, deep );
+            }
+            else {
+                ret[key] = cur;
+            }
+        }
+
+        // clone ends
+
+        if ( objectCache.pop( ) != this ) {
+            throw "boe.Object.shadow: stack corrupted."
+        }
+
+        delete this[traverseMark];
+
+        return ret;
+    };
+
+    return boeObjectClone;
+});
 /* Pattern */
 
 
-define('Pattern',[],function () {
+define('Pattern',['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone'], function ( pfDigit, boeClone ) {
 
     var PLACE_HOLDER_FUNCTION_START = "{";
     var PLACE_HOLDER_FUNCTION_END = "}";
@@ -460,13 +692,23 @@ define('Pattern',[],function () {
     var MODE_FUNCTION = 2;
     var MODE_PARAMETER = 4;
 
-    var EX_SYNTAX = 'Syntax error.';
+    var EX_SYNTAX = 'Syntax error';
+    var EX_RUNTIME = 'Runtime error';
     var EX_NOT_TAG = 'Not a tag.';
 
+    /**
+     * return a formatted string for throwing exception
+     */
     function getSyntaxError(innerError, index) {
         return EX_SYNTAX + ": " + innerError + ":" + index;    
     }
+    function getRuntimeError(innerError, index) {
+        return EX_RUNTIME + ": " + innerError + ":" + index;    
+    }
 
+    /**
+     * Return the opposite tag
+     */
     function getOpposite( tag ) {
         if ( tag == PLACE_HOLDER_FUNCTION_START ) {
             return PLACE_HOLDER_FUNCTION_END;
@@ -484,16 +726,12 @@ define('Pattern',[],function () {
         throw new Error( EX_NOT_TAG );
     }
 
-    function Ctor () {
+    /**
+     * Parse input as pattern
+     */
+    function parse(str) {
 
-        // a list of items to be matched
-        this.items = [];
-
-    }
-
-    Ctor.parse = function (str) {
-
-        var ret = new Ctor();
+        var me = this;
         var curChar;
         var mode = MODE_CONSTANT;
         var tmp;
@@ -542,7 +780,7 @@ define('Pattern',[],function () {
 
                 if ( mode == MODE_CONSTANT ) {
 
-                    ret.items.push( { 
+                    me.items.push( { 
                         type: mode,  
                         value: curChar
                     } );
@@ -550,7 +788,7 @@ define('Pattern',[],function () {
                 }
                 else if ( mode == MODE_FUNCTION ) {
 
-                    ret.items.push( { 
+                    me.items.push( { 
                         type: mode,  
                         value: curChar,
                         param: ''
@@ -561,7 +799,7 @@ define('Pattern',[],function () {
                     // must be parameter
 
                     // check for previous function
-                    var prev = ret.items[ ret.items.length - 1 ];
+                    var prev = me.items[ me.items.length - 1 ];
 
                     if ( prev.type != MODE_FUNCTION ) {
                         throw new Error( getSyntaxError("Expect a function pattern", i - 1) );
@@ -579,38 +817,488 @@ define('Pattern',[],function () {
             throw new Error( getSyntaxError("Expect a '" + getOpposite( stack[ stack.length - 1 ].char ) + "'", i - 1) );
         }
 
-        return ret;
+    };
 
+    function getShorthandDigit(deadDigit){
+        return function(input) {
+            return pfDigit(input, deadDigit+"");       
+        };
+    }
+
+    /* Public Methods */
+
+    function Ctor ( pattern ) {
+
+        // a list of items to be matched
+        this.items = [];
+        this.pattern = pattern;
+        parse.call(this, pattern);
+
+    }
+
+    var p = Ctor.prototype;
+
+    /**
+     * Return true if input matches current pattern
+     */
+    p.match = function ( string, isFullyMatch ) {
+        var i, len, input, items, matches = [], item, func, 
+            result = '', 
+            matched = true,
+            matchedCount = 0;
+
+        input = string.toString();
+        items = boeClone.call( this.items, true );
+
+        // extract matches
+        for( i = 0; i < items.length; i++ ) {
+            item = items[i];
+
+            if ( item.type == MODE_FUNCTION ) {
+                matches.push( item );
+            }
+        }
+
+        if ( input.length > matches.length ) {
+            return false;
+        }
+
+        if ( isFullyMatch ) {
+            len = matches.length;
+        }
+        else {
+            len = input.length;
+        }
+
+        matchedCount = len;
+
+        // check if matching
+        for ( i = 0; i < len && i < matches.length ; i++ ) {
+
+            item = matches[ i ];
+            char = input.charAt( i );
+
+            if ( item.type == MODE_FUNCTION ) {
+
+                func = Ctor.functions[ item.value ];
+
+                if ( func == null ) {
+                    throw new Error( getRuntimeError( 'Function "' + item.value + '"" was not available.', i ) );
+                }
+
+                if ( func.call( null, char, item.param ) === false ) {
+                    matched = false;
+                    matchedCount = i + 1;
+                    break;
+                }
+
+                item.value = char;
+                item.type = MODE_CONSTANT;
+
+            }
+
+        }
+
+        // output the final result
+        for ( i = 0; i < items.length; i++ ) {
+            item = items[i];
+            if ( item.type == MODE_CONSTANT ){
+                result += item.value;
+            }
+            else {
+                result += ' ';
+            }
+        }
+
+        return { 
+            result: result, 
+            matched: matched, 
+            counts: { 
+                total: len, 
+                matched: matchedCount 
+            } 
+        };
+        
+    };
+
+    p.toString = function () {
+        return this.pattern;
+    };
+
+
+    /**
+     * Map of built-in pattern functions
+     */
+    Ctor.functions = {
+        'd': pfDigit
+    };
+
+    for ( var i = 10; i--; ) {
+        Ctor.functions[i] = getShorthandDigit(i);
+    }
+
+    Ctor.parse = function( str ) {
+        var ret = new Ctor( str );
+        return ret;
     };
 
     return Ctor;
 });
+/**
+ * Modified based on util.js in https://github.com/firstopinion/formatter.js
+ */
+define('util',[],function(){
+
+    var utils = {};
+
+    // Useragent info for keycode handling
+    var uAgent = (typeof navigator !== 'undefined') ? navigator.userAgent : null,
+        iPhone = /iphone/i.test(uAgent);
+
+    //
+    // Shallow copy properties from n objects to destObj
+    //
+    utils.extend = function (destObj) {
+        for (var i = 1; i < arguments.length; i++) {
+            for (var key in arguments[i]) {
+              destObj[key] = arguments[i][key];
+            }
+        }
+        return destObj;
+    };
+
+    //
+    // Add a given character to a string at a defined pos
+    //
+    utils.addChars = function (str, chars, pos) {
+        return str.substr(0, pos) + chars + str.substr(pos, str.length);
+    };
+
+    //
+    // Remove a span of characters
+    //
+    utils.removeChars = function (str, start, end) {
+        return str.substr(0, start) + str.substr(end, str.length);
+    };
+
+    //
+    // Return true/false is num false between bounds
+    //
+    utils.isBetween = function (num, bounds) {
+        bounds.sort(function(a,b) { return a-b; });
+        return (num > bounds[0] && num < bounds[1]);
+    };
+
+    //
+    // Helper method for cross browser event listeners
+    //
+    utils.addListener = function (el, evt, handler) {
+        return (typeof el.addEventListener != "undefined")
+            ? el.addEventListener(evt, handler, false)
+            : el.attachEvent('on' + evt, handler);
+    };
+
+    //
+    // Helper method for cross browser implementation of preventDefault
+    //
+    utils.preventDefault = function (evt) {
+        return (evt.preventDefault) ? evt.preventDefault() : (evt.returnValue = false);
+    };
+
+    //
+    // Helper method for cross browser implementation for grabbing
+    // clipboard data
+    //
+    utils.getClip = function (evt) {
+        if (evt.clipboardData) { return evt.clipboardData.getData('Text'); }
+        if (window.clipboardData) { return window.clipboardData.getData('Text'); }
+    };
+
+    //
+    // Returns true/false if k is a del key
+    //
+    utils.isDelKey = function (k) {
+        return k === 46 || (iPhone && k === 127);
+    };
+
+    //
+    // Returns true/false if k is a backspace key
+    //
+    utils.isBackSpaceKey = function (k) {
+        return k === 8;
+    }
+
+    //
+    // Returns true/false if k is an arrow key
+    //
+    utils.isSpecialKey = function (k) {
+        var codes = {
+            '9' : 'tab',
+            '13': 'enter',
+            '35': 'end',
+            '36': 'home',
+            '37': 'leftarrow',
+            '38': 'uparrow',
+            '39': 'rightarrow',
+            '40': 'downarrow',
+            '116': 'F5'
+        };
+        // If del or special key
+        return codes[k];
+    };
+
+    //
+    // Returns true/false if modifier key is held down
+    //
+    utils.isModifier = function (evt) {
+        return evt.ctrlKey || evt.altKey || evt.metaKey;
+    };
+
+    //
+    // Return true if the input is in the range of acceptable keycode
+    // 
+    utils.isAcceptableKeyCode = function(kc) {
+
+        if ( 
+            // 0-9
+            ( kc >= 48 && kc <= 57 ) || 
+            // a-z
+            ( kc >= 65 && kc <= 90 ) || 
+            // keypad 0-9
+            ( kc >= 96 && kc <= 105 ) ||
+            utils.isDelKey( kc ) ||
+            utils.isBackSpaceKey( kc )
+        ) {
+            return true;
+        }
+
+        return false;
+    };
+
+    utils.isMovementKeyCode = function( k ) {
+
+        if ( 
+            k >= 37 && k <= 40 || k == 9
+        ) {
+            return true;
+        }
+
+        return false;
+
+    };
+
+    return utils;
+});
+/*
+ * caret.js
+ *
+ * Cross browser implementation to get and set input selections
+ * Modified based on inptSel.js in https://github.com/firstopinion/formatter.js
+ */
+define('caret',['require'],function  (argument) {
+
+    var inptSel = {};
+
+    //
+    // Get begin and end positions of selected input. Return 0's
+    // if there is no selectiion data
+    //
+    inptSel.get = function (el) {
+      // If normal browser return with result
+      if (typeof el.selectionStart == "number") {
+        return { 
+          begin: el.selectionStart,
+          end: el.selectionEnd
+        };
+      }
+
+      // Uh-Oh. We must be IE. Fun with TextRange!!
+      var range = document.selection.createRange();
+      // Determine if there is a selection
+      if (range && range.parentElement() == el) {
+        var inputRange = el.createTextRange(),
+            endRange   = el.createTextRange(),
+            length     = el.value.length;
+
+        // Create a working TextRange for the input selection
+        inputRange.moveToBookmark(range.getBookmark());
+
+        // Move endRange begin pos to end pos (hence endRange)
+        endRange.collapse(false);
+        
+        // If we are at the very end of the input, begin and end
+        // must both be the length of the el.value
+        if (inputRange.compareEndPoints("StartToEnd", endRange) > -1) {
+          return { begin: length, end: length };
+        }
+
+        // Note: moveStart usually returns the units moved, which 
+        // one may think is -length, however, it will stop when it
+        // gets to the begin of the range, thus giving us the
+        // negative value of the pos.
+        return {
+          begin: -inputRange.moveStart("character", -length),
+          end: -inputRange.moveEnd("character", -length)
+        };
+      }
+
+      //Return 0's on no selection data
+      return { begin: 0, end: 0 };
+    };
+
+    //
+    // Set the caret position at a specified location
+    //
+    inptSel.set = function (el, pos) {
+      // If normal browser
+      if (el.setSelectionRange) {
+        el.focus();
+        el.setSelectionRange(pos,pos);
+
+      // IE = TextRange fun
+      } else if (el.createTextRange) {
+        var range = el.createTextRange();
+        range.collapse(true);
+        range.moveEnd('character', pos);
+        range.moveStart('character', pos);
+        range.select();
+      }
+    };
+
+    return inptSel;
+});
+/*
+ * Function.bind
+ */
+define('../lib/boe/src/boe/Function/bind',['../util'], function (util) {
+    // simply alias it
+    var FUNCTION_PROTO = util.g.Function.prototype;
+
+    return FUNCTION_PROTO.bind || util.bind;
+});
 
 
 
-define('Chuanr.js',['./Formatter', './Pattern'], function  (Formatter, Pattern) {
+define('Chuanr',['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Function/bind'], 
+    function ( Formatter, Pattern, util, caret, bind ) {
 
+    // settings
     var ioc = {
         Formatter: Formatter,
         Pattern: Pattern
     };
 
+    /* Private Methods */
+    function onKeyDown ( evt ) {
+
+        if ( util.isAcceptableKeyCode( evt.keyCode ) == false || util.isModifier( evt ) ) {
+            if ( util.isMovementKeyCode( evt.keyCode ) == false && util.isModifier( evt ) == false ) {
+                evt.preventDefault();
+            }
+            this._requireHandlePress = false;
+            this._requireHandleInput = false;
+        }
+
+        this._keyCode = evt.keyCode;
+        this._caret = caret.get( this._el );
+        this._charCode = null;
+
+        if ( util.isDelKey( evt.keyCode ) == false && 
+            util.isBackSpaceKey( evt.keyCode ) == false ) {
+            this._requireHandlePress = true;
+        }
+
+        this._requireHandleInput = true;
+    }
+
+    function onKeyPress(evt) {
+        if ( this._requireHandlePress == false ) {
+            return;
+        }
+
+        this._charCode = evt.keyChar || evt.keyCode;
+
+        this._requireHandlePress = false;
+    }
+
+    function onInput(evt) {
+        if ( this._requireHandleInput == false ) {
+            return;
+        }
+
+        render.call( this, {
+            key: this._keyCode,
+            char: this._charCode,
+            del: util.isDelKey( this._keyCode ),
+            back: util.isBackSpaceKey( this._keyCode ),
+            caret: this._caret
+        } );
+
+        this._requireHandlePress = false;
+        this._requireHandleInput = false;
+    }
+
+    function render( input ) {
+        
+        this.formatter.input( input );
+
+        var format = this.formatter.output();
+
+        if ( format == null ) {
+
+            // revert to original value
+            format = this._untouched;
+
+        }
+
+        this._untouched = format;
+
+        console.log( format );
+
+    }
+
+    /* Public Methods */
     function Ctor() {
         this.patterns = [];
         this.formatter = null;
-    }
 
-    // expose ioc setting
-    Ctor.ioc = ioc;
+        this._el = null;
+        this._requireHandlePress = false;
+        this._requireHandleInput = false;
+        this._keyCode = null;
+        this._charCode = null;
+        this._caret = null;
+        this._untouched = '';
+        this.isFormatted = false;
+    }
 
     var p = Ctor.prototype;
 
+    /**
+     * Bind Chuanr with specific input elment
+     */
     p.roast = function (el, patterns) {
-        this.patterns.push.apply(this.patterns, patterns);
+
+        if ( this._el != null ) {
+            // TODO;
+        }
+
+        this._el = el;
+
+        for( var i = 0 ; i < patterns.length; i++ ) {
+            this.patterns.push( ioc.Pattern.parse( patterns[ i ] ) );
+        }
+
         this.formatter = new ioc.Formatter(this.patterns);
+
+        util.addListener(el, 'keydown', bind.call(onKeyDown, this));
+        util.addListener(el, 'keypress', bind.call(onKeyPress, this));
+        util.addListener(el, 'input', bind.call(onInput, this));
+
     };
 
-
+    // expose ioc setting
+    Ctor.setting = ioc;
 
     return Ctor;
 });

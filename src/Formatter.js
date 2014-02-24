@@ -14,25 +14,38 @@ define(function () {
         var pattern, 
             matched = false,
             cache = this._cache,
-            resultObject;
+            resultObject,
+            bestMatchResultObject,
+            bestMatchPattern;
 
         console.log('input', cache);
 
         for( var i = 0; i < this.patterns.length; i++ ) {
             pattern = this.patterns[ i ];
             if ( resultObject = pattern.match( cache ) ) {
-                matched = true;
-                break;
+                if ( resultObject.matched ) {
+                    bestMatchResultObject = resultObject;
+                    bestMatchPattern = pattern;
+                    matched = true;
+                    break;
+                }
+                else if ( 
+                    bestMatchResultObject == null || 
+                    resultObject.counts.matched > bestMatchResultObject.counts.matched ) {
+                    bestMatchResultObject = resultObject;
+                    bestMatchPattern = pattern;
+                }
             }
         }
 
-        if ( pattern != null && resultObject && matched ) {
+        if ( bestMatchPattern != null && bestMatchResultObject ) {
+            console.log( bestMatchPattern.toString(), bestMatchResultObject)
             this._current = { 
-                pattern: pattern,
-                result: resultObject
+                pattern: bestMatchPattern,
+                result: bestMatchResultObject
             };
 
-            return resultObject.result;
+            return bestMatchResultObject.result;
         }
         else {
             return null;

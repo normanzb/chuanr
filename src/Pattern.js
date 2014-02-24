@@ -161,10 +161,13 @@ define(['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone'], function 
     var p = Ctor.prototype;
 
     /**
-     * Return true if input matches current pattern
+     * Return an object to decribe if string is matched or how many characters are matched
      */
     p.match = function ( string, isFullyMatch ) {
-        var i, len, input, items, matches = [], item, func, result = '';
+        var i, len, input, items, matches = [], item, func, 
+            result = '', 
+            matched = true,
+            matchedCount = 0;
 
         input = string.toString();
         items = boeClone.call( this.items, true );
@@ -178,16 +181,14 @@ define(['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone'], function 
             }
         }
 
-        if ( input.length > matches.length ) {
-            return false;
-        }
-
         if ( isFullyMatch ) {
             len = matches.length;
         }
         else {
             len = input.length;
         }
+
+        matchedCount = len;
 
         // check if matching
         for ( i = 0; i < len && i < matches.length ; i++ ) {
@@ -204,7 +205,9 @@ define(['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone'], function 
                 }
 
                 if ( func.call( null, char, item.param ) === false ) {
-                    return false;
+                    matched = false;
+                    matchedCount = i + 1;
+                    break;
                 }
 
                 item.value = char;
@@ -225,7 +228,14 @@ define(['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone'], function 
             }
         }
 
-        return { result: result };
+        return { 
+            result: result, 
+            matched: matched, 
+            counts: { 
+                total: len, 
+                matched: matchedCount 
+            } 
+        };
         
     };
 
