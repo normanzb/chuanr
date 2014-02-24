@@ -1,0 +1,11 @@
+{
+  "name": "chuanr",
+  "version": "0.0.1",
+  "devDependencies": {
+    "almond": "~0.2.9",
+    "requirejs": "~2.1.8",
+    "chai": "~1.8.0",
+    "mocha": "~1.13.0",
+    "boe": "~1.1.6"
+  }
+}

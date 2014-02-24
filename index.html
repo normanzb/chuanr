@@ -1,0 +1,64 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <title>Chuanr Testing</title>
+</head>
+<body>
+    <script type="text/javascript" src="./node_modules/requirejs/require.js"></script>
+    <input id="tester" type="">
+    <script type="text/javascript">
+        window.onload = function () {
+            require(['./src/Chuanr', './src/util'], function(Chuanr, util){
+
+                if ( typeof window.console == 'undefined') {
+                    console = {};
+                    console.log = function(){
+                        var str = Array.prototype.slice.call(arguments).join(',');
+                        var el = document.createTextNode(str);
+                        document.body.appendChild(el);
+                    };
+                }
+
+                var elInput = document.getElementById('tester');
+                var chuanr = new Chuanr();
+                chuanr.roast(elInput, [
+                    "({11}) {99ddd}-{dddd}",
+                    "({11}) {98ddd}-{dddd}",
+                    "({11}) {97d(01234569)dd}-{dddd}",
+                    "({11}) {96ddd}-{dddd}",
+                    "({11}) {95ddd}-{dddd}",
+                    "({dd}) {700d}-{dddd}",
+                    "({dd}) {7010}-{dddd}",
+                    "({dd}) {77dd}-{dddd}",
+                    "({dd}) {78dd}-{dddd}",
+                    "({dd}) {790d(124)}-{dddd}",
+                    "({dd}) {791d(23456789)}-{dddd}",
+                    "({dd}) {792d(03489)}-{dddd}",
+                    "({dd}) {793d(012456789)}-{dddd}",
+                    "({dd}) {794d}-{dddd}",
+                    "({11}) {d(2345)ddd}-{dddd}"
+                ]);
+
+                // for testing
+                util.addListener(elInput, 'keydown', function(evt){
+                    console.log('keyCode', evt.keyCode);
+                });
+                util.addListener(elInput, 'keypress', function(evt){
+                    console.log('charCode', evt.charCode || evt.keyCode);
+                });
+                util.addListener(elInput, 'input', function(evt){
+                    console.log('input', evt.charCode);
+                });
+                util.addListener(elInput, 'propertychange', function(evt){
+                    console.log('propertychange', evt.charCode);
+                });
+                util.addListener(elInput, 'keyup', function(evt){
+                    console.log('keyup', evt.keyCode);
+                });
+            });
+        };
+    </script>
+
+</body>
+</html>
