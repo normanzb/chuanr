@@ -112,5 +112,14 @@ define(function () {
         return format.call( this );
     };
 
+    p.reset = function(cache){
+        if ( cache == null ) {
+            cache = '';
+        }
+
+        this._cache = cache;
+        this._current = null;
+    }
+
     return Ctor;
 });

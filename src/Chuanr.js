@@ -19,8 +19,10 @@ define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Fun
             if ( util.isMovementKeyCode( evt.keyCode ) == false && util.isModifier( evt ) == false ) {
                 evt.preventDefault();
             }
+            
             this._requireHandlePress = false;
             this._requireHandleInput = false;
+            return;
         }
 
         this._keyCode = evt.keyCode;
@@ -31,7 +33,7 @@ define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Fun
             util.isBackSpaceKey( evt.keyCode ) == false ) {
             this._requireHandlePress = true;
         }
-
+        
         this._requireHandleInput = true;
     }
 
@@ -40,31 +42,47 @@ define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Fun
             return;
         }
 
-        this._charCode = evt.keyChar || evt.keyCode;
+        this._charCode = evt.keyCode || evt.charCode;
 
         this._requireHandlePress = false;
     }
 
     function onInput(evt) {
-        if ( this._requireHandleInput == false ) {
-            return;
+        if ( this._requireHandleInput ) {
+
+            console.log ( 'single input' )
+
+            render.call( this, {
+                key: this._keyCode,
+                char: this._charCode,
+                del: util.isDelKey( this._keyCode ),
+                back: util.isBackSpaceKey( this._keyCode ),
+                caret: this._caret
+            } );
+
+            this._requireHandlePress = false;
+            this._requireHandleInput = false;
+            
         }
+        else {
 
-        render.call( this, {
-            key: this._keyCode,
-            char: this._charCode,
-            del: util.isDelKey( this._keyCode ),
-            back: util.isBackSpaceKey( this._keyCode ),
-            caret: this._caret
-        } );
+            // that means the change is done by pasting, dragging ...etc
+            var value = this._el.value;
 
-        this._requireHandlePress = false;
-        this._requireHandleInput = false;
+            console.log ( 'batch input', value )
+
+            this.formatter.reset( value );
+
+            render.call(this);
+
+        }
     }
 
     function render( input ) {
-        
-        this.formatter.input( input );
+
+        if ( input ) {
+            this.formatter.input( input );
+        }
 
         var format = this.formatter.output();
 
