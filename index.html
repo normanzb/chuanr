@@ -9,7 +9,7 @@
     <input id="tester" type="">
     <script type="text/javascript">
         window.onload = function () {
-            require(['./src/Chuanr', './src/util'], function(Chuanr, util){
+            require(['./src/Chuanr', './src/util', './src/shim/console'], function(Chuanr, util, console ){
 
                 if ( typeof window.console == 'undefined') {
                     console = {};

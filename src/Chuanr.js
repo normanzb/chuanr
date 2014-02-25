@@ -3,8 +3,8 @@ if (typeof define !== 'function') {
     var define = require('amdefine')(module);
 }
 
-define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Function/bind'], 
-    function ( Formatter, Pattern, util, caret, bind ) {
+define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Function/bind', './shim/console'], 
+    function ( Formatter, Pattern, util, caret, bind, console ) {
 
     // settings
     var ioc = {
@@ -50,7 +50,7 @@ define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Fun
     function onInput(evt) {
         if ( this._requireHandleInput ) {
 
-            console.log ( 'single input' )
+            console.log ( 'Input Type: Single: ', String.fromCharCode( this._charCode ) );
 
             render.call( this, {
                 key: this._keyCode,
@@ -69,7 +69,7 @@ define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Fun
             // that means the change is done by pasting, dragging ...etc
             var value = this._el.value;
 
-            console.log ( 'batch input', value )
+            console.log ( 'Input Type: Batch: ', value );
 
             this.formatter.reset( value );
 

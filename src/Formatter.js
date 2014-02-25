@@ -3,7 +3,7 @@ if (typeof define !== 'function') {
     var define = require('amdefine')(module);
 }
 
-define(function () {
+define(['./shim/console'], function (console) {
 
     var EX_NO_PATTERN = 'No pattern specified';
 
@@ -18,7 +18,7 @@ define(function () {
             bestMatchResultObject,
             bestMatchPattern;
 
-        console.log('input', cache);
+        console.log('Start Formating: ', cache);
 
         for( var i = 0; i < this.patterns.length; i++ ) {
             pattern = this.patterns[ i ];
@@ -39,7 +39,7 @@ define(function () {
         }
 
         if ( bestMatchPattern != null && bestMatchResultObject ) {
-            console.log( bestMatchPattern.toString(), bestMatchResultObject)
+            console.log( 'Best Matching Pattern: ', bestMatchPattern.toString(), bestMatchResultObject)
             this._current = { 
                 pattern: bestMatchPattern,
                 result: bestMatchResultObject
