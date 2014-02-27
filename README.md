@@ -13,6 +13,12 @@ This component formats the `<input />` according the declared patterns
 * Flexible pattern function to match specific characters
 * Customizable pattern function
 
+#Build
+
+
+    npm install
+    grunt
+
 
 #Terms
 
