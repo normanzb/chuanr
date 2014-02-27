@@ -195,6 +195,10 @@ define(['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone', './Pattern
         }
 
         matchedCount = len;
+        
+        if ( string.length > matches.length ) {
+            matched = false;
+        }
 
         // check if matching
         for ( i = 0; i < len && i < matches.length ; i++ ) {

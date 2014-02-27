@@ -3,8 +3,8 @@ if (typeof define !== 'function') {
     var define = require('amdefine')(module);
 }
 
-define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Function/bind', './shim/console'], 
-    function ( Formatter, Pattern, util, caretUtil, bind, console ) {
+define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Function/bind', '../lib/boe/src/boe/String/trim', './shim/console'], 
+    function ( Formatter, Pattern, util, caretUtil, bind, trim, console ) {
 
     // settings
     var ioc = {
@@ -35,10 +35,11 @@ define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Fun
 
         if ( this.isFormatted ) {
             // do a filtering before actual inputting
-            original = this.formatter.extract( this._el.value );
+            original = trim.call( this.formatter.extract( this._el.value ) );
 
             console.log( 'Caret before update: ', this._caret );
 
+            // calculate the original caret position
             this._caret.begin = this.formatter
                 .index()
                     .of('function')
@@ -48,7 +49,15 @@ define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Fun
                     .of('function')
                     .by({ pattern: { index: this._caret.end } });
 
-            console.log( 'Original input extracted: ', original + '' , 'Updated caret: ', this._caret );
+            // means actually at the end of input
+            if ( this._caret.begin < 0 || this._caret.begin > original.length ) {
+                this._caret.begin = original.length;
+            }
+            if ( this._caret.end < 0 || this._caret.end > original.length ) {
+                this._caret.end = original.length;
+            }
+
+            console.log( 'Original input extracted: "' + original + '"' , 'Updated caret: ', this._caret );
 
             this._el.value = original;
         }
@@ -125,6 +134,7 @@ define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Fun
 
         var format = this.formatter.output();
 
+        // check if we need to move caret
         if ( format.result.matched == false ) {
             console.log('Failed to format, undo.')
             caretMove = false;
@@ -137,6 +147,11 @@ define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Fun
                     // a delete operation? don't move caret
                     caretMove = false;
                 }
+            }
+            else if ( input && ( input.del || input.back ) ) {
+                caretMove = false;
+                caret.begin -= 1;
+                caret.end -= 1;
             }
         }
 
