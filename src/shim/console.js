@@ -5,10 +5,16 @@ if (typeof define !== 'function') {
 
 define(function () {
     var noop = function(){};
-    return window.console || {
+    var ret = window.console || {
         log: noop,
         error: noop,
         warn: noop,
         debug: noop
     };
+
+    ret.hr = function() {
+        ret.log('=======================================');
+    };
+
+    return ret;
 });

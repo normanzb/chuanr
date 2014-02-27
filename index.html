@@ -3,6 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>Chuanr Testing</title>
+    <style type="text/css">
+    input 
+    {
+        font-family: Courier , Courier New;
+    }
+    </style>
 </head>
 <body>
     <script type="text/javascript" src="./node_modules/requirejs/require.js"></script>
@@ -48,7 +54,7 @@
                     console.log('charCode', evt.charCode || evt.keyCode);
                 });
                 util.addListener(elInput, 'input', function(evt){
-                    console.log('input', evt.charCode);
+                    console.log('input', elInput.value);
                 });
                 util.addListener(elInput, 'propertychange', function(evt){
                     console.log('propertychange', evt.charCode);

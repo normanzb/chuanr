@@ -68,6 +68,10 @@ define(function(){
         if (window.clipboardData) { return window.clipboardData.getData('Text'); }
     };
 
+    utils.isUndo = function(evt){
+        return 
+    };
+
     //
     // Returns true/false if k is a del key
     //

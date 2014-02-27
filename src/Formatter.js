@@ -18,11 +18,11 @@ define(['./shim/console'], function (console) {
             bestMatchResultObject,
             bestMatchPattern;
 
-        console.log('Start Formating: ', cache);
+        console.log('Start Formating: "' + cache + '"');
 
         for( var i = 0; i < this.patterns.length; i++ ) {
             pattern = this.patterns[ i ];
-            if ( resultObject = pattern.match( cache ) ) {
+            if ( resultObject = pattern.apply( cache ) ) {
                 if ( resultObject.matched ) {
                     bestMatchResultObject = resultObject;
                     bestMatchPattern = pattern;
@@ -39,13 +39,15 @@ define(['./shim/console'], function (console) {
         }
 
         if ( bestMatchPattern != null && bestMatchResultObject ) {
+
             console.log( 'Best Matching Pattern: ', bestMatchPattern.toString(), bestMatchResultObject)
+
             this._current = { 
                 pattern: bestMatchPattern,
                 result: bestMatchResultObject
             };
 
-            return bestMatchResultObject.result;
+            return this._current;
         }
         else {
             return null;
@@ -62,6 +64,7 @@ define(['./shim/console'], function (console) {
         this._cache = '';
         this._current = null;
         this.patterns = patterns;
+        this._undo = [];
     }
 
     var p = Ctor.prototype;
@@ -104,6 +107,7 @@ define(['./shim/console'], function (console) {
             cache.substring( 0, caret.begin ) + injection +
             cache.substring( caret.end , cache.length);
 
+        this._undo.push( this._cache );
         this._cache = cache;
 
     };
@@ -112,13 +116,31 @@ define(['./shim/console'], function (console) {
         return format.call( this );
     };
 
+    p.undo = function() {
+        this._cache = this._undo.pop();
+        return format.call( this );
+    };
+
+    /**
+     * Remove the format and return the actual user data according to current pattern
+     */
+    p.extract = function( formatted ) {
+        return this._current.pattern.extract( formatted );
+    };
+
+    p.index = function ( ) {
+        return this._current.pattern.index();
+    };
+
     p.reset = function(cache){
         if ( cache == null ) {
             cache = '';
         }
 
+        this._undo.push( this._cache );
         this._cache = cache;
         this._current = null;
+        format.call( this );
     }
 
     return Ctor;

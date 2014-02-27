@@ -3,20 +3,22 @@ if (typeof define !== 'function') {
     var define = require('amdefine')(module);
 }
 
-define(['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone'], function ( pfDigit, boeClone ) {
+define(['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone', './PatternIndexQuery', './PatternConstant'], function ( pfDigit, boeClone, PatternIndexQuery, PatternConstant ) {
 
     var PLACE_HOLDER_FUNCTION_START = "{";
     var PLACE_HOLDER_FUNCTION_END = "}";
     var PLACE_HOLDER_CALL_START = "(";
     var PLACE_HOLDER_CALL_END = ")";
 
-    var MODE_CONSTANT = 1;
-    var MODE_FUNCTION = 2;
-    var MODE_PARAMETER = 4;
+    var MODE_CONSTANT = PatternConstant.MODE_CONSTANT;
+    var MODE_FUNCTION = PatternConstant.MODE_FUNCTION;
+    var MODE_PARAMETER = PatternConstant.MODE_PARAMETER;
 
     var EX_SYNTAX = 'Syntax error';
     var EX_RUNTIME = 'Runtime error';
     var EX_NOT_TAG = 'Not a tag.';
+    var EX_NOT_FORMATTED = 'Not a formatted string.';
+
 
     /**
      * return a formatted string for throwing exception
@@ -26,6 +28,9 @@ define(['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone'], function 
     }
     function getRuntimeError(innerError, index) {
         return EX_RUNTIME + ": " + innerError + ":" + index;    
+    }
+    function resultToString() {
+        return this.result;
     }
 
     /**
@@ -154,6 +159,7 @@ define(['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone'], function 
         // a list of items to be matched
         this.items = [];
         this.pattern = pattern;
+        this._query = null;
         parse.call(this, pattern);
 
     }
@@ -163,7 +169,7 @@ define(['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone'], function 
     /**
      * Return an object to decribe if string is matched or how many characters are matched
      */
-    p.match = function ( string, isFullyMatch ) {
+    p.apply = function ( string, isFullyMatch ) {
         var i, len, input, items, matches = [], item, func, 
             result = '', 
             matched = true,
@@ -217,7 +223,7 @@ define(['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone'], function 
 
         }
 
-        // output the final result
+        // Output the final result
         for ( i = 0; i < items.length; i++ ) {
             item = items[i];
             if ( item.type == MODE_CONSTANT ){
@@ -229,14 +235,63 @@ define(['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone'], function 
         }
 
         return { 
+            // the actual string after applied the pattern
             result: result, 
+            // indicate if application is successful
             matched: matched, 
             counts: { 
+                // the number of total match, successful application means a full match
                 total: len, 
+                // the actual number of matched.
                 matched: matchedCount 
-            } 
+            },
+            toString: resultToString
         };
         
+    };
+
+    /**
+     * Remove the chars which match pattern constants, 
+     * return the chars which matched the position of pattern function
+     */
+    p.extract = function ( str ) {
+        if ( str.length != this.items.length ) {
+            throw EX_NOT_FORMATTED;
+        }
+
+        var ret = [], item, items = this.items;
+
+        for( var i = 0; i < items.length ; i++ ) {
+            var item = items[i];
+
+            if ( item.type == MODE_FUNCTION ) {
+                ret.push( { 
+                    result: str.charAt(i),
+                    index: {
+                        formatted: i,
+                        original: ret.length
+                    },
+                    toString: resultToString
+                });
+            }
+        }
+
+        ret.toString = function () {
+            return this.join('');
+        };
+
+        return ret;
+    };
+
+    /** 
+     * Return index of specified item 
+     * @param query query object
+     */
+    p.index = function(query) {
+    
+        var ret = new PatternIndexQuery(this, query);
+
+        return ret;
     };
 
     p.toString = function () {
