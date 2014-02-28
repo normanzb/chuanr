@@ -1,6 +1,9 @@
 /**
  * Modified based on util.js in https://github.com/firstopinion/formatter.js
  */
+if (typeof define !== 'function' && module ) {
+    var define = require('amdefine')(module);
+}
 define(function(){
 
     var utils = {};

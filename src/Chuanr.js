@@ -1,5 +1,5 @@
 
-if (typeof define !== 'function') {
+if (typeof define !== 'function' && typeof module != 'undefined') {
     var define = require('amdefine')(module);
 }
 
@@ -17,6 +17,7 @@ define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Fun
 
         if ( util.isAcceptableKeyCode( evt.keyCode ) == false || util.isModifier( evt ) ) {
             if ( util.isMovementKeyCode( evt.keyCode ) == false && util.isModifier( evt ) == false ) {
+                console.log('Key Down prevented')
                 evt.preventDefault();
             }
             
@@ -60,6 +61,10 @@ define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Fun
             console.log( 'Original input extracted: "' + original + '"' , 'Updated caret: ', this._caret );
 
             this._el.value = original;
+
+            if ( original == 0 ) {
+                this.isFormatted = false;
+            }
         }
 
         if ( util.isDelKey( evt.keyCode ) == false && 
@@ -184,7 +189,12 @@ define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Fun
         // set cursor
         caretUtil.set( this._el, caret.begin );
 
-        this.isFormatted = true;
+        if ( format.result != 0 ) {
+            this.isFormatted = true;
+        }
+        else {
+            this.isFormatted = false;
+        }
 
     }
 

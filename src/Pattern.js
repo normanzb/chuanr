@@ -1,5 +1,5 @@
 /* Pattern */
-if (typeof define !== 'function') {
+if (typeof define !== 'function' && typeof module != 'undefined') {
     var define = require('amdefine')(module);
 }
 
@@ -195,7 +195,7 @@ define(['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone', './Pattern
         }
 
         matchedCount = len;
-        
+
         if ( string.length > matches.length ) {
             matched = false;
         }

@@ -24,7 +24,7 @@ describe('Pattern', function(){
     });
 
     it('parse string with function pattern without parameter correctly', function(){
-        var pattern = Pattern.parse('(+86) {ddddddddddd}');
+        var pattern = Pattern.parse('(+86) {d}{dddddddddd}');
         
         assert.deepEqual(pattern.items, [ 
             { type: 1, value: '(' },

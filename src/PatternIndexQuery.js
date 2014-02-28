@@ -1,3 +1,7 @@
+if (typeof define !== 'function' && typeof module != 'undefined') {
+    var define = require('amdefine')(module);
+}
+
 define(['./PatternConstant'], function ( PatternConstant ) {
 
     var MODE_CONSTANT = PatternConstant.MODE_CONSTANT;

@@ -48,20 +48,29 @@
 
                 // for testing
                 util.addListener(elInput, 'keydown', function(evt){
-                    console.log('keyCode', evt.keyCode);
+                    console.log('onkeydown: keyCode', evt.keyCode);
                 });
                 util.addListener(elInput, 'keypress', function(evt){
-                    console.log('charCode', evt.charCode || evt.keyCode);
+                    console.log('onkeypress: charCode', evt.charCode || evt.keyCode);
                 });
                 util.addListener(elInput, 'input', function(evt){
-                    console.log('input', elInput.value);
+                    console.log('oninput "' + elInput.value + '"');
                 });
                 util.addListener(elInput, 'propertychange', function(evt){
-                    console.log('propertychange', evt.charCode);
+                    console.log('onpropertychange', evt.charCode);
                 });
                 util.addListener(elInput, 'keyup', function(evt){
-                    console.log('keyup', evt.keyCode);
+                    console.log('onkeyup "' + evt.keyCode + '"');
                 });
+                var MutationObserver = window.MutationObserver || window.webkitMutationObserver;
+                var observer = new MutationObserver(function(mutations){
+                    console.log(11)
+                    mutations.forEach(function(mutation){
+                        console.log('Mutation: ' , mutation);
+                    });
+                })
+                observer.observe(elInput, { attributes: true, childList: true, characterData: true, subtree: true, attributeOldValue: true });
+                // observer.disconnect();
             });
         };
     </script>

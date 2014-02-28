@@ -1,3 +1,7 @@
+if (typeof define !== 'function' && typeof module != 'undefined') {
+    var define = require('amdefine')(module);
+}
+
 define(function(){
     return {
         MODE_CONSTANT : 1,

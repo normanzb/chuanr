@@ -1,4 +1,4 @@
-if (typeof define !== 'function') {
+if (typeof define !== 'function' && typeof module != 'undefined') {
     var define = require('amdefine')(module);
 }
 
