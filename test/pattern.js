@@ -142,18 +142,112 @@ describe('Pattern', function(){
     });
 
     /* Matches & Applications */
-    it('throw exception when parameter pattern did not close.', function(){
+    it('return matched when input partially match a positive pattern.', function(){
         var msg = '';
         var p;
 
-        try {
-            p = Pattern.parse("({11}) {99ddd}-{dddd}");
-        }
-        catch(ex) {
-            msg = ex.message;
+        p = Pattern.parse("({11}) {99ddd}-{dddd}");
+
+        var result = p.apply("1199386");
+
+        assert.deepEqual( result,  { 
+            result: '(11) 99386-    ',
+            matched: true,
+            counts: { total: 7, matched: 7 },
+            toString: result.toString
+        } );
+    });
+
+    it('return matched when input fully match a positive pattern.', function(){
+        var msg = '';
+        var p;
+
+        p = Pattern.parse("({11}) {99ddd}-{dddd}");
+
+        var result = p.apply("11993863845");
+
+        assert.deepEqual( result,  { 
+            result: '(11) 99386-3845',
+            matched: true,
+            counts: { total: 11, matched: 11 },
+            toString: result.toString
+        } );
+    });
+
+    it('return unmatched when a fully matched input appended a char (so it makes the input longer than pattern length)', function(){
+        var msg = '';
+        var p;
+
+        p = Pattern.parse("({11}) {99ddd}-{dddd}");
+
+        var result = p.apply("119938638458");
+
+        assert.deepEqual( result,  { 
+            result: '(11) 99386-3845',
+            matched: false,
+            counts: { total: 12, matched: 11 },
+            toString: result.toString
+        } );
+    });
+
+    it('can verify against any digit or specified digit', function(){
+        var msg = '';
+        var p;
+
+        p = Pattern.parse("{1234567890}-{dddddddddd}");
+
+        var result = p.apply("12345678901234567890");
+
+        assert.deepEqual( result,  { 
+            result: '1234567890-1234567890',
+            matched: true,
+            counts: { total: 20, matched: 20 },
+            toString: result.toString
+        } );
+    });
+
+    it('can verify against any digit or specified digit (negative case)', function(){
+        var msg = '';
+        var p;
+        var indexCapA = 65;
+        var indexA = 97;
+        var numberOfAlphabet = 26;
+
+        p = Pattern.parse("{d}");
+
+        for( var i = 0; 
+            i < indexA + numberOfAlphabet - indexCapA;
+            i++ ) {
+            
+            var result = p.apply( String.fromCharCode( i + indexCapA ) );
+
+            assert.deepEqual( result,  { 
+                result: " ",
+                matched: false,
+                counts: { total: 1, matched: 0 },
+                toString: result.toString
+            } );
         }
 
-        assert.include( msg,  "Syntax error: Expect a ')':23" );
+        for ( var j = 0; j < 10; j++ ) {
+            p = Pattern.parse("{" + j + "}");
+
+            for( var i = 0; i < 10 ; i++ ) {
+
+                if ( i == j ) {
+                    continue;
+                }
+
+                var result = p.apply(i);
+
+                assert.deepEqual( result,  { 
+                    result: " ",
+                    matched: false,
+                    counts: { total: 1, matched: 0 },
+                    toString: result.toString
+                } );
+            }
+        }
     });
 });
     
