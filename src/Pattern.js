@@ -194,8 +194,6 @@ define(['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone', './Pattern
             len = input.length;
         }
 
-        matchedCount = len;
-
         if ( string.length > matches.length ) {
             matched = false;
         }
@@ -216,9 +214,10 @@ define(['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone', './Pattern
 
                 if ( func.call( null, char, item.param ) === false ) {
                     matched = false;
-                    matchedCount = i + 1;
                     break;
                 }
+
+                matchedCount++;
 
                 item.value = char;
                 item.type = MODE_CONSTANT;
