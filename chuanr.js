@@ -600,7 +600,7 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
 define( 'PatternFunction/digit',[],function () {
     var ret = function(input, param){
 
-        if ( param == null || param == false ) {
+        if ( param == null || (param == 0 && param !== '0') ) {
             param = "0-9";
         }
         
@@ -1419,13 +1419,327 @@ define('../lib/boe/src/boe/String/trim',['../util'], function (util) {
         return this.replace(re, "");
     };
 });
+define('../lib/cogs/src/cogs/noop',[],function(){
+    return function(){};
+});
+/**
+ * @function: observable
+ **/
+
+
+
+define('../lib/cogs/src/cogs/observable',['./noop'], function (noop) {
+
+    function EventLinkBox(){
+        this.ref = null;
+        this.next = null;
+    }
+
+    /**
+     * @function newBox
+     * @private
+     * Create a node
+     **/
+    function newBox() {
+        return new EventLinkBox;
+    };
+
+    function checkIsFunc(func){
+        if (Object.prototype.toString.call(func).toLowerCase() !==
+            '[object function]'){
+            throw new Error('hookee is not a function');
+        }
+    };
+
+    function hookFunc(func){
+        checkIsFunc(func);
+
+        this.cur.next = newBox();
+
+        this.cur = this.cur.next;
+        this.cur.ref = func;
+
+        return true;
+    };
+
+    function unhookFunc(func){
+        checkIsFunc(func);
+
+        // traversing link ds
+        var c = this.head;
+        var p = null;
+        while (c.next != null) {
+            p = c;
+            c = c.next;
+            if (c.ref === func || 
+                // allow to remove all hooked functions when func is mot specified
+                func == null) {
+                p.next = c.next;
+
+                // we are deleting the last element
+                if (c.next == null){
+                    // reset this.cur
+                    this.cur = p;
+                }
+
+                c.ref = null;
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    function hookOnceFunc(func){
+        var scope = this;
+        var funcWrapper = function(){
+            unhookFunc.call(scope, funcWrapper);
+            func.apply(this, arguments);
+        };
+
+        hookFunc.call(scope, funcWrapper);
+    };
+
+    function invokeFunc(){
+        var args = Array.prototype.slice.call(arguments, 1);
+        var context = arguments[0];
+        var c = this.head;
+        var p = null, tmp = null, result=null;
+        while (c.next != null) {
+            p = c;
+            c = c.next;
+            if (c.ref != null) {
+
+                tmp = null;
+                try {
+                    tmp = c.ref.apply(context, args);
+                }
+                catch (ex) {
+                    // we need to throw the exception but meanwhile keep 
+                    // casting. so we decided to throw in another ui task
+                    // the advantage are:
+                    //  1. it is more synmatically correct, an inner exception
+                    //      should be thrown rather than console.error()
+                    //  2. it also developer to determine the issue more easily
+                    //      and ealier on IEs (while the other browsers hide the
+                    //      js err) 
+                    //  3. you can catch the error on window.onerror and process
+                    setTimeout(function(){
+                        throw ex;
+                    }, 0); 
+                }
+                if (tmp != null) {
+                    result = tmp;
+                }
+            }
+        }
+
+        return result;
+    };
+
+    function observable(retFunc) {
+
+        var result = null;
+        var ret = retFunc?retFunc:function(){
+            return ret.invoke.apply(this, arguments);
+        };
+
+        ret.head = newBox();
+
+        // init head node
+        ret.head.ref = noop;
+
+        // point cursor to head
+        ret.cur = ret.head;
+
+        // hook a func
+        ret.hook = hookFunc;
+
+        // hook func and unhook it once it is been called.
+        ret.once = hookOnceFunc;
+
+        // unhook a func
+        ret.unhook = unhookFunc;
+
+        // make sure the context of hookees are same as 
+        // the context when ret.invoke is executed.
+        ret.invoke = function(){
+            var args = Array.prototype.slice.call(arguments);
+            args.unshift(this);
+            invokeFunc.apply(ret, args);
+        };
+
+        return ret;
+    };
+
+    observable.EventLinkBox = EventLinkBox;
+
+    return observable;
+});
+/**
+ * @function: event
+ * Create a event-like delegate object, supports multicast
+
+ * sample:
+ * Create a observable object:
+ * obj.onMouseDown = cogs.event();
+ *
+ * sample:
+ * Hook a function to the event:
+ * Obj.onMouseDown.hook(function(){});
+ *
+ * sample:
+ * Remove a function reference from the event:
+ * Obj.onMouseDown.unhook(funcVariable);
+ *
+ * sample:
+ * Cast the event
+ * onMouseDown(arg1, arg2);
+ *
+ **/
+
+
+
+define('../lib/cogs/src/cogs/event',['./observable'], function(observable){
+    var ON = 'on';
+
+    function event(){
+        var ret = observable();
+        
+        ret.onHook = observable();
+        ret.onUnhook = observable();
+
+        var hook = ret.hook;
+        var once = ret.once;
+        ret.hook = function(func){
+            if (ret.onHook(this, func) === false){
+                return false;
+            }
+            return hook.apply(this, arguments);
+        };
+
+        ret.once = function(func){
+            if (ret.onHook(this, func) === false){
+                return false;
+            }
+            return once.apply(this, arguments);
+        };
+
+        var unhook = ret.unhook;
+        ret.unhook = function(func){
+            if (ret.onUnhook(this, func) === false){
+                return false;
+            }
+            return unhook.apply(this, arguments);
+        };
+
+        return ret;
+    };
+
+    function onFunc(eventName, callback){
+        var name = eventName.charAt(0).toUpperCase() + eventName.substr(1),
+            evt = this[ON + name];
+
+        if (!evt){
+            evt = event();
+            this[ON + name] = evt;
+        }
+
+        if (evt.hook){
+            evt.hook(callback);
+        }
+        else{
+            throw "The member name '" + eventName + "' is occupied.";
+        }
+    }
+
+    function offFunc(eventName, callback){
+        if (!eventName){
+            
+            // if there is no eventName specified, that simply means
+            // we want to clear all event on current obj
+            for(var key in this){
+                if (key.indexOf(ON) != 0 ||
+                    // if it is not a cogs event object
+                    !(this[key].head instanceof observable.EventLinkBox)){
+                    continue;
+                }
+
+                offFunc(key.substr(2));
+            }
+
+            return;
+        }
+
+        var name = eventName.charAt(0).toUpperCase() + eventName.substr(1),
+            evt = this[ON + name];
+
+        if (!evt){
+            return;
+        }
+
+        if (evt.unhook){
+            evt.unhook(callback);
+        }
+        else{
+            throw "The member name '" + eventName + "' might be over written.";
+        }
+    }
+
+    function emitFunc(eventName){
+        var name = [eventName.charAt(0).toUpperCase(), eventName.substr(1)].join(''),
+            evt = this[ON + name], args;
+
+        if (evt){
+            args = Array.prototype.slice.call(arguments, 1);
+            evt.apply(this, args);
+        }
+    };
+
+    event.onFunc = onFunc;
+    event.offFunc = offFunc;
+    event.emitFunc = emitFunc;
+
+    return event;
+});
+/**
+ * @function emittable
+ * add .on and .off to support any object
+ */ 
+
+
+
+define('../lib/cogs/src/cogs/emittable',['./event'], function (event) {
+
+    function emittable(obj){
+        obj['on'] = event.onFunc;
+        obj['off'] = event.offFunc;
+        obj['emit'] = event.emitFunc;
+
+        return obj;
+    };
+
+    emittable(emittable.prototype); 
+
+    return emittable;
+});
 
 if (typeof define !== 'function' && typeof module != 'undefined') {
     var define = require('amdefine')(module);
 }
 
-define('Chuanr',['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Function/bind', '../lib/boe/src/boe/String/trim', '../lib/boe/src/boe/Object/clone', '../lib/boe/src/boe/util', './shim/console'], 
-    function ( Formatter, Pattern, util, caretUtil, bind, trim, clone, boeUtil, console ) {
+define('Chuanr',['./Formatter', 
+    './Pattern', 
+    './util', 
+    './caret', 
+    '../lib/boe/src/boe/Function/bind', 
+    '../lib/boe/src/boe/String/trim', 
+    '../lib/boe/src/boe/Object/clone', 
+    '../lib/boe/src/boe/util', 
+    '../lib/cogs/src/cogs/emittable',
+    '../lib/cogs/src/cogs/event',
+    './shim/console'], 
+    function ( Formatter, Pattern, util, caretUtil, bind, trim, clone, boeUtil, emittable, event, console ) {
 
     // ioc settings
     var ioc = {
@@ -1602,6 +1916,7 @@ define('Chuanr',['./Formatter', './Pattern', './util', './caret', '../lib/boe/sr
         };
         var caretMove = true;
         var format;
+        var undid = false;
 
         if ( input ) {
             // normal input
@@ -1651,13 +1966,15 @@ define('Chuanr',['./Formatter', './Pattern', './util', './caret', '../lib/boe/sr
         while ( format.result.matched == false && ( format = this.formatter.undo() ) ) {
             console.log('Failed to format, undo.');
 
+            undid = true;
+
             caret.begin = tryExtractAndResetCaret.call( this, format.result.toString(), null ).length;
             caret.end = caret.begin;
             caretMove = false;
         }
 
         if ( format == null ) {
-            throw 'Boom, Format is null, this should never happen.';
+            throw 'Boom, "format" is null, this should never happen.';
         }
 
         console.log('Move caret? ', caretMove);
@@ -1674,6 +1991,7 @@ define('Chuanr',['./Formatter', './Pattern', './util', './caret', '../lib/boe/sr
         // update the element
         this._el.value = format.result;
 
+        // update the caret
         console.log('Caret before format: ', caret );
 
         caret.begin = this.formatter
@@ -1696,6 +2014,11 @@ define('Chuanr',['./Formatter', './Pattern', './util', './caret', '../lib/boe/sr
             this._isFormatted = false;
         }
 
+        // fire event
+        if ( undid ) {
+            this.onPrevented.invoke( format );
+        }
+
     }
 
     /* Public Methods */
@@ -1714,6 +2037,8 @@ define('Chuanr',['./Formatter', './Pattern', './util', './caret', '../lib/boe/sr
         this._untouched = '';
         this._isFormatted = false;
 
+        this.onPrevented = event();
+        emittable( this );
 
     }
 

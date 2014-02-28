@@ -1,6 +1,6 @@
 {
   "name": "chuanr",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "devDependencies": {
     "almond": "~0.2.9",
     "requirejs": "~2.1.8",
