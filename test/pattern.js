@@ -23,6 +23,8 @@ describe('Pattern', function(){
         }
     });
 
+    /* Normal Parsing Cases */
+
     it('parse string with function pattern without parameter correctly', function(){
         var pattern = Pattern.parse('(+86) {d}{dddddddddd}');
         
@@ -98,6 +100,8 @@ describe('Pattern', function(){
         
     });
 
+    /* Exceptions */
+
     it('throw exception when function pattern did not close.', function(){
         var msg = '';
 
@@ -108,20 +112,20 @@ describe('Pattern', function(){
             msg = ex.message;
         }
 
-        assert.include( msg,  "Syntax error.: Expect a '}':23" );
+        assert.include( msg,  "Syntax error: Expect a '}':23" );
     });
 
     it('throw exception when function pattern did not close (multiple function pattern).', function(){
         var msg = '';
 
         try {
-            Pattern.parse('(+86) {ddd(2345) -{dddddddd}');
+            Pattern.parse('(+86) {ddd(2345)} -{dddddddd');
         }
         catch(ex) {
             msg = ex.message;
         }
 
-        assert.include( msg,  "Syntax error.: Expect a '}':23" );
+        assert.include( msg,  "Syntax error: Expect a '}':27" );
     });
 
     it('throw exception when parameter pattern did not close.', function(){
@@ -134,8 +138,10 @@ describe('Pattern', function(){
             msg = ex.message;
         }
 
-        assert.include( msg,  "Syntax error.: Expect a ')':23" );
+        assert.include( msg,  "Syntax error: Expect a ')':23" );
     });
+
+    
 });
     
 }(requirejs, require);
