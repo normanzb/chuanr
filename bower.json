@@ -2,10 +2,6 @@
   "name": "chuanr",
   "version": "0.0.5",
   "devDependencies": {
-    "almond": "~0.2.9",
-    "requirejs": "~2.1.8",
-    "chai": "~1.8.0",
-    "mocha": "~1.13.0",
     "boe": "~1.1.7",
     "cogs": "~1.0.0"
   }
