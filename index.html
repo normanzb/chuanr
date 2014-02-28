@@ -45,6 +45,9 @@
                     "({dd}) {794d}-{dddd}",
                     "({11}) {d(2345)ddd}-{dddd}"
                 ]);
+                chuanr.on('prevented', function() {
+                    console.error('Prevented!!')
+                })
 
                 // for testing
                 util.addListener(elInput, 'keydown', function(evt){

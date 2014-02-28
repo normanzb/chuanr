@@ -3,8 +3,18 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
     var define = require('amdefine')(module);
 }
 
-define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Function/bind', '../lib/boe/src/boe/String/trim', '../lib/boe/src/boe/Object/clone', '../lib/boe/src/boe/util', './shim/console'], 
-    function ( Formatter, Pattern, util, caretUtil, bind, trim, clone, boeUtil, console ) {
+define(['./Formatter', 
+    './Pattern', 
+    './util', 
+    './caret', 
+    '../lib/boe/src/boe/Function/bind', 
+    '../lib/boe/src/boe/String/trim', 
+    '../lib/boe/src/boe/Object/clone', 
+    '../lib/boe/src/boe/util', 
+    '../lib/cogs/src/cogs/emittable',
+    '../lib/cogs/src/cogs/event',
+    './shim/console'], 
+    function ( Formatter, Pattern, util, caretUtil, bind, trim, clone, boeUtil, emittable, event, console ) {
 
     // ioc settings
     var ioc = {
@@ -181,6 +191,7 @@ define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Fun
         };
         var caretMove = true;
         var format;
+        var undid = false;
 
         if ( input ) {
             // normal input
@@ -230,13 +241,15 @@ define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Fun
         while ( format.result.matched == false && ( format = this.formatter.undo() ) ) {
             console.log('Failed to format, undo.');
 
+            undid = true;
+
             caret.begin = tryExtractAndResetCaret.call( this, format.result.toString(), null ).length;
             caret.end = caret.begin;
             caretMove = false;
         }
 
         if ( format == null ) {
-            throw 'Boom, Format is null, this should never happen.';
+            throw 'Boom, "format" is null, this should never happen.';
         }
 
         console.log('Move caret? ', caretMove);
@@ -253,6 +266,7 @@ define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Fun
         // update the element
         this._el.value = format.result;
 
+        // update the caret
         console.log('Caret before format: ', caret );
 
         caret.begin = this.formatter
@@ -275,6 +289,11 @@ define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Fun
             this._isFormatted = false;
         }
 
+        // fire event
+        if ( undid ) {
+            this.onPrevented.invoke( format );
+        }
+
     }
 
     /* Public Methods */
@@ -293,6 +312,8 @@ define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Fun
         this._untouched = '';
         this._isFormatted = false;
 
+        this.onPrevented = event();
+        emittable( this );
 
     }
 
