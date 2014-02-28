@@ -119,7 +119,9 @@ Once you gained the reference to Chuanr constructor, by doing below you can inst
 
 
     npm install
+    bower install
     grunt
+    
 
 ##Test
 

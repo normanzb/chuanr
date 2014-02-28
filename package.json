@@ -21,6 +21,6 @@
     "almond": "~0.2.9"
   },
   "scripts": {
-    "test": "./node_modules/.bin/mocha --reporter nyan"
+    "test": "./node_modules/.bin/mocha --reporter spec"
   }
 }
