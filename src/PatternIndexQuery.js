@@ -13,14 +13,14 @@ define(['./PatternConstant'], function ( PatternConstant ) {
     function getIndex() {
         var query = this._query;
         var targetName = this._target;
-        var funcIndex = -1, item, items = this._pattern.items;
+        var funcIndex, item, items = this._pattern.items;
 
         if ( query == null || targetName == null ) {
             return this;
         }
 
         if ( query.function && query.function.index != null && targetName == "pattern" ) {
-
+            funcIndex = -1
             for ( var i = 0 ; i < items.length; i++ ) {
                 item = items[i];
                 if ( item.type == MODE_FUNCTION ) {
@@ -34,8 +34,9 @@ define(['./PatternConstant'], function ( PatternConstant ) {
             return -1;
         }
         else if ( query.pattern && query.pattern.index != null && targetName == "function" ) {
+            funcIndex = 0;
 
-            for ( var i = 0 ; i < items.length; i++ ) {
+            for ( var i = 0 ; i < items.length && query.pattern.index > 0 ; i++ ) {
 
                 item = items[i];
 
@@ -43,7 +44,7 @@ define(['./PatternConstant'], function ( PatternConstant ) {
                     funcIndex++;
                 }
 
-                if ( i != query.pattern.index ) {
+                if ( i != query.pattern.index - 1 ) {
                     continue;
                 }
 
@@ -51,7 +52,7 @@ define(['./PatternConstant'], function ( PatternConstant ) {
                 
             }
 
-            return -1;
+            return 0;
         }
         else {
             throw EX_ARG;

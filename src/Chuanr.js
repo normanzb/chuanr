@@ -3,17 +3,105 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
     var define = require('amdefine')(module);
 }
 
-define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Function/bind', '../lib/boe/src/boe/String/trim', './shim/console'], 
-    function ( Formatter, Pattern, util, caretUtil, bind, trim, console ) {
+define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Function/bind', '../lib/boe/src/boe/String/trim', '../lib/boe/src/boe/Object/clone', '../lib/boe/src/boe/util', './shim/console'], 
+    function ( Formatter, Pattern, util, caretUtil, bind, trim, clone, boeUtil, console ) {
 
-    // settings
+    // ioc settings
     var ioc = {
         Formatter: Formatter,
         Pattern: Pattern
     };
 
+    var defaultSettings = {
+        speculation: {
+            batchinput: true
+        }
+    };
+
     /* Private Methods */
-    function onKeyDown ( evt ) {
+    function tryExtractAndResetCaret( value, caret ) {
+        // do a filtering before actual inputting
+        var original;
+
+        try{
+            original = trim.call( this.formatter.extract( value ) );    
+        }
+        catch(ex){
+            original = null;
+        }
+
+        if ( caret ){
+
+            console.log( 'Caret before update: ', caret );
+
+            // calculate the original caret position
+            caret.begin = this.formatter
+                .index()
+                    .of('function')
+                    .by({ pattern: { index: caret.begin } });
+            caret.end = this.formatter
+                .index()
+                    .of('function')
+                    .by({ pattern: { index: caret.end } });
+
+            // means actually at the end of input
+            if ( caret.begin < 0 || caret.begin > original.length ) {
+                caret.begin = original.length;
+            }
+            if ( caret.end < 0 || caret.end > original.length ) {
+                caret.end = original.length;
+            }
+
+            console.log( 'Original input extracted: "' + original + '"' , 'Updated caret: ', caret );
+
+        }
+
+        if ( original == 0 ) {
+            this._isFormatted = false;
+        }
+
+        return original;
+    }
+
+    function speculateBatchInput( format ){
+
+        var speculated, finalExtraction;
+
+        console.log("Try to be smart, figure out what the user actually want to input");
+        console.log("Step 1. Try Extract");
+
+        speculated = tryExtractAndResetCaret.call( this, this._el.value, null );
+
+        if ( speculated == null ) {
+
+            console.log('Failed to extract.');
+            console.log("Step 2. Try filter out puncuation and spaces.");
+
+            speculated = this._el.value.replace(/\W/g,'');
+
+            if ( speculated != 0 ) {
+                speculated = trim.call( speculated );
+                this._el.value = speculated;
+                format = this.formatter.reset( this._el.value );
+            }
+
+            // give up
+            
+        }
+        else {
+
+            console.log('Extracted, use extrcted string.')
+
+            speculated = trim.call( speculated );
+            this._el.value = speculated;
+            format = this.formatter.reset( this._el.value );
+
+        }
+
+        return format;
+    }
+
+    function onKeyDown( evt ) {
 
         if ( util.isAcceptableKeyCode( evt.keyCode ) == false || util.isModifier( evt ) ) {
             if ( util.isMovementKeyCode( evt.keyCode ) == false && util.isModifier( evt ) == false ) {
@@ -28,43 +116,12 @@ define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Fun
 
         console.hr();
 
-        var original;
-
         this._keyCode = evt.keyCode;
         this._caret = caretUtil.get( this._el );
         this._charCode = null;
 
-        if ( this.isFormatted ) {
-            // do a filtering before actual inputting
-            original = trim.call( this.formatter.extract( this._el.value ) );
-
-            console.log( 'Caret before update: ', this._caret );
-
-            // calculate the original caret position
-            this._caret.begin = this.formatter
-                .index()
-                    .of('function')
-                    .by({ pattern: { index: this._caret.begin } });
-            this._caret.end = this.formatter
-                .index()
-                    .of('function')
-                    .by({ pattern: { index: this._caret.end } });
-
-            // means actually at the end of input
-            if ( this._caret.begin < 0 || this._caret.begin > original.length ) {
-                this._caret.begin = original.length;
-            }
-            if ( this._caret.end < 0 || this._caret.end > original.length ) {
-                this._caret.end = original.length;
-            }
-
-            console.log( 'Original input extracted: "' + original + '"' , 'Updated caret: ', this._caret );
-
-            this._el.value = original;
-
-            if ( original == 0 ) {
-                this.isFormatted = false;
-            }
+        if ( this._isFormatted ) {
+            this._el.value = tryExtractAndResetCaret.call( this, this._el.value, this._caret );
         }
 
         if ( util.isDelKey( evt.keyCode ) == false && 
@@ -75,7 +132,7 @@ define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Fun
         this._requireHandleInput = true;
     }
 
-    function onKeyPress(evt) {
+    function onKeyPress( evt ) {
         if ( this._requireHandlePress == false ) {
             return;
         }
@@ -85,7 +142,7 @@ define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Fun
         this._requireHandlePress = false;
     }
 
-    function onInput(evt) {
+    function onInput( evt ) {
         if ( this._requireHandleInput && 
             // if below check == true, means keyDown happen but keypress never happen, 
             // quite possible it is a undo
@@ -109,12 +166,7 @@ define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Fun
 
             console.hr();
 
-            // that means the change is done by pasting, dragging ...etc
-            var value = this._el.value;
-
-            console.log ( 'Input Type: Batch: ', value );
-
-            this.formatter.reset( value );
+            console.log ( 'Input Type: Batch: ', this._el.value );
 
             render.call(this);
 
@@ -128,36 +180,63 @@ define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Fun
             end: 0
         };
         var caretMove = true;
+        var format;
 
         if ( input ) {
+            // normal input
             caret = input.caret;
             this.formatter.input( input );
+            format = this.formatter.output();
         }
         else {
+            // that means the change is done by pasting, dragging ...etc
+            format = this.formatter.reset( this._el.value );
             caret = caretUtil.get( this._el );
         }
 
-        var format = this.formatter.output();
+        // get a matched format by trying different type of input
+        if ( this.config.speculation.batchinput == true && 
+            input == null && 
+            format.result.matched == false ) {
+            format = speculateBatchInput.call( this , format );
+        }
 
         // check if we need to move caret
-        if ( format.result.matched == false ) {
-            console.log('Failed to format, undo.')
-            caretMove = false;
-            format = this.formatter.undo();
+        if ( input ) {
+            if ( format.result.matched == false ) {
+                caretMove = false;
+            }
+            else if ( input.del || input.back ) {
+                caretMove = false;
+                if ( caret.begin > 0 ) {
+                   caret.begin -= 1; 
+                }
+                if ( caret.end > 0 ) {
+                    caret.end -= 1
+                }
+                
+            }
         }
         else {
-            if ( this._untouched && input == null ) {
-                // check if current value is shorter than previous value in batch mode
-                if ( this._untouched.result.toString().length > this._el.value.length ) {
-                    // a delete operation? don't move caret
-                    caretMove = false;
-                }
-            }
-            else if ( input && ( input.del || input.back ) ) {
+            // check if current value is shorter than previous value in batch mode
+            if ( this._untouched && 
+                this._untouched.result.toString().length > this._el.value.length ) {
+                // a delete operation? don't move caret
                 caretMove = false;
-                caret.begin -= 1;
-                caret.end -= 1;
             }
+        }
+
+        // revert if match failed
+        while ( format.result.matched == false && ( format = this.formatter.undo() ) ) {
+            console.log('Failed to format, undo.');
+
+            caret.begin = tryExtractAndResetCaret.call( this, format.result.toString(), null ).length;
+            caret.end = caret.begin;
+            caretMove = false;
+        }
+
+        if ( format == null ) {
+            throw 'Boom, Format is null, this should never happen.';
         }
 
         console.log('Move caret? ', caretMove);
@@ -174,7 +253,7 @@ define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Fun
         // update the element
         this._el.value = format.result;
 
-        console.log('Caret before input: ', caret );
+        console.log('Caret before format: ', caret );
 
         caret.begin = this.formatter
             .index()
@@ -190,18 +269,20 @@ define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Fun
         caretUtil.set( this._el, caret.begin );
 
         if ( format.result != 0 ) {
-            this.isFormatted = true;
+            this._isFormatted = true;
         }
         else {
-            this.isFormatted = false;
+            this._isFormatted = false;
         }
 
     }
 
     /* Public Methods */
-    function Ctor() {
+    function Ctor( config ) {
         this.patterns = [];
         this.formatter = null;
+        this.config = clone.call(defaultSettings, true);
+        boeUtil.mixin( this.config, config );
 
         this._el = null;
         this._requireHandlePress = false;
@@ -210,7 +291,9 @@ define(['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Fun
         this._charCode = null;
         this._caret = null;
         this._untouched = '';
-        this.isFormatted = false;
+        this._isFormatted = false;
+
+
     }
 
     var p = Ctor.prototype;

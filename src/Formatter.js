@@ -117,6 +117,9 @@ define(['./shim/console'], function (console) {
     };
 
     p.undo = function() {
+        if ( this._undo.length <= 0 ) {
+            return null;
+        }
         this._cache = this._undo.pop();
         return format.call( this );
     };
@@ -140,7 +143,7 @@ define(['./shim/console'], function (console) {
         this._undo.push( this._cache );
         this._cache = cache;
         this._current = null;
-        format.call( this );
+        return format.call( this );
     }
 
     return Ctor;

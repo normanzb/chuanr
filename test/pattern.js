@@ -141,7 +141,20 @@ describe('Pattern', function(){
         assert.include( msg,  "Syntax error: Expect a ')':23" );
     });
 
-    
+    /* Matches & Applications */
+    it('throw exception when parameter pattern did not close.', function(){
+        var msg = '';
+        var p;
+
+        try {
+            p = Pattern.parse("({11}) {99ddd}-{dddd}");
+        }
+        catch(ex) {
+            msg = ex.message;
+        }
+
+        assert.include( msg,  "Syntax error: Expect a ')':23" );
+    });
 });
     
 }(requirejs, require);
