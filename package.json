@@ -1,6 +1,6 @@
 {
   "name": "chuanr",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "main": "chuanr.min.js",
   "devDependencies": {
     "requirejs": "~2.1.11",

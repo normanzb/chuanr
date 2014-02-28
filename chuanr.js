@@ -424,7 +424,9 @@ var requirejs, require, define;
 define("../node_modules/almond/almond", function(){});
 
 
-
+if (typeof define !== 'function' && typeof module != 'undefined') {
+    var define = require('amdefine')(module);
+}
 
 define('shim/console',[],function () {
     var noop = function(){};
@@ -442,7 +444,9 @@ define('shim/console',[],function () {
     return ret;
 });
 
-
+if (typeof define !== 'function' && typeof module != 'undefined') {
+    var define = require('amdefine')(module);
+}
 
 define('Formatter',['./shim/console'], function (console) {
 
@@ -558,6 +562,9 @@ define('Formatter',['./shim/console'], function (console) {
     };
 
     p.undo = function() {
+        if ( this._undo.length <= 0 ) {
+            return null;
+        }
         this._cache = this._undo.pop();
         return format.call( this );
     };
@@ -581,12 +588,14 @@ define('Formatter',['./shim/console'], function (console) {
         this._undo.push( this._cache );
         this._cache = cache;
         this._current = null;
-        format.call( this );
+        return format.call( this );
     }
 
     return Ctor;
 });
-
+if (typeof define !== 'function' && typeof module != 'undefined') {
+    var define = require('amdefine')(module);
+}
 
 define( 'PatternFunction/digit',[],function () {
     var ret = function(input, param){
@@ -600,6 +609,9 @@ define( 'PatternFunction/digit',[],function () {
 
     return ret;
 });
+if (typeof define !== 'function' && typeof module != 'undefined') {
+    var define = require('amdefine')(module);
+}
 define('../lib/boe/src/boe/util',[],function(){
     
     
@@ -664,6 +676,9 @@ define('../lib/boe/src/boe/util',[],function(){
 
     return ret;
 });
+if (typeof define !== 'function' && typeof module != 'undefined') {
+    var define = require('amdefine')(module);
+}
 define('../lib/boe/src/boe/Object/clone',['../util'], function(util){
 
     var FUNCTION = 'function';
@@ -729,6 +744,10 @@ define('../lib/boe/src/boe/Object/clone',['../util'], function(util){
 
     return boeObjectClone;
 });
+if (typeof define !== 'function' && typeof module != 'undefined') {
+    var define = require('amdefine')(module);
+}
+
 define('PatternConstant',[],function(){
     return {
         MODE_CONSTANT : 1,
@@ -736,6 +755,10 @@ define('PatternConstant',[],function(){
         MODE_PARAMETER : 4
     };
 });
+if (typeof define !== 'function' && typeof module != 'undefined') {
+    var define = require('amdefine')(module);
+}
+
 define('PatternIndexQuery',['./PatternConstant'], function ( PatternConstant ) {
 
     var MODE_CONSTANT = PatternConstant.MODE_CONSTANT;
@@ -747,14 +770,14 @@ define('PatternIndexQuery',['./PatternConstant'], function ( PatternConstant ) {
     function getIndex() {
         var query = this._query;
         var targetName = this._target;
-        var funcIndex = -1, item, items = this._pattern.items;
+        var funcIndex, item, items = this._pattern.items;
 
         if ( query == null || targetName == null ) {
             return this;
         }
 
         if ( query.function && query.function.index != null && targetName == "pattern" ) {
-
+            funcIndex = -1
             for ( var i = 0 ; i < items.length; i++ ) {
                 item = items[i];
                 if ( item.type == MODE_FUNCTION ) {
@@ -768,8 +791,9 @@ define('PatternIndexQuery',['./PatternConstant'], function ( PatternConstant ) {
             return -1;
         }
         else if ( query.pattern && query.pattern.index != null && targetName == "function" ) {
+            funcIndex = 0;
 
-            for ( var i = 0 ; i < items.length; i++ ) {
+            for ( var i = 0 ; i < items.length && query.pattern.index > 0 ; i++ ) {
 
                 item = items[i];
 
@@ -777,7 +801,7 @@ define('PatternIndexQuery',['./PatternConstant'], function ( PatternConstant ) {
                     funcIndex++;
                 }
 
-                if ( i != query.pattern.index ) {
+                if ( i != query.pattern.index - 1 ) {
                     continue;
                 }
 
@@ -785,7 +809,7 @@ define('PatternIndexQuery',['./PatternConstant'], function ( PatternConstant ) {
                 
             }
 
-            return -1;
+            return 0;
         }
         else {
             throw EX_ARG;
@@ -814,7 +838,9 @@ define('PatternIndexQuery',['./PatternConstant'], function ( PatternConstant ) {
     return Ctor;
 });
 /* Pattern */
-
+if (typeof define !== 'function' && typeof module != 'undefined') {
+    var define = require('amdefine')(module);
+}
 
 define('Pattern',['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone', './PatternIndexQuery', './PatternConstant'], function ( pfDigit, boeClone, PatternIndexQuery, PatternConstant ) {
 
@@ -1008,7 +1034,7 @@ define('Pattern',['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone', 
         }
 
         matchedCount = len;
-        
+
         if ( string.length > matches.length ) {
             matched = false;
         }
@@ -1137,6 +1163,9 @@ define('Pattern',['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone', 
 /**
  * Modified based on util.js in https://github.com/firstopinion/formatter.js
  */
+if (typeof define !== 'function' && module ) {
+    var define = require('amdefine')(module);
+}
 define('util',[],function(){
 
     var utils = {};
@@ -1364,6 +1393,9 @@ define('caret',['require'],function  (argument) {
 /*
  * Function.bind
  */
+if (typeof define !== 'function' && typeof module != 'undefined') {
+    var define = require('amdefine')(module);
+}
 define('../lib/boe/src/boe/Function/bind',['../util'], function (util) {
     // simply alias it
     var FUNCTION_PROTO = util.g.Function.prototype;
@@ -1376,6 +1408,9 @@ define('../lib/boe/src/boe/Function/bind',['../util'], function (util) {
  * @return {String} trimed string
  * @es5
  */
+if (typeof define !== 'function' && typeof module != 'undefined') {
+    var define = require('amdefine')(module);
+}
 define('../lib/boe/src/boe/String/trim',['../util'], function (util) {
     var STRING_PROTO = util.g.String.prototype;
     return STRING_PROTO.trim || function() {
@@ -1385,22 +1420,113 @@ define('../lib/boe/src/boe/String/trim',['../util'], function (util) {
     };
 });
 
+if (typeof define !== 'function' && typeof module != 'undefined') {
+    var define = require('amdefine')(module);
+}
 
+define('Chuanr',['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Function/bind', '../lib/boe/src/boe/String/trim', '../lib/boe/src/boe/Object/clone', '../lib/boe/src/boe/util', './shim/console'], 
+    function ( Formatter, Pattern, util, caretUtil, bind, trim, clone, boeUtil, console ) {
 
-define('Chuanr',['./Formatter', './Pattern', './util', './caret', '../lib/boe/src/boe/Function/bind', '../lib/boe/src/boe/String/trim', './shim/console'], 
-    function ( Formatter, Pattern, util, caretUtil, bind, trim, console ) {
-
-    // settings
+    // ioc settings
     var ioc = {
         Formatter: Formatter,
         Pattern: Pattern
     };
 
+    var defaultSettings = {
+        speculation: {
+            batchinput: true
+        }
+    };
+
     /* Private Methods */
-    function onKeyDown ( evt ) {
+    function tryExtractAndResetCaret( value, caret ) {
+        // do a filtering before actual inputting
+        var original;
+
+        try{
+            original = trim.call( this.formatter.extract( value ) );    
+        }
+        catch(ex){
+            original = null;
+        }
+
+        if ( caret ){
+
+            console.log( 'Caret before update: ', caret );
+
+            // calculate the original caret position
+            caret.begin = this.formatter
+                .index()
+                    .of('function')
+                    .by({ pattern: { index: caret.begin } });
+            caret.end = this.formatter
+                .index()
+                    .of('function')
+                    .by({ pattern: { index: caret.end } });
+
+            // means actually at the end of input
+            if ( caret.begin < 0 || caret.begin > original.length ) {
+                caret.begin = original.length;
+            }
+            if ( caret.end < 0 || caret.end > original.length ) {
+                caret.end = original.length;
+            }
+
+            console.log( 'Original input extracted: "' + original + '"' , 'Updated caret: ', caret );
+
+        }
+
+        if ( original == 0 ) {
+            this._isFormatted = false;
+        }
+
+        return original;
+    }
+
+    function speculateBatchInput( format ){
+
+        var speculated, finalExtraction;
+
+        console.log("Try to be smart, figure out what the user actually want to input");
+        console.log("Step 1. Try Extract");
+
+        speculated = tryExtractAndResetCaret.call( this, this._el.value, null );
+
+        if ( speculated == null ) {
+
+            console.log('Failed to extract.');
+            console.log("Step 2. Try filter out puncuation and spaces.");
+
+            speculated = this._el.value.replace(/\W/g,'');
+
+            if ( speculated != 0 ) {
+                speculated = trim.call( speculated );
+                this._el.value = speculated;
+                format = this.formatter.reset( this._el.value );
+            }
+
+            // give up
+            
+        }
+        else {
+
+            console.log('Extracted, use extrcted string.')
+
+            speculated = trim.call( speculated );
+            this._el.value = speculated;
+            format = this.formatter.reset( this._el.value );
+
+        }
+
+        return format;
+    }
+
+    function onKeyDown( evt ) {
 
         if ( util.isAcceptableKeyCode( evt.keyCode ) == false || util.isModifier( evt ) ) {
             if ( util.isMovementKeyCode( evt.keyCode ) == false && util.isModifier( evt ) == false ) {
+                console.log('Key Down prevented')
                 evt.preventDefault();
             }
             
@@ -1411,39 +1537,12 @@ define('Chuanr',['./Formatter', './Pattern', './util', './caret', '../lib/boe/sr
 
         console.hr();
 
-        var original;
-
         this._keyCode = evt.keyCode;
         this._caret = caretUtil.get( this._el );
         this._charCode = null;
 
-        if ( this.isFormatted ) {
-            // do a filtering before actual inputting
-            original = trim.call( this.formatter.extract( this._el.value ) );
-
-            console.log( 'Caret before update: ', this._caret );
-
-            // calculate the original caret position
-            this._caret.begin = this.formatter
-                .index()
-                    .of('function')
-                    .by({ pattern: { index: this._caret.begin } });
-            this._caret.end = this.formatter
-                .index()
-                    .of('function')
-                    .by({ pattern: { index: this._caret.end } });
-
-            // means actually at the end of input
-            if ( this._caret.begin < 0 || this._caret.begin > original.length ) {
-                this._caret.begin = original.length;
-            }
-            if ( this._caret.end < 0 || this._caret.end > original.length ) {
-                this._caret.end = original.length;
-            }
-
-            console.log( 'Original input extracted: "' + original + '"' , 'Updated caret: ', this._caret );
-
-            this._el.value = original;
+        if ( this._isFormatted ) {
+            this._el.value = tryExtractAndResetCaret.call( this, this._el.value, this._caret );
         }
 
         if ( util.isDelKey( evt.keyCode ) == false && 
@@ -1454,7 +1553,7 @@ define('Chuanr',['./Formatter', './Pattern', './util', './caret', '../lib/boe/sr
         this._requireHandleInput = true;
     }
 
-    function onKeyPress(evt) {
+    function onKeyPress( evt ) {
         if ( this._requireHandlePress == false ) {
             return;
         }
@@ -1464,7 +1563,7 @@ define('Chuanr',['./Formatter', './Pattern', './util', './caret', '../lib/boe/sr
         this._requireHandlePress = false;
     }
 
-    function onInput(evt) {
+    function onInput( evt ) {
         if ( this._requireHandleInput && 
             // if below check == true, means keyDown happen but keypress never happen, 
             // quite possible it is a undo
@@ -1488,12 +1587,7 @@ define('Chuanr',['./Formatter', './Pattern', './util', './caret', '../lib/boe/sr
 
             console.hr();
 
-            // that means the change is done by pasting, dragging ...etc
-            var value = this._el.value;
-
-            console.log ( 'Input Type: Batch: ', value );
-
-            this.formatter.reset( value );
+            console.log ( 'Input Type: Batch: ', this._el.value );
 
             render.call(this);
 
@@ -1507,36 +1601,63 @@ define('Chuanr',['./Formatter', './Pattern', './util', './caret', '../lib/boe/sr
             end: 0
         };
         var caretMove = true;
+        var format;
 
         if ( input ) {
+            // normal input
             caret = input.caret;
             this.formatter.input( input );
+            format = this.formatter.output();
         }
         else {
+            // that means the change is done by pasting, dragging ...etc
+            format = this.formatter.reset( this._el.value );
             caret = caretUtil.get( this._el );
         }
 
-        var format = this.formatter.output();
+        // get a matched format by trying different type of input
+        if ( this.config.speculation.batchinput == true && 
+            input == null && 
+            format.result.matched == false ) {
+            format = speculateBatchInput.call( this , format );
+        }
 
         // check if we need to move caret
-        if ( format.result.matched == false ) {
-            console.log('Failed to format, undo.')
-            caretMove = false;
-            format = this.formatter.undo();
+        if ( input ) {
+            if ( format.result.matched == false ) {
+                caretMove = false;
+            }
+            else if ( input.del || input.back ) {
+                caretMove = false;
+                if ( caret.begin > 0 ) {
+                   caret.begin -= 1; 
+                }
+                if ( caret.end > 0 ) {
+                    caret.end -= 1
+                }
+                
+            }
         }
         else {
-            if ( this._untouched && input == null ) {
-                // check if current value is shorter than previous value in batch mode
-                if ( this._untouched.result.toString().length > this._el.value.length ) {
-                    // a delete operation? don't move caret
-                    caretMove = false;
-                }
-            }
-            else if ( input && ( input.del || input.back ) ) {
+            // check if current value is shorter than previous value in batch mode
+            if ( this._untouched && 
+                this._untouched.result.toString().length > this._el.value.length ) {
+                // a delete operation? don't move caret
                 caretMove = false;
-                caret.begin -= 1;
-                caret.end -= 1;
             }
+        }
+
+        // revert if match failed
+        while ( format.result.matched == false && ( format = this.formatter.undo() ) ) {
+            console.log('Failed to format, undo.');
+
+            caret.begin = tryExtractAndResetCaret.call( this, format.result.toString(), null ).length;
+            caret.end = caret.begin;
+            caretMove = false;
+        }
+
+        if ( format == null ) {
+            throw 'Boom, Format is null, this should never happen.';
         }
 
         console.log('Move caret? ', caretMove);
@@ -1553,7 +1674,7 @@ define('Chuanr',['./Formatter', './Pattern', './util', './caret', '../lib/boe/sr
         // update the element
         this._el.value = format.result;
 
-        console.log('Caret before input: ', caret );
+        console.log('Caret before format: ', caret );
 
         caret.begin = this.formatter
             .index()
@@ -1568,14 +1689,21 @@ define('Chuanr',['./Formatter', './Pattern', './util', './caret', '../lib/boe/sr
         // set cursor
         caretUtil.set( this._el, caret.begin );
 
-        this.isFormatted = true;
+        if ( format.result != 0 ) {
+            this._isFormatted = true;
+        }
+        else {
+            this._isFormatted = false;
+        }
 
     }
 
     /* Public Methods */
-    function Ctor() {
+    function Ctor( config ) {
         this.patterns = [];
         this.formatter = null;
+        this.config = clone.call(defaultSettings, true);
+        boeUtil.mixin( this.config, config );
 
         this._el = null;
         this._requireHandlePress = false;
@@ -1584,7 +1712,9 @@ define('Chuanr',['./Formatter', './Pattern', './util', './caret', '../lib/boe/sr
         this._charCode = null;
         this._caret = null;
         this._untouched = '';
-        this.isFormatted = false;
+        this._isFormatted = false;
+
+
     }
 
     var p = Ctor.prototype;
