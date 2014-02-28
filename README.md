@@ -1,4 +1,5 @@
-#Chuanr
+#Chuanr ![travis-build](https://api.travis-ci.org/normanzb/chuanr.png)
+
 
 
 This component formats the `<input />` according the declared patterns
@@ -121,7 +122,7 @@ Once you gained the reference to Chuanr constructor, by doing below you can inst
     npm install
     bower install
     grunt
-    
+
 
 ##Test
 
