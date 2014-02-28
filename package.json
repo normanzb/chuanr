@@ -17,6 +17,6 @@
   },
   "scripts": {
     "postinstall": "bower install",
-    "test": "./node_modules/.bin/mocha --reporter spec"
+    "test": "./node_modules/.bin/mocha --reporter nyan"
   }
 }
