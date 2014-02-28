@@ -324,8 +324,8 @@ define(['./Formatter',
      */
     p.roast = function (el, patterns) {
 
-        if ( this._el != null ) {
-            // TODO;
+        if ( el == null || el.tagName.toUpperCase() != 'INPUT' ) {
+            throw "Target input element must be specified.";
         }
 
         this._el = el;
