@@ -13,13 +13,19 @@ define(['./Formatter',
     '../lib/boe/src/boe/util', 
     '../lib/cogs/src/cogs/emittable',
     '../lib/cogs/src/cogs/event',
+    './shim/oninput',
     './shim/console'], 
-    function ( Formatter, Pattern, util, caretUtil, bind, trim, clone, boeUtil, emittable, event, console ) {
+    function ( 
+        Formatter, Pattern, util, caretUtil, 
+        bind, trim, clone, boeUtil, 
+        emittable, event, 
+        InputObserver, console ) {
 
     // ioc settings
     var ioc = {
         Formatter: Formatter,
-        Pattern: Pattern
+        Pattern: Pattern,
+        InputObserver: InputObserver
     };
 
     var defaultSettings = {
@@ -113,10 +119,17 @@ define(['./Formatter',
 
     function onKeyDown( evt ) {
 
+        if ( this._requireHandleKeyUp == true ) {
+            // mean user keeps key down 
+            // this is not allowed because it causes oninput never happen
+            util.preventDefault(evt);
+            return;
+        }
+
         if ( util.isAcceptableKeyCode( evt.keyCode ) == false || util.isModifier( evt ) ) {
             if ( util.isMovementKeyCode( evt.keyCode ) == false && util.isModifier( evt ) == false ) {
                 console.log('Key Down prevented')
-                evt.preventDefault();
+                util.preventDefault(evt);
             }
             
             this._requireHandlePress = false;
@@ -142,6 +155,7 @@ define(['./Formatter',
         }
         
         this._requireHandleInput = true;
+        this._requireHandleKeyUp = true;
     }
 
     function onKeyPress( evt ) {
@@ -193,6 +207,8 @@ define(['./Formatter',
             console.log('Compulsorily call into onInput')
             onInput.call(this);
         }
+
+        this._requireHandleKeyUp = false;
     }
 
     function render( input ) {
@@ -273,7 +289,7 @@ define(['./Formatter',
         }
         this._untouched = format;
 
-        console.log( 'Final Format', format.result.toString(), format );
+        console.log( 'Final Format', format.result.toString() );
 
         // update the element
         this._el.value = format.result;
@@ -315,12 +331,14 @@ define(['./Formatter',
     function Ctor( config ) {
         this.patterns = [];
         this.formatter = null;
+        this.oninput = null;
         this.config = clone.call(defaultSettings, true);
         boeUtil.mixin( this.config, config );
 
         this._el = null;
         this._requireHandlePress = false;
         this._requireHandleInput = false;
+        this._requireHandleKeyUp = false;
         this._keyCode = null;
         this._charCode = null;
         this._caret = null;
@@ -351,10 +369,13 @@ define(['./Formatter',
         }
 
         this.formatter = new ioc.Formatter(this.patterns);
+        
+        this.oninput = new InputObserver();
+        this.oninput.observe(el);
+        this.oninput.oninput = bind.call(onInput, this);
 
         util.addListener(el, 'keydown', bind.call(onKeyDown, this));
         util.addListener(el, 'keypress', bind.call(onKeyPress, this));
-        util.addListener(el, 'input', bind.call(onInput, this));
         util.addListener(el, 'keyup', bind.call(onKeyUp, this));
 
         if ( this._el.value != "" ) {

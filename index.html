@@ -23,7 +23,7 @@
     <input id="tester" type="">
     <script type="text/javascript">
         window.onload = function () {
-            require(['./src/Chuanr', './src/util', './src/shim/console'], function(Chuanr, util, console ){
+            require(['./src/Chuanr', './src/util', './src/shim/oninput', './src/shim/console'], function(Chuanr, util, InputObserver, console ){
 
                 if ( typeof window.console == 'undefined') {
                     console = {};
@@ -62,6 +62,11 @@
                 });
 
                 // for testing
+                var oninput = new InputObserver;
+                oninput.observe(elInput);
+                oninput.oninput = function(){
+                    console.log('xoninput "' + elInput.value + '"');
+                };
                 util.addListener(elInput, 'keydown', function(evt){
                     console.log('onkeydown: keyCode', evt.keyCode);
                 });
@@ -72,7 +77,7 @@
                     console.log('oninput "' + elInput.value + '"');
                 });
                 util.addListener(elInput, 'propertychange', function(evt){
-                    console.log('onpropertychange', evt.charCode);
+                    console.log('onpropertychange', evt.propertyName);
                 });
                 util.addListener(elInput, 'keyup', function(evt){
                     console.log('onkeyup "' + evt.keyCode + '"');
