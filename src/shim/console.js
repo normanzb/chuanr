@@ -5,12 +5,25 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
 
 define(['../../lib/boe/src/boe/util'], function (boeUtil) {
     var MAX_NESTING = 3;
-    var ret, nestingCount;
+    var ret, nestingCount, isIE, shim = {
+        log: noop,
+        error: redir,
+        warn: redir,
+        debug: redir
+    };
+
+    isIE = navigator.userAgent.toUpperCase().indexOf('MSIE') > 0 || 
+        navigator.userAgent.toUpperCase().indexOf('TRIDENT') > 0 ;
 
     function noop(){};
 
-    function stringify( arg ){
-        if ( nestingCount >= MAX_NESTING ) {
+    function redir(){
+        return this.log.apply(this, arguments);
+    }
+
+    function stringify( arg, nestingCount ){
+        nestingCount = nestingCount >>> 0 ;
+        if ( ( nestingCount >>> 0 ) >= MAX_NESTING ) {
             return '...';
         }
 
@@ -20,7 +33,7 @@ define(['../../lib/boe/src/boe/util'], function (boeUtil) {
         if ( type == 'Object' ) {
             str = '{';
             for( var key in arg ) {
-                str += 'key:' + stringify( arg[key] ) + ',';
+                str += '"' + key + '" : ' + stringify( arg[key], nestingCount + 1 ) + ',';
             }
             str += '}'
         }
@@ -34,8 +47,6 @@ define(['../../lib/boe/src/boe/util'], function (boeUtil) {
             str = arg.toString();
         }
 
-        nestingCount++;
-
         return str;
     }
 
@@ -43,31 +54,28 @@ define(['../../lib/boe/src/boe/util'], function (boeUtil) {
         return function(){
             var args = boeUtil.slice(arguments);
             for( var i = 0; i < args.length; i++ ) {
-                nestingCount = 0;
                 args[i] = stringify(args[i]);
-
             }
             
-            return func.call(this, args.join(' ') );
+            return Function.prototype.call.call(func, this, args.join(' ') );
         };
     };
 
-    var ret = window.console || {
-        log: noop,
-        error: noop,
-        warn: noop,
-        debug: noop
-    };
+    var ret = window.console;
 
-    if ( navigator.userAgent.toUpperCase().indexOf('MSIE') > 0 || 
-        navigator.userAgent.toUpperCase().indexOf('TRIDENT') > 0 ) {
-        for ( var key in ret ) {
-
-            if (typeof ret[key] == 'function') {
-                ret[ key ] = ieFuncWrapper( ret[ key ] );
-            }
-
+    for( var key in shim ) {
+        if ( !shim.hasOwnProperty(key) ) {
+            continue;
         }
+
+        if ( ret[key] == null  ) {
+            ret[ key ] = shim[ key ];
+        }
+
+        if ( isIE ) {
+            ret[ key ] = ieFuncWrapper( ret[ key ] );
+        }
+
     }
 
     ret.hr = function() {
