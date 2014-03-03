@@ -34,7 +34,7 @@ define(['./Formatter',
         var original;
 
         try{
-            original = trim.call( this.formatter.extract( value ) );    
+            original = trim.call( this.formatter.extract( value ) + '' );    
         }
         catch(ex){
             original = null;
@@ -130,7 +130,9 @@ define(['./Formatter',
         this._caret = caretUtil.get( this._el );
         this._charCode = null;
 
-        if ( this._isFormatted ) {
+        if ( this._isFormatted && 
+            // in case user clear the input by X button or js function (which do not trigger oninput)
+            this._el.value !== "" ) {
             this._el.value = tryExtractAndResetCaret.call( this, this._el.value, this._caret );
         }
 
@@ -152,7 +154,7 @@ define(['./Formatter',
         this._requireHandlePress = false;
     }
 
-    function onInput( evt ) {
+    function onInput( ) {
         if ( this._requireHandleInput && 
             // if below check == true, means keyDown happen but keypress never happen, 
             // quite possible it is a undo
@@ -167,9 +169,6 @@ define(['./Formatter',
                 back: util.isBackSpaceKey( this._keyCode ),
                 caret: this._caret
             } );
-
-            this._requireHandlePress = false;
-            this._requireHandleInput = false;
             
         }
         else {
@@ -180,6 +179,19 @@ define(['./Formatter',
 
             render.call(this);
 
+        }
+
+        this._requireHandlePress = false;
+        this._requireHandleInput = false;
+    }
+
+    function onKeyUp( evt ) {
+        // protection mechanism
+        // some browsers (e.g. IE) doesn't support oninput
+        // so we compulsorily make it here
+        if ( this._requireHandleInput == true ) {
+            console.log('Compulsorily call into onInput')
+            onInput.call(this);
         }
     }
 
@@ -272,7 +284,7 @@ define(['./Formatter',
         caret.begin = this.formatter
             .index()
                 .of('pattern')
-                .by({ function: { index: caret.begin + ( caretMove ? 1 : 0 ) } });
+                .by({ 'function': { index: caret.begin + ( caretMove ? 1 : 0 ) } });
         if ( caret.begin < 0 ) {
             caret.begin = this._el.value.length;
         }
@@ -339,6 +351,7 @@ define(['./Formatter',
         util.addListener(el, 'keydown', bind.call(onKeyDown, this));
         util.addListener(el, 'keypress', bind.call(onKeyPress, this));
         util.addListener(el, 'input', bind.call(onInput, this));
+        util.addListener(el, 'keyup', bind.call(onKeyUp, this));
 
         if ( this._el.value != "" ) {
             // not equal to empty spaces
