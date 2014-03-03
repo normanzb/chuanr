@@ -7,6 +7,14 @@
     input 
     {
         font-family: Courier , Courier New;
+        outline: none;
+        border: 1px solid #999;
+    }
+    input.error
+    {
+        border: 1px solid red;
+        box-shadow: 0 0 3px red;
+        transition: all .5s;
     }
     </style>
 </head>
@@ -46,8 +54,12 @@
                     "({11}) {d(2345)ddd}-{dddd}"
                 ]);
                 chuanr.on('prevented', function() {
-                    console.error('Prevented!!')
-                })
+                    elInput.className = 'error';
+                    console.error('Prevented!!');
+                });
+                chuanr.on('resumed', function(){
+                    elInput.className = '';
+                });
 
                 // for testing
                 util.addListener(elInput, 'keydown', function(evt){

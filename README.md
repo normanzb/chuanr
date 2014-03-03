@@ -81,7 +81,8 @@ Once you gained the reference to Chuanr constructor, by doing below you can inst
 
 ##Events
 
-* prevented - Fire when user input something not allowed.
+* prevented - Fire when user input something not accetpable.
+* resumed - Fire no matter when user input is accepted.
 
 ###Custom Pattern Function
 

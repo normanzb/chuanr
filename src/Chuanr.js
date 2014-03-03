@@ -305,6 +305,9 @@ define(['./Formatter',
         if ( undid ) {
             this.onPrevented.invoke( format );
         }
+        else {
+            this.onResumed.invoke( format );
+        }
 
     }
 
@@ -325,6 +328,7 @@ define(['./Formatter',
         this._isFormatted = false;
 
         this.onPrevented = event();
+        this.onResumed = event();
         emittable( this );
 
     }
