@@ -423,19 +423,152 @@ var requirejs, require, define;
 
 define("../node_modules/almond/almond", function(){});
 
+if (typeof define !== 'function' && typeof module != 'undefined') {
+    var define = require('amdefine')(module);
+}
+define('shim/../../lib/boe/src/boe/util',[],function(){
+    
+    
+    var global = (Function("return this"))();
+
+    var OBJECT_PROTO = global.Object.prototype;
+    var ARRAY_PROTO = global.Array.prototype;
+    var FUNCTION_PROTO = global.Function.prototype;
+    var FUNCTION = 'function';
+
+    var ret = {
+        mixinAsStatic: function(target, fn){
+            for(var key in fn){
+                if (!fn.hasOwnProperty(key)){
+                    continue;
+                }
+
+                target[key] = ret.bind.call(FUNCTION_PROTO.call, fn[key]);
+            }
+
+            return target;
+        },
+        type: function(obj){
+            var typ = OBJECT_PROTO.toString.call(obj);
+            var closingIndex = typ.indexOf(']');
+            return typ.substring(8, closingIndex);
+        },
+        mixin: function(target, source, map){
+
+            // in case only source specified
+            if (source == null){
+                source = target;
+                target= {};
+            }
+
+            for(var key in source){
+                if (!source.hasOwnProperty(key)){
+                    continue;
+                }
+
+                target[key] = ( typeof map == FUNCTION ? map( key, source[key] ) : source[key] );
+            }
+
+            return target;
+        },
+        bind: function(context) {
+            var slice = ARRAY_PROTO.slice;
+            var __method = this, args = slice.call(arguments);
+            args.shift();
+            return function wrapper() {
+                if (this instanceof wrapper){
+                    context = this;
+                }
+                return __method.apply(context, args.concat(slice.call(arguments)));
+            };
+        },
+        slice: function(arr) {
+            return ARRAY_PROTO.slice.call(arr);
+        },
+        g: global
+    };
+
+    return ret;
+});
 
 if (typeof define !== 'function' && typeof module != 'undefined') {
     var define = require('amdefine')(module);
 }
 
-define('shim/console',[],function () {
-    var noop = function(){};
-    var ret = window.console || {
+define('shim/console',['../../lib/boe/src/boe/util'], function (boeUtil) {
+    var MAX_NESTING = 3;
+    var ret, nestingCount, isIE, shim = {
         log: noop,
-        error: noop,
-        warn: noop,
-        debug: noop
+        error: redir,
+        warn: redir,
+        debug: redir
     };
+
+    isIE = navigator.userAgent.toUpperCase().indexOf('MSIE') > 0 || 
+        navigator.userAgent.toUpperCase().indexOf('TRIDENT') > 0 ;
+
+    function noop(){};
+
+    function redir(){
+        return this.log.apply(this, arguments);
+    }
+
+    function stringify( arg, nestingCount ){
+        nestingCount = nestingCount >>> 0 ;
+        if ( ( nestingCount >>> 0 ) >= MAX_NESTING ) {
+            return '...';
+        }
+
+        type = boeUtil.type( arg );
+        str = '';
+
+        if ( type == 'Object' ) {
+            str = '{';
+            for( var key in arg ) {
+                str += '"' + key + '" : ' + stringify( arg[key], nestingCount + 1 ) + ',';
+            }
+            str += '}'
+        }
+        else if ( type == 'Array' ) {
+            str = '[' + arg.toString() + ']';
+        }
+        else if ( type == 'Undefined' || type == 'Null' ) {
+            str = type;
+        }
+        else {
+            str = arg.toString();
+        }
+
+        return str;
+    }
+
+    function ieFuncWrapper(func){
+        return function(){
+            var args = boeUtil.slice(arguments);
+            for( var i = 0; i < args.length; i++ ) {
+                args[i] = stringify(args[i]);
+            }
+            
+            return Function.prototype.call.call(func, this, args.join(' ') );
+        };
+    };
+
+    var ret = window.console;
+
+    for( var key in shim ) {
+        if ( !shim.hasOwnProperty(key) ) {
+            continue;
+        }
+
+        if ( ret[key] == null  ) {
+            ret[ key ] = shim[ key ];
+        }
+
+        if ( isIE ) {
+            ret[ key ] = ieFuncWrapper( ret[ key ] );
+        }
+
+    }
 
     ret.hr = function() {
         ret.log('=======================================');
@@ -489,7 +622,8 @@ define('Formatter',['./shim/console'], function (console) {
 
             this._current = { 
                 pattern: bestMatchPattern,
-                result: bestMatchResultObject
+                result: bestMatchResultObject,
+                input: cache
             };
 
             return this._current;
@@ -525,13 +659,22 @@ define('Formatter',['./shim/console'], function (console) {
         }
      */
     p.input = function( input ) {
-        var cache = this._cache;
+        var cache = this._cache, caret, injection = '';
 
-        var caret = {
+        if ( typeof input == 'string' ) {
+            input = {
+                key: 0,
+                char: input.charCodeAt(0),
+                del: false,
+                back: false,
+                caret: { begin: cache.length, end: cache.length }
+            };
+        }
+
+        caret = {
             begin: input.caret.begin,
             end: input.caret.end
         };
-        var injection = '';
 
         if ( input.caret.begin == input.caret.end ) {
             if ( input.del ) {
@@ -776,13 +919,13 @@ define('PatternIndexQuery',['./PatternConstant'], function ( PatternConstant ) {
             return this;
         }
 
-        if ( query.function && query.function.index != null && targetName == "pattern" ) {
+        if ( query['function'] && query['function'].index != null && targetName == "pattern" ) {
             funcIndex = -1
             for ( var i = 0 ; i < items.length; i++ ) {
                 item = items[i];
                 if ( item.type == MODE_FUNCTION ) {
                     funcIndex++;
-                    if ( funcIndex ==  query.function.index ) {
+                    if ( funcIndex ==  query['function'].index ) {
                         return i;
                     }
                 }
@@ -792,6 +935,10 @@ define('PatternIndexQuery',['./PatternConstant'], function ( PatternConstant ) {
         }
         else if ( query.pattern && query.pattern.index != null && targetName == "function" ) {
             funcIndex = 0;
+
+            if ( query.pattern.index < 0 ) {
+                return -1;
+            }
 
             for ( var i = 0 ; i < items.length && query.pattern.index > 0 ; i++ ) {
 
@@ -809,7 +956,7 @@ define('PatternIndexQuery',['./PatternConstant'], function ( PatternConstant ) {
                 
             }
 
-            return 0;
+            return funcIndex;
         }
         else {
             throw EX_ARG;
@@ -1033,8 +1180,6 @@ define('Pattern',['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone', 
             len = input.length;
         }
 
-        matchedCount = len;
-
         if ( string.length > matches.length ) {
             matched = false;
         }
@@ -1055,9 +1200,10 @@ define('Pattern',['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone', 
 
                 if ( func.call( null, char, item.param ) === false ) {
                     matched = false;
-                    matchedCount = i + 1;
                     break;
                 }
+
+                matchedCount++;
 
                 item.value = char;
                 item.type = MODE_CONSTANT;
@@ -1168,42 +1314,16 @@ if (typeof define !== 'function' && module ) {
 }
 define('util',[],function(){
 
-    var utils = {};
+    var util = {};
 
     // Useragent info for keycode handling
     var uAgent = (typeof navigator !== 'undefined') ? navigator.userAgent : null,
         iPhone = /iphone/i.test(uAgent);
 
     //
-    // Shallow copy properties from n objects to destObj
-    //
-    utils.extend = function (destObj) {
-        for (var i = 1; i < arguments.length; i++) {
-            for (var key in arguments[i]) {
-              destObj[key] = arguments[i][key];
-            }
-        }
-        return destObj;
-    };
-
-    //
-    // Add a given character to a string at a defined pos
-    //
-    utils.addChars = function (str, chars, pos) {
-        return str.substr(0, pos) + chars + str.substr(pos, str.length);
-    };
-
-    //
-    // Remove a span of characters
-    //
-    utils.removeChars = function (str, start, end) {
-        return str.substr(0, start) + str.substr(end, str.length);
-    };
-
-    //
     // Return true/false is num false between bounds
     //
-    utils.isBetween = function (num, bounds) {
+    util.isBetween = function (num, bounds) {
         bounds.sort(function(a,b) { return a-b; });
         return (num > bounds[0] && num < bounds[1]);
     };
@@ -1211,7 +1331,7 @@ define('util',[],function(){
     //
     // Helper method for cross browser event listeners
     //
-    utils.addListener = function (el, evt, handler) {
+    util.addListener = function (el, evt, handler) {
         return (typeof el.addEventListener != "undefined")
             ? el.addEventListener(evt, handler, false)
             : el.attachEvent('on' + evt, handler);
@@ -1220,7 +1340,7 @@ define('util',[],function(){
     //
     // Helper method for cross browser implementation of preventDefault
     //
-    utils.preventDefault = function (evt) {
+    util.preventDefault = function (evt) {
         return (evt.preventDefault) ? evt.preventDefault() : (evt.returnValue = false);
     };
 
@@ -1228,33 +1348,29 @@ define('util',[],function(){
     // Helper method for cross browser implementation for grabbing
     // clipboard data
     //
-    utils.getClip = function (evt) {
+    util.getClip = function (evt) {
         if (evt.clipboardData) { return evt.clipboardData.getData('Text'); }
         if (window.clipboardData) { return window.clipboardData.getData('Text'); }
-    };
-
-    utils.isUndo = function(evt){
-        return 
     };
 
     //
     // Returns true/false if k is a del key
     //
-    utils.isDelKey = function (k) {
+    util.isDelKey = function (k) {
         return k === 46 || (iPhone && k === 127);
     };
 
     //
     // Returns true/false if k is a backspace key
     //
-    utils.isBackSpaceKey = function (k) {
+    util.isBackSpaceKey = function (k) {
         return k === 8;
     }
 
     //
     // Returns true/false if k is an arrow key
     //
-    utils.isSpecialKey = function (k) {
+    util.isSpecialKey = function (k) {
         var codes = {
             '9' : 'tab',
             '13': 'enter',
@@ -1273,14 +1389,14 @@ define('util',[],function(){
     //
     // Returns true/false if modifier key is held down
     //
-    utils.isModifier = function (evt) {
+    util.isModifier = function (evt) {
         return evt.ctrlKey || evt.altKey || evt.metaKey;
     };
 
     //
     // Return true if the input is in the range of acceptable keycode
     // 
-    utils.isAcceptableKeyCode = function(kc) {
+    util.isAcceptableKeyCode = function(kc) {
 
         if ( 
             // 0-9
@@ -1289,8 +1405,8 @@ define('util',[],function(){
             ( kc >= 65 && kc <= 90 ) || 
             // keypad 0-9
             ( kc >= 96 && kc <= 105 ) ||
-            utils.isDelKey( kc ) ||
-            utils.isBackSpaceKey( kc )
+            util.isDelKey( kc ) ||
+            util.isBackSpaceKey( kc )
         ) {
             return true;
         }
@@ -1298,7 +1414,7 @@ define('util',[],function(){
         return false;
     };
 
-    utils.isMovementKeyCode = function( k ) {
+    util.isMovementKeyCode = function( k ) {
 
         if ( 
             k >= 37 && k <= 40 || k == 9
@@ -1310,7 +1426,7 @@ define('util',[],function(){
 
     };
 
-    return utils;
+    return util;
 });
 /*
  * caret.js
@@ -1723,6 +1839,90 @@ define('../lib/cogs/src/cogs/emittable',['./event'], function (event) {
 
     return emittable;
 });
+if (typeof define !== 'function' && typeof module != 'undefined') {
+    var define = require('amdefine')(module);
+}
+
+define('shim/oninput',[],function () {
+    var INPUT = 'input';
+
+    /* Feature Detection */
+
+    var hasOnInput = function(){
+        /*
+            The following function tests an element for oninput support in Firefox.
+            Many thanks to:
+            http://blog.danielfriesen.name/2010/02/16/html5-browser-maze-oninput-support/
+        */
+        function checkEvent(el) {
+            // First check, for if Firefox fixes its issue with el.oninput = function
+            el.setAttribute("oninput", "return");
+            if (typeof el.oninput == "function"){
+                return true;
+            }
+
+            // Second check, because Firefox doesn't map oninput attribute to oninput property
+            try {
+                var e  = document.createEvent("KeyboardEvent"),
+                    ok = false,
+                    tester = function(e) {
+                        ok = true;
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                e.initKeyEvent("keypress", true, true, window, false, false, false, false, 0, "e".charCodeAt(0));
+                document.body.appendChild(el);
+                el.addEventListener(INPUT, tester, false);
+                el.focus();
+                el.dispatchEvent(e);
+                el.removeEventListener(INPUT, tester, false);
+                document.body.removeChild(el);
+                return ok;
+            } catch(e) {}
+        }
+
+        var testee = document.createElement(INPUT);
+        return "oninput" in testee || checkEvent(testee);
+    }();
+
+    /* Public */
+    
+    function Observer(){
+        this._old = '';
+        this.oninput = function(){};
+    }
+
+    var p = Observer.prototype;
+
+    p.observe = function(el){
+        if ( el == null || el.tagName.toLowerCase() != INPUT ) {
+            throw "Target input element must be specified.";
+        }
+
+        var me = this;
+
+        if ( hasOnInput ) {
+            el.addEventListener(INPUT, function() {
+                me.oninput();
+            }, false);
+        }
+        else if (el.attachEvent) {
+            this._old = el.value;
+            el.attachEvent('onpropertychange', function(evt){
+                if ( evt.propertyName == "value" && el.value != this._old ) {
+                    this._old = el.value;
+                    me.oninput();
+                }
+            });
+        }
+        else {
+            throw "Something wrong, should never goes to here.";
+        }
+    };
+
+    return Observer;
+
+});
 
 if (typeof define !== 'function' && typeof module != 'undefined') {
     var define = require('amdefine')(module);
@@ -1738,13 +1938,19 @@ define('Chuanr',['./Formatter',
     '../lib/boe/src/boe/util', 
     '../lib/cogs/src/cogs/emittable',
     '../lib/cogs/src/cogs/event',
+    './shim/oninput',
     './shim/console'], 
-    function ( Formatter, Pattern, util, caretUtil, bind, trim, clone, boeUtil, emittable, event, console ) {
+    function ( 
+        Formatter, Pattern, util, caretUtil, 
+        bind, trim, clone, boeUtil, 
+        emittable, event, 
+        InputObserver, console ) {
 
     // ioc settings
     var ioc = {
         Formatter: Formatter,
-        Pattern: Pattern
+        Pattern: Pattern,
+        InputObserver: InputObserver
     };
 
     var defaultSettings = {
@@ -1759,7 +1965,7 @@ define('Chuanr',['./Formatter',
         var original;
 
         try{
-            original = trim.call( this.formatter.extract( value ) );    
+            original = trim.call( this.formatter.extract( value ) + '' );    
         }
         catch(ex){
             original = null;
@@ -1838,10 +2044,17 @@ define('Chuanr',['./Formatter',
 
     function onKeyDown( evt ) {
 
+        if ( this._requireHandleKeyUp == true ) {
+            // mean user keeps key down 
+            // this is not allowed because it causes oninput never happen
+            util.preventDefault(evt);
+            return;
+        }
+
         if ( util.isAcceptableKeyCode( evt.keyCode ) == false || util.isModifier( evt ) ) {
             if ( util.isMovementKeyCode( evt.keyCode ) == false && util.isModifier( evt ) == false ) {
                 console.log('Key Down prevented')
-                evt.preventDefault();
+                util.preventDefault(evt);
             }
             
             this._requireHandlePress = false;
@@ -1855,7 +2068,9 @@ define('Chuanr',['./Formatter',
         this._caret = caretUtil.get( this._el );
         this._charCode = null;
 
-        if ( this._isFormatted ) {
+        if ( this._isFormatted && 
+            // in case user clear the input by X button or js function (which do not trigger oninput)
+            this._el.value !== "" ) {
             this._el.value = tryExtractAndResetCaret.call( this, this._el.value, this._caret );
         }
 
@@ -1865,6 +2080,7 @@ define('Chuanr',['./Formatter',
         }
         
         this._requireHandleInput = true;
+        this._requireHandleKeyUp = true;
     }
 
     function onKeyPress( evt ) {
@@ -1877,7 +2093,7 @@ define('Chuanr',['./Formatter',
         this._requireHandlePress = false;
     }
 
-    function onInput( evt ) {
+    function onInput( ) {
         if ( this._requireHandleInput && 
             // if below check == true, means keyDown happen but keypress never happen, 
             // quite possible it is a undo
@@ -1892,9 +2108,6 @@ define('Chuanr',['./Formatter',
                 back: util.isBackSpaceKey( this._keyCode ),
                 caret: this._caret
             } );
-
-            this._requireHandlePress = false;
-            this._requireHandleInput = false;
             
         }
         else {
@@ -1906,6 +2119,21 @@ define('Chuanr',['./Formatter',
             render.call(this);
 
         }
+
+        this._requireHandlePress = false;
+        this._requireHandleInput = false;
+    }
+
+    function onKeyUp( evt ) {
+        // protection mechanism
+        // some browsers (e.g. IE) doesn't support oninput
+        // so we compulsorily make it here
+        if ( this._requireHandleInput == true ) {
+            console.log('Compulsorily call into onInput')
+            onInput.call(this);
+        }
+
+        this._requireHandleKeyUp = false;
     }
 
     function render( input ) {
@@ -1963,10 +2191,17 @@ define('Chuanr',['./Formatter',
         }
 
         // revert if match failed
-        while ( format.result.matched == false && ( format = this.formatter.undo() ) ) {
+        while ( format.result.matched == false ) {
+
+            undid = format;
+            format = this.formatter.undo()
+
             console.log('Failed to format, undo.');
 
-            undid = true;
+            if ( format == null ) {
+                console.log('Tried to undo, but failed.');
+                break;
+            }
 
             caret.begin = tryExtractAndResetCaret.call( this, format.result.toString(), null ).length;
             caret.end = caret.begin;
@@ -1986,7 +2221,7 @@ define('Chuanr',['./Formatter',
         }
         this._untouched = format;
 
-        console.log( 'Final Format', format.result.toString(), format );
+        console.log( 'Final Format', format.result.toString() );
 
         // update the element
         this._el.value = format.result;
@@ -1997,7 +2232,7 @@ define('Chuanr',['./Formatter',
         caret.begin = this.formatter
             .index()
                 .of('pattern')
-                .by({ function: { index: caret.begin + ( caretMove ? 1 : 0 ) } });
+                .by({ 'function': { index: caret.begin + ( caretMove ? 1 : 0 ) } });
         if ( caret.begin < 0 ) {
             caret.begin = this._el.value.length;
         }
@@ -2016,7 +2251,10 @@ define('Chuanr',['./Formatter',
 
         // fire event
         if ( undid ) {
-            this.onPrevented.invoke( format );
+            this.onPrevented.invoke( undid );
+        }
+        else {
+            this.onResumed.invoke( format );
         }
 
     }
@@ -2025,12 +2263,14 @@ define('Chuanr',['./Formatter',
     function Ctor( config ) {
         this.patterns = [];
         this.formatter = null;
+        this.oninput = null;
         this.config = clone.call(defaultSettings, true);
         boeUtil.mixin( this.config, config );
 
         this._el = null;
         this._requireHandlePress = false;
         this._requireHandleInput = false;
+        this._requireHandleKeyUp = false;
         this._keyCode = null;
         this._charCode = null;
         this._caret = null;
@@ -2038,6 +2278,7 @@ define('Chuanr',['./Formatter',
         this._isFormatted = false;
 
         this.onPrevented = event();
+        this.onResumed = event();
         emittable( this );
 
     }
@@ -2049,8 +2290,8 @@ define('Chuanr',['./Formatter',
      */
     p.roast = function (el, patterns) {
 
-        if ( this._el != null ) {
-            // TODO;
+        if ( el == null || el.tagName.toUpperCase() != 'INPUT' ) {
+            throw "Target input element must be specified.";
         }
 
         this._el = el;
@@ -2060,10 +2301,14 @@ define('Chuanr',['./Formatter',
         }
 
         this.formatter = new ioc.Formatter(this.patterns);
+        
+        this.oninput = new InputObserver();
+        this.oninput.observe(el);
+        this.oninput.oninput = bind.call(onInput, this);
 
         util.addListener(el, 'keydown', bind.call(onKeyDown, this));
         util.addListener(el, 'keypress', bind.call(onKeyPress, this));
-        util.addListener(el, 'input', bind.call(onInput, this));
+        util.addListener(el, 'keyup', bind.call(onKeyUp, this));
 
         if ( this._el.value != "" ) {
             // not equal to empty spaces

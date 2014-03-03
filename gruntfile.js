@@ -61,12 +61,13 @@ module.exports = function(grunt) {
     grunt.registerTask("dist", "requirejs:dist uglify".split(' '));
     grunt.registerTask("default", "dist".split(' '));
     grunt.registerTask("release", function (type) {
+
+        grunt.task.run('dist');
         
         if (type != null && type != false){
             grunt.task.run('bumpup:' + type);
             grunt.task.run('tagrelease');
         }
 
-        grunt.task.run('dist');
     });
 };
