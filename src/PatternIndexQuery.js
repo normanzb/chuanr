@@ -19,13 +19,13 @@ define(['./PatternConstant'], function ( PatternConstant ) {
             return this;
         }
 
-        if ( query.function && query.function.index != null && targetName == "pattern" ) {
+        if ( query['function'] && query['function'].index != null && targetName == "pattern" ) {
             funcIndex = -1
             for ( var i = 0 ; i < items.length; i++ ) {
                 item = items[i];
                 if ( item.type == MODE_FUNCTION ) {
                     funcIndex++;
-                    if ( funcIndex ==  query.function.index ) {
+                    if ( funcIndex ==  query['function'].index ) {
                         return i;
                     }
                 }
@@ -35,6 +35,10 @@ define(['./PatternConstant'], function ( PatternConstant ) {
         }
         else if ( query.pattern && query.pattern.index != null && targetName == "function" ) {
             funcIndex = 0;
+
+            if ( query.pattern.index < 0 ) {
+                return -1;
+            }
 
             for ( var i = 0 ; i < items.length && query.pattern.index > 0 ; i++ ) {
 
@@ -52,7 +56,7 @@ define(['./PatternConstant'], function ( PatternConstant ) {
                 
             }
 
-            return 0;
+            return funcIndex;
         }
         else {
             throw EX_ARG;
