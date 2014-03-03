@@ -1,5 +1,5 @@
 (function() { 
-var global = new Function('return this')();var parentDefine = global.define || (function(factory){ var ret = factory();typeof module != 'undefined' && (module.exports = ret) ||(global.chuanr = ret); }) ;/**
+var global = new Function('return this')();var parentDefine = global.define || (function(factory){ var ret = factory();typeof module != 'undefined' && (module.exports = ret) ||(global.Chuanr = ret); }) ;/**
  * @license almond 0.2.9 Copyright (c) 2011-2014, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
  * see: http://github.com/jrburke/almond for details
@@ -2322,5 +2322,5 @@ define('Chuanr',['./Formatter',
 
     return Ctor;
 });
-parentDefine(function() { return require('chuanr'); }); 
+parentDefine(function() { return require('Chuanr'); }); 
 }());

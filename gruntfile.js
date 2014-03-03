@@ -1,12 +1,12 @@
 /*global module:false*/
 module.exports = function(grunt) {
 
-    var SPACE_NAME = 'chuanr';
+    var SPACE_NAME = 'Chuanr';
     var EXT_JS = '.js';
     var EXT_JS_MIN = '.min' + EXT_JS;
     var FILE_NAME_OUT_MAX = SPACE_NAME + EXT_JS;
     var FILE_NAME_OUT_MIN = SPACE_NAME + EXT_JS_MIN;
-    var FILE_NAME_ENTRY = 'Chuanr';
+    var FILE_NAME_ENTRY = SPACE_NAME;
 
     grunt.loadNpmTasks("grunt-contrib-requirejs");
     grunt.loadNpmTasks("grunt-contrib-uglify");

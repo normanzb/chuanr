@@ -4,39 +4,46 @@
     <meta charset="UTF-8">
     <title>Chuanr Testing</title>
     <style type="text/css">
-    input 
+    input#tester
     {
         font-family: Courier , Courier New;
         outline: none;
         border: 1px solid #999;
+        transition: all .5s;
     }
-    input.error
+    input#tester.error
     {
         border: 1px solid red;
         box-shadow: 0 0 3px red;
-        transition: all .5s;
+    }
+    #message-box
+    {
+        font-family: Courier , Courier New;
     }
     </style>
 </head>
 <body>
     <script type="text/javascript" src="./node_modules/requirejs/require.js"></script>
     <input id="tester" type="">
-    <div id="message-box" class="message"></div>
+    <pre id="message-box" class="message"></pre>
     <script type="text/javascript">
         window.onload = function () {
-            require(['./src/Chuanr', './src/util', './src/shim/oninput', './src/shim/console'], function(Chuanr, util, InputObserver, console ){
+            var isDebug = location.hash.indexOf('debug') > 0;
+            require([ (isDebug ? './src/Chuanr': './chuanr.min')], function( Chuanr ){
 
-                if ( typeof window.console == 'undefined') {
-                    console = {};
-                    console.log = function(){
-                        var str = Array.prototype.slice.call(arguments).join(',');
-                        var el = document.createTextNode(str);
-                        document.body.appendChild(el);
-                    };
+                function scheduleErrorClear(){
+                    if ( schHandle ) {
+                        clearTimeout( schHandle );
+                        schHandle = null;
+                    }
+                    schHandle = setTimeout(function(){
+                        elInput.className = '';
+                    }, 1000);
                 }
 
+                var schHandle;
                 var elInput = document.getElementById('tester');
-                var elMessageBox = document.getElementById('message-box')
+                var elMessageBox = document.getElementById('message-box');
                 var chuanr = new Chuanr();
                 chuanr.roast(elInput, [
                     "({11}) {99ddd}-{dddd}",
@@ -56,9 +63,8 @@
                     "({11}) {d(2345)ddd}-{dddd}"
                 ]);
                 chuanr.on('prevented', function(format) {
-                    elInput.className = 'error';
 
-                    var genericPattern = Chuanr.setting.Pattern.parse("({dd}) {ddddd}-{dddd}");
+                    var genericPattern = Chuanr.setting.Pattern.parse("({dd}) {ddddd}-{ddddd}");
                     var genericFormatter = new Chuanr.setting.Formatter([genericPattern]);
 
                     for(var i = 0; i < format.input.length; i++){
@@ -69,43 +75,49 @@
                     var msg = '"' + output.result + '" is not an valid telephone number!';
                     console.error('Prevented!! ' + msg);
                     elMessageBox.innerText = msg;
+
+                    elInput.className = 'error';
+                    scheduleErrorClear();
                 });
                 chuanr.on('resumed', function(){
                     elInput.className = '';
                     elMessageBox.innerText = '';
                 });
 
-                // for testing
-                var oninput = new InputObserver;
-                oninput.observe(elInput);
-                oninput.oninput = function(){
-                    console.log('xoninput "' + elInput.value + '"');
-                };
-                util.addListener(elInput, 'keydown', function(evt){
-                    console.log('onkeydown: keyCode', evt.keyCode);
+                isDebug && require(['./src/util', './src/shim/oninput', './src/shim/console'], 
+                    function( util, InputObserver, console ){
+                    // for testing
+                    var oninput = new InputObserver;
+                    oninput.observe(elInput);
+                    oninput.oninput = function(){
+                        console.log('xoninput "' + elInput.value + '"');
+                    };
+                    util.addListener(elInput, 'keydown', function(evt){
+                        console.log('onkeydown: keyCode', evt.keyCode);
+                    });
+                    util.addListener(elInput, 'keypress', function(evt){
+                        console.log('onkeypress: charCode', evt.charCode || evt.keyCode);
+                    });
+                    util.addListener(elInput, 'input', function(evt){
+                        console.log('oninput "' + elInput.value + '"');
+                    });
+                    util.addListener(elInput, 'propertychange', function(evt){
+                        console.log('onpropertychange', evt.propertyName);
+                    });
+                    util.addListener(elInput, 'keyup', function(evt){
+                        console.log('onkeyup "' + evt.keyCode + '"');
+                    });
+                    var MutationObserver = window.MutationObserver || window.webkitMutationObserver;
+                    if ( MutationObserver ) {
+                        var observer = new MutationObserver(function(mutations){
+                            mutations.forEach(function(mutation){
+                                console.log('Mutation: ' , mutation);
+                            });
+                        })
+                        observer.observe(elInput, { attributes: true, childList: true, characterData: true, subtree: true, attributeOldValue: true });
+                        // observer.disconnect();
+                    }
                 });
-                util.addListener(elInput, 'keypress', function(evt){
-                    console.log('onkeypress: charCode', evt.charCode || evt.keyCode);
-                });
-                util.addListener(elInput, 'input', function(evt){
-                    console.log('oninput "' + elInput.value + '"');
-                });
-                util.addListener(elInput, 'propertychange', function(evt){
-                    console.log('onpropertychange', evt.propertyName);
-                });
-                util.addListener(elInput, 'keyup', function(evt){
-                    console.log('onkeyup "' + evt.keyCode + '"');
-                });
-                var MutationObserver = window.MutationObserver || window.webkitMutationObserver;
-                if ( MutationObserver ) {
-                    var observer = new MutationObserver(function(mutations){
-                        mutations.forEach(function(mutation){
-                            console.log('Mutation: ' , mutation);
-                        });
-                    })
-                    observer.observe(elInput, { attributes: true, childList: true, characterData: true, subtree: true, attributeOldValue: true });
-                    // observer.disconnect();
-                }
             });
         };
     </script>

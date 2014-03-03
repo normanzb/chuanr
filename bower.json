@@ -1,6 +1,6 @@
 {
   "name": "chuanr",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "devDependencies": {
     "boe": "~1.1.7",
     "cogs": "~1.0.0"
