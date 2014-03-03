@@ -44,7 +44,8 @@ define(['./shim/console'], function (console) {
 
             this._current = { 
                 pattern: bestMatchPattern,
-                result: bestMatchResultObject
+                result: bestMatchResultObject,
+                input: cache
             };
 
             return this._current;
@@ -80,13 +81,22 @@ define(['./shim/console'], function (console) {
         }
      */
     p.input = function( input ) {
-        var cache = this._cache;
+        var cache = this._cache, caret, injection = '';
 
-        var caret = {
+        if ( typeof input == 'string' ) {
+            input = {
+                key: 0,
+                char: input.charCodeAt(0),
+                del: false,
+                back: false,
+                caret: { begin: cache.length, end: cache.length }
+            };
+        }
+
+        caret = {
             begin: input.caret.begin,
             end: input.caret.end
         };
-        var injection = '';
 
         if ( input.caret.begin == input.caret.end ) {
             if ( input.del ) {

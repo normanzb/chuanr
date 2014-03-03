@@ -21,6 +21,7 @@
 <body>
     <script type="text/javascript" src="./node_modules/requirejs/require.js"></script>
     <input id="tester" type="">
+    <div id="message-box" class="message"></div>
     <script type="text/javascript">
         window.onload = function () {
             require(['./src/Chuanr', './src/util', './src/shim/oninput', './src/shim/console'], function(Chuanr, util, InputObserver, console ){
@@ -35,6 +36,7 @@
                 }
 
                 var elInput = document.getElementById('tester');
+                var elMessageBox = document.getElementById('message-box')
                 var chuanr = new Chuanr();
                 chuanr.roast(elInput, [
                     "({11}) {99ddd}-{dddd}",
@@ -53,12 +55,24 @@
                     "({dd}) {794d}-{dddd}",
                     "({11}) {d(2345)ddd}-{dddd}"
                 ]);
-                chuanr.on('prevented', function() {
+                chuanr.on('prevented', function(format) {
                     elInput.className = 'error';
-                    console.error('Prevented!!');
+
+                    var genericPattern = Chuanr.setting.Pattern.parse("({dd}) {ddddd}-{dddd}");
+                    var genericFormatter = new Chuanr.setting.Formatter([genericPattern]);
+
+                    for(var i = 0; i < format.input.length; i++){
+                        genericFormatter.input(format.input.charAt(i));    
+                    }
+
+                    var output = genericFormatter.output();
+                    var msg = '"' + output.result + '" is not an valid telephone number!';
+                    console.error('Prevented!! ' + msg);
+                    elMessageBox.innerText = msg;
                 });
                 chuanr.on('resumed', function(){
                     elInput.className = '';
+                    elMessageBox.innerText = '';
                 });
 
                 // for testing

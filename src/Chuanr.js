@@ -266,10 +266,17 @@ define(['./Formatter',
         }
 
         // revert if match failed
-        while ( format.result.matched == false && ( format = this.formatter.undo() ) ) {
+        while ( format.result.matched == false ) {
+
+            undid = format;
+            format = this.formatter.undo()
+
             console.log('Failed to format, undo.');
 
-            undid = true;
+            if ( format == null ) {
+                console.log('Tried to undo, but failed.');
+                break;
+            }
 
             caret.begin = tryExtractAndResetCaret.call( this, format.result.toString(), null ).length;
             caret.end = caret.begin;
@@ -319,7 +326,7 @@ define(['./Formatter',
 
         // fire event
         if ( undid ) {
-            this.onPrevented.invoke( format );
+            this.onPrevented.invoke( undid );
         }
         else {
             this.onResumed.invoke( format );
