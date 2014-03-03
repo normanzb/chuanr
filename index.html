@@ -80,7 +80,6 @@
                 var MutationObserver = window.MutationObserver || window.webkitMutationObserver;
                 if ( MutationObserver ) {
                     var observer = new MutationObserver(function(mutations){
-                        console.log(11)
                         mutations.forEach(function(mutation){
                             console.log('Mutation: ' , mutation);
                         });
