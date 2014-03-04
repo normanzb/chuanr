@@ -3,29 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <title>Chuanr Testing</title>
+    <link href='http://fonts.googleapis.com/css?family=Noto+Sans' rel='stylesheet' type='text/css'>
     <style type="text/css">
+    html
+    {
+        color: #FFF;
+        font-family: Noto Sans, Arial;
+        background:#3C454F;
+    }
+    h1
+    {
+        margin: 2em auto;
+
+        font-family: Noto Sans, Arial;
+        color: #FFF;
+        text-align: center;
+    }
+    section
+    {
+        margin: 1em auto;
+        width: 80%;
+
+        overflow: hidden;
+        text-align: center;
+        transition: all .5s;
+    }
+    section > .inner
+    {
+        margin: 1em;
+    }
+    section:empty
+    {
+        display: none;
+    }
+    span
+    {
+        line-height: 1.8em;
+    }
+    span.highlight
+    {
+        display: inline-block;
+        
+        border-radius: .7em;
+        padding: 0 .6em;
+
+        background-color: #8BC53F;
+        cursor: pointer;
+    }
     input#tester
     {
-        font-family: Courier , Courier New;
         outline: none;
-        border: 1px solid #999;
-        transition: all .5s;
+        border: 1px solid #428BCA;
+        padding: 1em;
+
+        color: #FFF;
+        font-weight: bolder;
+        font-family: Courier , Courier New;
+        background: #428BCA;
+        transition: all .6s;
     }
     input#tester.error
     {
-        border: 1px solid red;
-        box-shadow: 0 0 3px red;
+        border: 1px solid #D9534F;
+
+        background-color: #D9534F;
+    }
+    section.patterns
+    {
+        opacity: 0;
+        background-color: #8BC53F;
+    }
+    section.info
+    {
+        opacity: 0;
+        background-color: #D9534F;
     }
     #message-box
     {
         font-family: Courier , Courier New;
     }
+
+
+    @-webkit-keyframes shake {
+      0%, 100% {
+        -webkit-transform: translateX(0);
+        transform: translateX(0);
+      }
+
+      10%, 30%, 50%, 70%, 90% {
+        -webkit-transform: translateX(-10px);
+        transform: translateX(-10px);
+      }
+
+      20%, 40%, 60%, 80% {
+        -webkit-transform: translateX(10px);
+        transform: translateX(10px);
+      }
+    }
+
+    @keyframes shake {
+      0%, 100% {
+        -webkit-transform: translateX(0);
+        -ms-transform: translateX(0);
+        transform: translateX(0);
+      }
+
+      10%, 30%, 50%, 70%, 90% {
+        -webkit-transform: translateX(-10px);
+        -ms-transform: translateX(-10px);
+        transform: translateX(-10px);
+      }
+
+      20%, 40%, 60%, 80% {
+        -webkit-transform: translateX(10px);
+        -ms-transform: translateX(10px);
+        transform: translateX(10px);
+      }
+    }
+
+    .shake {
+      -webkit-animation-name: shake;
+      animation-name: shake;
+    }
+
+    .animated {
+      -webkit-animation-duration: .6s;
+      animation-duration: .6s;
+      -webkit-animation-fill-mode: both;
+      animation-fill-mode: both;
+    }
+
+    .animated.hinge {
+      -webkit-animation-duration: 2s;
+      animation-duration: 2s;
+    }
+
     </style>
 </head>
 <body>
     <script type="text/javascript" src="./res/require.js"></script>
-    <input id="tester" type="">
-    <pre id="message-box" class="message"></pre>
+    <h1>CHUANR</h1>
+    <section>
+        <div class='wizard'>
+            Type in below red &lt;INPUT /&gt; box, Chuanr will masking and formatting against <span id="btn-patterns" class='highlight patterns'>patterns</span> . 
+        </div>
+    </section>
+    <section>
+        <input id="tester" type="">
+    </section>
+    <section class='info'>
+        <div class="inner">
+            <pre id="message-box" class="message"></pre>
+        </div>
+    </section>
+    <section id="patterns-detail" class='patterns'>
+        <div class="inner"></div>
+    </section>
     <script type="text/javascript">
         window.onload = function () {
             var isDebug = location.hash.indexOf('debug') > 0;
@@ -44,6 +177,8 @@
                 var schHandle;
                 var elInput = document.getElementById('tester');
                 var elMessageBox = document.getElementById('message-box');
+                var elBtnPatterns = document.getElementById('btn-patterns')
+                var elPatterns = document.getElementById('patterns-detail')
                 var chuanr = new Chuanr();
                 chuanr.roast(elInput, [
                     "({11}) {99ddd}-{dddd}",
@@ -74,15 +209,23 @@
                     var output = genericFormatter.output();
                     var msg = '"' + output.result + '" is not an valid telephone number!';
                     console.error('Prevented!! ' + msg);
-                    elMessageBox.innerText = msg;
+                    elMessageBox.innerHTML = msg;
+                    elMessageBox.parentNode.parentNode.style.opacity = '1';
 
-                    elInput.className = 'error';
+                    elInput.className = 'error shake animated';
                     scheduleErrorClear();
                 });
                 chuanr.on('resumed', function(){
                     elInput.className = '';
                     elMessageBox.innerText = '';
+                    elMessageBox.parentNode.parentNode.style.opacity = '0';
                 });
+
+                elBtnPatterns.onclick = function() {
+                    elPatterns.style.opacity = '1';
+                    elPatterns.children[0].innerText = chuanr.patterns.toString().replace(/,/g, ',\n');
+                };
+
 
                 isDebug && require(['./src/util', './src/shim/oninput', './src/shim/console'], 
                     function( util, InputObserver, console ){
@@ -121,6 +264,6 @@
             });
         };
     </script>
-
+    <a href="https://github.com/normanzb/chuanr"><img style="position: absolute; top: 0; right: 30px; border: 0;" src="https://github.com/jamesflorentino/fork-ribbons/raw/master/ribbons/orange-black.png" alt="Fork me on GitHub"></a>
 </body>
 </html>
