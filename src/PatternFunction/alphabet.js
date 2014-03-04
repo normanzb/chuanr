@@ -5,14 +5,15 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
 define( function () {
 
     var EX_NOT_CORRECT_PARAM = "Not a correct parameter format";
-    var EX_NOT_CORRECT_RANGE = "Expect the range to be 0-9";
+    var EX_NOT_CORRECT_RANGE = "Expect the range to be a-zA-Z";
 
-    var regexNumeric = /[0-9]/;
-    var regexAcceptableParam = /[^0-9\-]/;
+    var AZAZ = "a-zA-Z";
+    var regexAlphbet = new RegExp("[" + AZAZ + "]");
+    var regexAcceptableParam = new RegExp("[^" + AZAZ + "\-]");
 
     function noPrev (context){
         if ( context == null || context.prev == null || 
-            regexNumeric.test(context.prev) != true ) {
+            regexAlphbet.test(context.prev) != true ) {
             return true;
         }
 
@@ -43,12 +44,12 @@ define( function () {
                     throw new Error( EX_NOT_CORRECT_RANGE );
                 }
 
-                return input == ( context.prev * 1 + ( param >> 0 ) );
+                return input.charCodeAt(0) == ( context.prev * 1 + ( param >> 0 ) ).charCodeAt(0);
             }
         }
 
         if ( param == null || (param == 0 && param !== '0') ) {
-            param = "0-9";
+            param = AZAZ;
         }
 
         if ( regexAcceptableParam.test( param ) ) {

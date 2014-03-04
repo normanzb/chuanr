@@ -3,7 +3,13 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
     var define = require('amdefine')(module);
 }
 
-define(['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone', './PatternIndexQuery', './PatternConstant'], function ( pfDigit, boeClone, PatternIndexQuery, PatternConstant ) {
+define([
+    './PatternFunction/digit', 
+    './PatternFunction/alphabet', 
+    '../lib/boe/src/boe/Object/clone', 
+    './PatternIndexQuery', 
+    './PatternConstant'
+], function ( pfDigit, pfAlphabet, boeClone, PatternIndexQuery, PatternConstant ) {
 
     var PLACE_HOLDER_FUNCTION_START = "{";
     var PLACE_HOLDER_FUNCTION_END = "}";
@@ -170,7 +176,7 @@ define(['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone', './Pattern
      * Return an object to decribe if string is matched or how many characters are matched
      */
     p.apply = function ( string, isFullyMatch ) {
-        var i, len, input, items, matches = [], item, func, 
+        var i, len, input, items, matches = [], item, func, context,
             result = '', 
             matched = true,
             matchedCount = 0;
@@ -212,10 +218,20 @@ define(['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone', './Pattern
                     throw new Error( getRuntimeError( 'Function "' + item.value + '"" was not available.', i ) );
                 }
 
-                if ( func.call( null, char, item.param ) === false ) {
-                    matched = false;
-                    break;
+                context = {
+                    prev: input.charAt( i - 1 )
+                };
+
+                try {
+                    if ( func.call( null, char, item.param, context) === false ) {
+                        matched = false;
+                        break;
+                    }
                 }
+                catch(ex){
+                    throw new Error( getRuntimeError( ex.message, i ) );
+                }
+                
 
                 matchedCount++;
 
@@ -306,7 +322,8 @@ define(['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone', './Pattern
      * Map of built-in pattern functions
      */
     Ctor.functions = {
-        'd': pfDigit
+        'd': pfDigit,
+        'a': pfAlphabet,
     };
 
     for ( var i = 10; i--; ) {

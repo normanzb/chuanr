@@ -120,14 +120,18 @@ Pattern function is useful for simplify the long pattern list by adding a bit fl
 * d: match for any digit
 * d(0123): match any digit within the parentheses.
 * d(0-6): match any digit within the range which starts from 0 and ends with 6.
-* d(.): match any digit that is same as previous one
-* d(+): match digit which equal to previous digit + 1, if previous digit is 9 then this pattern will never match.
-* d(+1): same as above
-* d(+n): match digit which is equal to previous digit + n.
-* d(-): match digit which is equal to previous digit - 1
+* d(=): match any digit that is same as previous one, if there is no previou digit, consider unmatched.
+* d(+): match digit which equal to previous digit + 1, if previous digit is 9 then this pattern will never match, if there is no previou digit, consider unmatched.
+* d(+n): match digit which is equal to previous digit + n. if previous digit + n > 9 then this pattern will never match, if there is no previou digit, consider unmatched.
+* d(-): match digit which is equal to previous digit - 1, if previous digit is 0 then this pattern will never matchif there is no previou digit, consider unmatched.
+* d(-1): same as above
+* d(-n): the counterpart case of d(+n), you can figure it out.
 * D: match any non-digit
-* w: match any letter ( a-zA-Z )
-* w(abcd): match any digit within the parentheses
+* a: match alphabet
+* a(abcd): match alphabet witin the parentheses
+* A: match non alphabet
+* w: match alphanumeric characters plus underscore (A-Za-z0-9_)
+* w(abcd0-9): match any alphabet or number within the parentheses
 * W: match any non letter
 * s: match any whitespace ( "\t" or " " )
 * S: match any non-whitespace
