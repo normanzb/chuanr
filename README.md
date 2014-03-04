@@ -20,7 +20,7 @@ There are 3 ways to reference Chuanr:
 
 ##Use it as a global object
 
-If you are not in a AMD loader environment, Chuanr will set itself a window.Chuanr, so you can access it by:
+If you are not in a AMD loader environment, Chuanr will set itself as window.Chuanr, so you can access it by:
 
     new window.Chuanr();
 
@@ -33,7 +33,7 @@ If you are in an AMD enabled environment, Chuanr will call the define() method s
         // ...
     } )
 
-Using Chuanr as pre-packed AMD module makes sure the internal module of Chuanr, doesn't pollute your AMD configuration, however to achieve that, Chuanr embedded a piece of [Almond](https://github.com/jrburke/almon) which larger the file size and you may not want it. So for some of you who want to make custom build or to get rid off Almond, you can clone this repo and do below: 
+Using Chuanr as pre-packed AMD module makes sure Chuanr is self-contained and contamination-free, no pollution your AMD configuration. However to achieve that, Chuanr embedded a piece of [Almond](https://github.com/jrburke/almon) which increased the overall file size and you may not want it. So for some of you who build your own projects or want to get rid off Almond, you can clone this repo and do below: 
 
 ##Use it as unpacked AMD module
 
@@ -42,9 +42,9 @@ Using Chuanr as pre-packed AMD module makes sure the internal module of Chuanr, 
         // ...
     } )
 
-##Hook it up with your Element
+##Hook it up with <INPUT />
 
-Once you gained the reference to Chuanr constructor, by doing below you can instantiate it and hook it to the input element and start the magic:
+Once you gained the access to Chuanr constructor, by doing below you can instantiate it and hook it to the input element and start the magic:
 
     var elInput = document.getElementById('tester');
     var options = {
@@ -86,11 +86,8 @@ Once you gained the reference to Chuanr constructor, by doing below you can inst
 
 ###Custom Pattern Function
 
-
     Chuanr.setting.Pattern.functions['n']=function(){}
 
-    
-    
 - where `n` must be one single char
 
 
