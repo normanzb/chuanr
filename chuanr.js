@@ -741,10 +741,119 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
 }
 
 define( 'PatternFunction/digit',[],function () {
-    var ret = function(input, param){
+
+    var EX_NOT_CORRECT_PARAM = "Not a correct parameter format";
+    var EX_NOT_CORRECT_RANGE = "Expect the range to be 0-9";
+
+    var regexNumeric = /[0-9]/;
+    var regexAcceptableParam = /[^0-9\-]/;
+
+    function noPrev (context){
+        if ( context == null || context.prev == null || 
+            regexNumeric.test(context.prev) != true ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    var ret = function(input, param, context){
+
+        if ( param == '=' ) {
+            if ( noPrev(context) ) {
+                return false;
+            }
+            else {
+                return input == context.prev;
+            }
+        }
+
+        if ( param.charAt(0) == '+' || param.charAt(0) == '-' ) {
+            if ( noPrev(context) ) {
+                return false;
+            }
+            else {
+                if ( param.length == 1 ) {
+                    param += '1';
+                }
+
+                if ( Math.abs(param >> 0) >= 10 ) {
+                    throw new Error( EX_NOT_CORRECT_RANGE );
+                }
+
+                return input == ( context.prev * 1 + ( param >> 0 ) );
+            }
+        }
 
         if ( param == null || (param == 0 && param !== '0') ) {
             param = "0-9";
+        }
+
+        if ( regexAcceptableParam.test( param ) ) {
+            throw new Error( EX_NOT_CORRECT_PARAM );
+        }
+        
+        return new RegExp("^[" + param + "]$").test( input );
+    };
+
+    return ret;
+});
+if (typeof define !== 'function' && typeof module != 'undefined') {
+    var define = require('amdefine')(module);
+}
+
+define( 'PatternFunction/alphabet',[],function () {
+
+    var EX_NOT_CORRECT_PARAM = "Not a correct parameter format";
+    var EX_NOT_CORRECT_RANGE = "Expect the range to be a-zA-Z";
+
+    var AZAZ = "a-zA-Z";
+    var regexAlphbet = new RegExp("[" + AZAZ + "]");
+    var regexAcceptableParam = new RegExp("[^" + AZAZ + "\-]");
+
+    function noPrev (context){
+        if ( context == null || context.prev == null || 
+            regexAlphbet.test(context.prev) != true ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    var ret = function(input, param, context){
+
+        if ( param == '=' ) {
+            if ( noPrev(context) ) {
+                return false;
+            }
+            else {
+                return input == context.prev;
+            }
+        }
+
+        if ( param.charAt(0) == '+' || param.charAt(0) == '-' ) {
+            if ( noPrev(context) ) {
+                return false;
+            }
+            else {
+                if ( param.length == 1 ) {
+                    param += '1';
+                }
+
+                if ( Math.abs(param >> 0) >= 10 ) {
+                    throw new Error( EX_NOT_CORRECT_RANGE );
+                }
+
+                return input.charCodeAt(0) == ( context.prev * 1 + ( param >> 0 ) ).charCodeAt(0);
+            }
+        }
+
+        if ( param == null || (param == 0 && param !== '0') ) {
+            param = AZAZ;
+        }
+
+        if ( regexAcceptableParam.test( param ) ) {
+            throw new Error( EX_NOT_CORRECT_PARAM );
         }
         
         return new RegExp("^[" + param + "]$").test( input );
@@ -989,7 +1098,13 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
     var define = require('amdefine')(module);
 }
 
-define('Pattern',['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone', './PatternIndexQuery', './PatternConstant'], function ( pfDigit, boeClone, PatternIndexQuery, PatternConstant ) {
+define('Pattern',[
+    './PatternFunction/digit', 
+    './PatternFunction/alphabet', 
+    '../lib/boe/src/boe/Object/clone', 
+    './PatternIndexQuery', 
+    './PatternConstant'
+], function ( pfDigit, pfAlphabet, boeClone, PatternIndexQuery, PatternConstant ) {
 
     var PLACE_HOLDER_FUNCTION_START = "{";
     var PLACE_HOLDER_FUNCTION_END = "}";
@@ -1156,7 +1271,7 @@ define('Pattern',['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone', 
      * Return an object to decribe if string is matched or how many characters are matched
      */
     p.apply = function ( string, isFullyMatch ) {
-        var i, len, input, items, matches = [], item, func, 
+        var i, len, input, items, matches = [], item, func, context,
             result = '', 
             matched = true,
             matchedCount = 0;
@@ -1198,10 +1313,20 @@ define('Pattern',['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone', 
                     throw new Error( getRuntimeError( 'Function "' + item.value + '"" was not available.', i ) );
                 }
 
-                if ( func.call( null, char, item.param ) === false ) {
-                    matched = false;
-                    break;
+                context = {
+                    prev: input.charAt( i - 1 )
+                };
+
+                try {
+                    if ( func.call( null, char, item.param, context) === false ) {
+                        matched = false;
+                        break;
+                    }
                 }
+                catch(ex){
+                    throw new Error( getRuntimeError( ex.message, i ) );
+                }
+                
 
                 matchedCount++;
 
@@ -1292,7 +1417,8 @@ define('Pattern',['./PatternFunction/digit', '../lib/boe/src/boe/Object/clone', 
      * Map of built-in pattern functions
      */
     Ctor.functions = {
-        'd': pfDigit
+        'd': pfDigit,
+        'a': pfAlphabet,
     };
 
     for ( var i = 10; i--; ) {
