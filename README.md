@@ -115,6 +115,26 @@ Once you gained the reference to Chuanr constructor, by doing below you can inst
 * Shorthand - Any consecutive set of Pattern Functions can be written within same {}, for example, "{d}{d(5)}" can be written as "{dd(5)}".
 * Batch Input - Means inputting several characters at once, for example, pasting, droping, undo...
 
+##Pattern Function
+
+Pattern function is useful for simplify the long pattern list by adding a bit flavor of regex:
+(Some of below patterns are still WIP)
+
+* d: match for any digit
+* d(0123): match any digit within the parentheses.
+* d(0-6): match any digit within the range which starts from 0 and ends with 6.
+* d(.): match any digit that is same as previous one
+* d(+): match digit which equal to previous digit + 1, if previous digit is 9 then this pattern will never match.
+* d(+1): same as above
+* d(+n): match digit which is equal to previous digit + n.
+* d(-): match digit which is equal to previous digit - 1
+* D: match any non-digit
+* w: match any letter ( a-zA-Z )
+* w(abcd): match any digit within the parentheses
+* W: match any non letter
+* s: match any whitespace ( "\t" or " " )
+* S: match any non-whitespace
+
 #Feeling Geeky
 
 ##Build
