@@ -42,7 +42,7 @@ Using Chuanr as pre-packed AMD module makes sure Chuanr is self-contained and co
         // ...
     } )
 
-##Hook it up with <INPUT />
+##Hook it up with `<INPUT />`
 
 Once you gained the access to Chuanr constructor, by doing below you can instantiate it and hook it to the input element and start the magic:
 
@@ -77,7 +77,7 @@ Once you gained the access to Chuanr constructor, by doing below you can instant
 
 ##Methods
 
-* roast( el, patterns ) - Link Chuanr with specified input element, format it against patternss
+* roast( el, patterns ) - Link Chuanr with specified input element, format it against patterns
 
 ##Events
 
