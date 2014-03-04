@@ -249,6 +249,55 @@ describe('Pattern', function(){
             }
         }
     });
+
+    it('can verify against any selected digit set', function(){
+        var msg = '';
+        var p;
+        var correctResult = {
+            1: true,
+            2: true,
+            3: true,
+            7: true,
+            8: true,
+            9: true
+        };
+
+        p = Pattern.parse("{d(123789)}");
+
+        for( var i = 0; i < 10; i++ ) {
+            var result = p.apply(i);
+            assert.deepEqual( result,  { 
+                result: correctResult[i]?i+'':' ',
+                matched: correctResult[i]?true:false,
+                counts: { total: 1, matched: correctResult[i]?1:0 },
+                toString: result.toString
+            } );
+        }
+
+    });
+
+    it('can verify against any selected digit range', function(){
+        var msg = '';
+        var p;
+        var correctResult = {
+            1: true,
+            2: true,
+            3: true
+        };
+
+        p = Pattern.parse("{d(1-3)}");
+
+        for( var i = 0; i < 10; i++ ) {
+            var result = p.apply(i);
+            assert.deepEqual( result,  { 
+                result: correctResult[i]?i+'':' ',
+                matched: correctResult[i]?true:false,
+                counts: { total: 1, matched: correctResult[i]?1:0 },
+                toString: result.toString
+            } );
+        }
+
+    });
 });
     
 }(requirejs, require);
