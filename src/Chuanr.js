@@ -177,11 +177,11 @@ define(['./Formatter',
             console.log ( 'Input Type: Single: ', String.fromCharCode( this._charCode ) );
 
             render.call( this, {
-                key: this._keyCode,
-                char: this._charCode,
-                del: util.isDelKey( this._keyCode ),
-                back: util.isBackSpaceKey( this._keyCode ),
-                caret: this._caret
+                'key': this._keyCode,
+                'char': this._charCode,
+                'del': util.isDelKey( this._keyCode ),
+                'back': util.isBackSpaceKey( this._keyCode ),
+                'caret': this._caret
             } );
             
         }

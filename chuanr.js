@@ -663,11 +663,11 @@ define('Formatter',['./shim/console'], function (console) {
 
         if ( typeof input == 'string' ) {
             input = {
-                key: 0,
-                char: input.charCodeAt(0),
-                del: false,
-                back: false,
-                caret: { begin: cache.length, end: cache.length }
+                'key': 0,
+                'char': input.charCodeAt(0),
+                'del': false,
+                'back': false,
+                'caret': { begin: cache.length, end: cache.length }
             };
         }
 
@@ -685,9 +685,9 @@ define('Formatter',['./shim/console'], function (console) {
             }   
         }
         
-        if ( input.char != null ) {
+        if ( input['char'] != null ) {
 
-            injection = String.fromCharCode( input.char );
+            injection = String.fromCharCode( input['char'] );
 
         }
 
@@ -1173,14 +1173,14 @@ define('Pattern',[
             if ( mode == MODE_CONSTANT && 
                 curChar == PLACE_HOLDER_FUNCTION_START ) {
 
-                stack.push( { char: curChar, mode: mode } );
+                stack.push( { 'char': curChar, mode: mode } );
 
                 mode = MODE_FUNCTION;
 
             }
             else if ( mode == MODE_FUNCTION && 
                 curChar == PLACE_HOLDER_FUNCTION_END && 
-                stack[ stack.length - 1 ].char == PLACE_HOLDER_FUNCTION_START ) {
+                stack[ stack.length - 1 ]['char'] == PLACE_HOLDER_FUNCTION_START ) {
                 
                 tmp = stack.pop();
 
@@ -1197,7 +1197,7 @@ define('Pattern',[
             }
             else if ( mode == MODE_PARAMETER && 
                 curChar == PLACE_HOLDER_CALL_END && 
-                stack[ stack.length - 1 ].char == PLACE_HOLDER_CALL_START ) {
+                stack[ stack.length - 1 ]['char'] == PLACE_HOLDER_CALL_START ) {
 
                 tmp = stack.pop();
 
@@ -1242,7 +1242,7 @@ define('Pattern',[
         }
 
         if ( stack.length > 0 ) {
-            throw new Error( getSyntaxError("Expect a '" + getOpposite( stack[ stack.length - 1 ].char ) + "'", i - 1) );
+            throw new Error( getSyntaxError("Expect a '" + getOpposite( stack[ stack.length - 1 ]['char'] ) + "'", i - 1) );
         }
 
     };
@@ -1273,6 +1273,7 @@ define('Pattern',[
     p.apply = function ( string, isFullyMatch ) {
         var i, len, input, items, matches = [], item, func, context,
             result = '', 
+            curChar,
             matched = true,
             matchedCount = 0;
 
@@ -1303,7 +1304,7 @@ define('Pattern',[
         for ( i = 0; i < len && i < matches.length ; i++ ) {
 
             item = matches[ i ];
-            char = input.charAt( i );
+            curChar = input.charAt( i );
 
             if ( item.type == MODE_FUNCTION ) {
 
@@ -1318,7 +1319,7 @@ define('Pattern',[
                 };
 
                 try {
-                    if ( func.call( null, char, item.param, context) === false ) {
+                    if ( func.call( null, curChar, item.param, context) === false ) {
                         matched = false;
                         break;
                     }
@@ -1330,7 +1331,7 @@ define('Pattern',[
 
                 matchedCount++;
 
-                item.value = char;
+                item.value = curChar;
                 item.type = MODE_CONSTANT;
 
             }
@@ -2228,11 +2229,11 @@ define('Chuanr',['./Formatter',
             console.log ( 'Input Type: Single: ', String.fromCharCode( this._charCode ) );
 
             render.call( this, {
-                key: this._keyCode,
-                char: this._charCode,
-                del: util.isDelKey( this._keyCode ),
-                back: util.isBackSpaceKey( this._keyCode ),
-                caret: this._caret
+                'key': this._keyCode,
+                'char': this._charCode,
+                'del': util.isDelKey( this._keyCode ),
+                'back': util.isBackSpaceKey( this._keyCode ),
+                'caret': this._caret
             } );
             
         }

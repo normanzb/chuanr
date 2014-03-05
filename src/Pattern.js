@@ -78,14 +78,14 @@ define([
             if ( mode == MODE_CONSTANT && 
                 curChar == PLACE_HOLDER_FUNCTION_START ) {
 
-                stack.push( { char: curChar, mode: mode } );
+                stack.push( { 'char': curChar, mode: mode } );
 
                 mode = MODE_FUNCTION;
 
             }
             else if ( mode == MODE_FUNCTION && 
                 curChar == PLACE_HOLDER_FUNCTION_END && 
-                stack[ stack.length - 1 ].char == PLACE_HOLDER_FUNCTION_START ) {
+                stack[ stack.length - 1 ]['char'] == PLACE_HOLDER_FUNCTION_START ) {
                 
                 tmp = stack.pop();
 
@@ -102,7 +102,7 @@ define([
             }
             else if ( mode == MODE_PARAMETER && 
                 curChar == PLACE_HOLDER_CALL_END && 
-                stack[ stack.length - 1 ].char == PLACE_HOLDER_CALL_START ) {
+                stack[ stack.length - 1 ]['char'] == PLACE_HOLDER_CALL_START ) {
 
                 tmp = stack.pop();
 
@@ -147,7 +147,7 @@ define([
         }
 
         if ( stack.length > 0 ) {
-            throw new Error( getSyntaxError("Expect a '" + getOpposite( stack[ stack.length - 1 ].char ) + "'", i - 1) );
+            throw new Error( getSyntaxError("Expect a '" + getOpposite( stack[ stack.length - 1 ]['char'] ) + "'", i - 1) );
         }
 
     };
@@ -178,6 +178,7 @@ define([
     p.apply = function ( string, isFullyMatch ) {
         var i, len, input, items, matches = [], item, func, context,
             result = '', 
+            curChar,
             matched = true,
             matchedCount = 0;
 
@@ -208,7 +209,7 @@ define([
         for ( i = 0; i < len && i < matches.length ; i++ ) {
 
             item = matches[ i ];
-            char = input.charAt( i );
+            curChar = input.charAt( i );
 
             if ( item.type == MODE_FUNCTION ) {
 
@@ -223,7 +224,7 @@ define([
                 };
 
                 try {
-                    if ( func.call( null, char, item.param, context) === false ) {
+                    if ( func.call( null, curChar, item.param, context) === false ) {
                         matched = false;
                         break;
                     }
@@ -235,7 +236,7 @@ define([
 
                 matchedCount++;
 
-                item.value = char;
+                item.value = curChar;
                 item.type = MODE_CONSTANT;
 
             }

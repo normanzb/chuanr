@@ -85,11 +85,11 @@ define(['./shim/console'], function (console) {
 
         if ( typeof input == 'string' ) {
             input = {
-                key: 0,
-                char: input.charCodeAt(0),
-                del: false,
-                back: false,
-                caret: { begin: cache.length, end: cache.length }
+                'key': 0,
+                'char': input.charCodeAt(0),
+                'del': false,
+                'back': false,
+                'caret': { begin: cache.length, end: cache.length }
             };
         }
 
@@ -107,9 +107,9 @@ define(['./shim/console'], function (console) {
             }   
         }
         
-        if ( input.char != null ) {
+        if ( input['char'] != null ) {
 
-            injection = String.fromCharCode( input.char );
+            injection = String.fromCharCode( input['char'] );
 
         }
 
