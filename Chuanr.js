@@ -2092,15 +2092,13 @@ define('Chuanr',['./Formatter',
         var original;
 
         try{
-            console.log( "Do Extraction of ", value );
-            original = trim.call( this.formatter.extract( value ) + '' );
-            console.log( "Exracted", original );
+            original = trim.call( this.formatter.extract( value ) + '' );    
         }
         catch(ex){
             original = null;
         }
 
-        if ( caret && original != null ){
+        if ( caret ){
 
             console.log( 'Caret before update: ', caret );
 
@@ -2133,14 +2131,14 @@ define('Chuanr',['./Formatter',
         return original;
     }
 
-    function speculateBatchInput( format, caret ){
+    function speculateBatchInput( format ){
 
         var speculated, finalExtraction;
 
         console.log("Try to be smart, figure out what the user actually want to input");
         console.log("Step 1. Try Extract");
 
-        speculated = tryExtractAndResetCaret.call( this, this._el.value, caret );
+        speculated = tryExtractAndResetCaret.call( this, this._el.value, null );
 
         if ( speculated == null ) {
 
@@ -2176,14 +2174,13 @@ define('Chuanr',['./Formatter',
         if ( this._requireHandleKeyUp == true ) {
             // mean user keeps key down 
             // this is not allowed because it causes oninput never happen
-            console.log('Continuous Key Down Prevented')
             util.preventDefault(evt);
             return;
         }
 
         if ( util.isAcceptableKeyCode( evt.keyCode ) == false || util.isModifier( evt ) ) {
             if ( util.isMovementKeyCode( evt.keyCode ) == false && util.isModifier( evt ) == false ) {
-                console.log('Key Down Prevented')
+                console.log('Key Down prevented')
                 util.preventDefault(evt);
             }
             
@@ -2198,7 +2195,9 @@ define('Chuanr',['./Formatter',
         this._caret = caretUtil.get( this._el );
         this._charCode = null;
 
-        if ( this._isFormatted && this._el.value !== "" ) {
+        if ( this._isFormatted && 
+            // in case user clear the input by X button or js function (which do not trigger oninput)
+            this._el.value !== "" ) {
             this._el.value = tryExtractAndResetCaret.call( this, this._el.value, this._caret );
         }
 
@@ -2284,8 +2283,6 @@ define('Chuanr',['./Formatter',
             // that means the change is done by pasting, dragging ...etc
             format = this.formatter.reset( this._el.value );
             caret = caretUtil.get( this._el );
-            // the caret we've got so far could be with format or without
-            // will will handle it later
         }
 
         // get a matched format by trying different type of input
@@ -2296,8 +2293,6 @@ define('Chuanr',['./Formatter',
         }
 
         // check if we need to move caret
-        // handle only normal single input because we will handle batch 
-        // input altogether later
         if ( input ) {
             if ( format.result.matched == false ) {
                 caretMove = false;
@@ -2311,6 +2306,14 @@ define('Chuanr',['./Formatter',
                     caret.end -= 1
                 }
                 
+            }
+        }
+        else {
+            // check if current value is shorter than previous value in batch mode
+            if ( this._untouched && 
+                this._untouched.result.toString().length > this._el.value.length ) {
+                // a delete operation? don't move caret
+                caretMove = false;
             }
         }
 
@@ -2353,19 +2356,12 @@ define('Chuanr',['./Formatter',
         // update the caret
         console.log('Caret before format: ', caret );
 
-        if ( input ) {
-            caret.begin = this.formatter
-                .index()
-                    .of('pattern')
-                    .by({ 'function': { index: caret.begin + ( caretMove ? 1 : 0 ) } });
-
-            if ( caret.begin < 0 ) {
-                caret.begin = this._el.value.length;
-            }    
-        }
-        else {
-            // for batch input, we always set the caret to the end of inputted char
-            tryExtractAndResetCaret( format.result + '', caret );
+        caret.begin = this.formatter
+            .index()
+                .of('pattern')
+                .by({ 'function': { index: caret.begin + ( caretMove ? 1 : 0 ) } });
+        if ( caret.begin < 0 ) {
+            caret.begin = this._el.value.length;
         }
 
         console.log('Caret after format: ', caret);
@@ -2405,7 +2401,7 @@ define('Chuanr',['./Formatter',
         this._keyCode = null;
         this._charCode = null;
         this._caret = null;
-        this._untouched = '';
+        this._untouched = null;
         this._isFormatted = false;
 
         this.onPrevented = event();
@@ -2446,6 +2442,19 @@ define('Chuanr',['./Formatter',
             onInput.call(this);
         }
 
+    };
+
+    /**
+     * Return true if user input at least fulfill one of the pattern
+     */
+    p.intact = function(){
+        if ( this._untouched == null || this._untouched == "" ) {
+            return false;
+        }
+
+        var result = this._untouched.pattern.apply( this._untouched.input , true );
+
+        return result.matched;
     };
 
     // expose ioc setting
