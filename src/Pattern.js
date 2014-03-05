@@ -95,7 +95,7 @@ define([
             else if ( mode == MODE_FUNCTION && 
                 curChar == PLACE_HOLDER_CALL_START ) {
 
-                stack.push( { char: curChar, mode: mode } )
+                stack.push( { 'char': curChar, mode: mode } )
 
                 mode = MODE_PARAMETER;
 
