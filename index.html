@@ -173,7 +173,7 @@
     <script type="text/javascript">
         window.onload = function () {
             var isDebug = location.hash.indexOf('debug') > 0;
-            require([ (isDebug ? './src/Chuanr': './chuanr.min')], function( Chuanr ){
+            require([ (isDebug ? './src/Chuanr': './Chuanr.min')], function( Chuanr ){
 
                 function scheduleErrorClear(){
                     if ( schHandle ) {
