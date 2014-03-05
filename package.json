@@ -1,7 +1,7 @@
 {
   "name": "chuanr",
   "version": "0.0.10",
-  "main": "chuanr.min.js",
+  "main": "Chuanr.min.js",
   "description": "串儿(chuanr), reformatting the <input /> according to declared patterns",
   "repository": {
     "type": "git",
