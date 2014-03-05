@@ -50,7 +50,12 @@
         background-color: #8BC53F;
         cursor: pointer;
     }
-    input#tester
+    button
+    {
+        cursor: pointer;
+    }
+    input#tester, 
+    button
     {
         outline: none;
         border: 1px solid #428BCA;
@@ -62,7 +67,13 @@
         background: #428BCA;
         transition: all .6s;
     }
-    input#tester.error
+    input#tester + button.validate
+    {
+        background-color: #8BC53F;
+        border-color: #8BC53F;
+    }
+    input#tester.error,
+    button.error
     {
         border: 1px solid #D9534F;
 
@@ -149,7 +160,7 @@
         </div>
     </section>
     <section>
-        <input id="tester" type="">
+        <input id="tester" type=""> <button id="btn-check">Check</button>
     </section>
     <section class='info'>
         <div class="inner">
@@ -177,8 +188,9 @@
                 var schHandle;
                 var elInput = document.getElementById('tester');
                 var elMessageBox = document.getElementById('message-box');
-                var elBtnPatterns = document.getElementById('btn-patterns')
-                var elPatterns = document.getElementById('patterns-detail')
+                var elBtnPatterns = document.getElementById('btn-patterns');
+                var elBtnCheck = document.getElementById('btn-check');
+                var elPatterns = document.getElementById('patterns-detail');
                 var chuanr = new Chuanr();
                 chuanr.roast(elInput, [
                     "({11}) {99ddd}-{dddd}",
@@ -224,6 +236,14 @@
                 elBtnPatterns.onclick = function() {
                     elPatterns.style.opacity = '1';
                     elPatterns.children[0].innerText = chuanr.patterns.toString().replace(/,/g, ',\n');
+                };
+                elBtnCheck.onclick = function () {
+                    if ( chuanr.intact() ) {
+                        elBtnCheck.className = 'validate';
+                    }
+                    else {
+                        elBtnCheck.className = 'error';   
+                    }
                 };
 
 

@@ -349,7 +349,7 @@ define(['./Formatter',
         this._keyCode = null;
         this._charCode = null;
         this._caret = null;
-        this._untouched = '';
+        this._untouched = null;
         this._isFormatted = false;
 
         this.onPrevented = event();
@@ -390,6 +390,19 @@ define(['./Formatter',
             onInput.call(this);
         }
 
+    };
+
+    /**
+     * Return true if user input at least fulfill one of the pattern
+     */
+    p.intact = function(){
+        if ( this._untouched == null || this._untouched == "" ) {
+            return false;
+        }
+
+        var result = this._untouched.pattern.apply( this._untouched.input , true );
+
+        return result.matched;
     };
 
     // expose ioc setting
