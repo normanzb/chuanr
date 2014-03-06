@@ -576,12 +576,96 @@ define('shim/console',['../../lib/boe/src/boe/util'], function (boeUtil) {
 
     return ret;
 });
+if (typeof define !== 'function' && typeof module != 'undefined') {
+    var define = require('amdefine')(module);
+}
+define('../lib/boe/src/boe/util',[],function(){
+    
+    
+    var global = (Function("return this"))();
+
+    var OBJECT_PROTO = global.Object.prototype;
+    var ARRAY_PROTO = global.Array.prototype;
+    var FUNCTION_PROTO = global.Function.prototype;
+    var FUNCTION = 'function';
+
+    var ret = {
+        mixinAsStatic: function(target, fn){
+            for(var key in fn){
+                if (!fn.hasOwnProperty(key)){
+                    continue;
+                }
+
+                target[key] = ret.bind.call(FUNCTION_PROTO.call, fn[key]);
+            }
+
+            return target;
+        },
+        type: function(obj){
+            var typ = OBJECT_PROTO.toString.call(obj);
+            var closingIndex = typ.indexOf(']');
+            return typ.substring(8, closingIndex);
+        },
+        mixin: function(target, source, map){
+
+            // in case only source specified
+            if (source == null){
+                source = target;
+                target= {};
+            }
+
+            for(var key in source){
+                if (!source.hasOwnProperty(key)){
+                    continue;
+                }
+
+                target[key] = ( typeof map == FUNCTION ? map( key, source[key] ) : source[key] );
+            }
+
+            return target;
+        },
+        bind: function(context) {
+            var slice = ARRAY_PROTO.slice;
+            var __method = this, args = slice.call(arguments);
+            args.shift();
+            return function wrapper() {
+                if (this instanceof wrapper){
+                    context = this;
+                }
+                return __method.apply(context, args.concat(slice.call(arguments)));
+            };
+        },
+        slice: function(arr) {
+            return ARRAY_PROTO.slice.call(arr);
+        },
+        g: global
+    };
+
+    return ret;
+});
+/*
+ * Trim specified chars at the start and the end of current string.
+ * @member String.prototype
+ * @return {String} trimed string
+ * @es5
+ */
+if (typeof define !== 'function' && typeof module != 'undefined') {
+    var define = require('amdefine')(module);
+}
+define('../lib/boe/src/boe/String/trim',['../util'], function (util) {
+    var STRING_PROTO = util.g.String.prototype;
+    return STRING_PROTO.trim || function() {
+        var trimChar = '\\s';
+        var re = new RegExp('(^' + trimChar + '*)|(' + trimChar + '*$)', 'g');
+        return this.replace(re, "");
+    };
+});
 
 if (typeof define !== 'function' && typeof module != 'undefined') {
     var define = require('amdefine')(module);
 }
 
-define('Formatter',['./shim/console'], function (console) {
+define('Formatter',['./shim/console', '../lib/boe/src/boe/String/trim'], function (console, trim) {
 
     var EX_NO_PATTERN = 'No pattern specified';
 
@@ -601,6 +685,7 @@ define('Formatter',['./shim/console'], function (console) {
         for( var i = 0; i < this.patterns.length; i++ ) {
             pattern = this.patterns[ i ];
             if ( resultObject = pattern.apply( cache ) ) {
+                console.log('  ', pattern + '', resultObject.counts);
                 if ( resultObject.matched ) {
                     bestMatchResultObject = resultObject;
                     bestMatchPattern = pattern;
@@ -716,7 +801,35 @@ define('Formatter',['./shim/console'], function (console) {
      * Remove the format and return the actual user data according to current pattern
      */
     p.extract = function( formatted ) {
-        return this._current.pattern.extract( formatted );
+        var ret = null,
+            extraction;
+
+        if ( this._current && this._current.pattern ) {
+            try{
+                ret = this._current.pattern.extract( formatted );
+                ret.pattern = this._current.pattern;
+            }
+            catch(ex){
+                console.log('Best bet extraction failed, will try the others...');
+            }
+        }
+
+        // try to find out best extraction
+        for( var l = this.patterns.length; l--; ) {
+            try{
+                extraction = this.patterns[l].extract( trim.call(formatted) );
+            }
+            catch(ex) {
+                continue;
+            }
+
+            if ( ret == null || extraction.length > ret.length ) {
+                ret = extraction;
+                ret.pattern = this.patterns[l];
+            }
+        }
+
+        return ret;
     };
 
     p.index = function ( ) {
@@ -864,73 +977,6 @@ define( 'PatternFunction/alphabet',[],function () {
 if (typeof define !== 'function' && typeof module != 'undefined') {
     var define = require('amdefine')(module);
 }
-define('../lib/boe/src/boe/util',[],function(){
-    
-    
-    var global = (Function("return this"))();
-
-    var OBJECT_PROTO = global.Object.prototype;
-    var ARRAY_PROTO = global.Array.prototype;
-    var FUNCTION_PROTO = global.Function.prototype;
-    var FUNCTION = 'function';
-
-    var ret = {
-        mixinAsStatic: function(target, fn){
-            for(var key in fn){
-                if (!fn.hasOwnProperty(key)){
-                    continue;
-                }
-
-                target[key] = ret.bind.call(FUNCTION_PROTO.call, fn[key]);
-            }
-
-            return target;
-        },
-        type: function(obj){
-            var typ = OBJECT_PROTO.toString.call(obj);
-            var closingIndex = typ.indexOf(']');
-            return typ.substring(8, closingIndex);
-        },
-        mixin: function(target, source, map){
-
-            // in case only source specified
-            if (source == null){
-                source = target;
-                target= {};
-            }
-
-            for(var key in source){
-                if (!source.hasOwnProperty(key)){
-                    continue;
-                }
-
-                target[key] = ( typeof map == FUNCTION ? map( key, source[key] ) : source[key] );
-            }
-
-            return target;
-        },
-        bind: function(context) {
-            var slice = ARRAY_PROTO.slice;
-            var __method = this, args = slice.call(arguments);
-            args.shift();
-            return function wrapper() {
-                if (this instanceof wrapper){
-                    context = this;
-                }
-                return __method.apply(context, args.concat(slice.call(arguments)));
-            };
-        },
-        slice: function(arr) {
-            return ARRAY_PROTO.slice.call(arr);
-        },
-        g: global
-    };
-
-    return ret;
-});
-if (typeof define !== 'function' && typeof module != 'undefined') {
-    var define = require('amdefine')(module);
-}
 define('../lib/boe/src/boe/Object/clone',['../util'], function(util){
 
     var FUNCTION = 'function';
@@ -1022,7 +1068,7 @@ define('PatternIndexQuery',['./PatternConstant'], function ( PatternConstant ) {
     function getIndex() {
         var query = this._query;
         var targetName = this._target;
-        var funcIndex, item, items = this._pattern.items;
+        var funcIndex, item, items = this._pattern.items, lastIndex;
 
         if ( query == null || targetName == null ) {
             return this;
@@ -1030,14 +1076,20 @@ define('PatternIndexQuery',['./PatternConstant'], function ( PatternConstant ) {
 
         if ( query['function'] && query['function'].index != null && targetName == "pattern" ) {
             funcIndex = -1
+
             for ( var i = 0 ; i < items.length; i++ ) {
                 item = items[i];
                 if ( item.type == MODE_FUNCTION ) {
                     funcIndex++;
+                    lastIndex = i;
                     if ( funcIndex ==  query['function'].index ) {
                         return i;
                     }
                 }
+            }
+
+            if ( query['function'].index == funcIndex + 1 ) {
+                return lastIndex + 1;
             }
 
             return -1;
@@ -1370,24 +1422,52 @@ define('Pattern',[
      * return the chars which matched the position of pattern function
      */
     p.extract = function ( str ) {
-        if ( str.length != this.items.length ) {
+        if ( str.length > this.items.length ) {
             throw EX_NOT_FORMATTED;
         }
 
-        var ret = [], item, items = this.items;
+        var ret = [], item, items = this.items, func, context, curChar;
 
-        for( var i = 0; i < items.length ; i++ ) {
-            var item = items[i];
+        for( var i = 0; i < str.length ; i++ ) {
+            item = items[i];
+            curChar = str.charAt(i);
 
             if ( item.type == MODE_FUNCTION ) {
+                func = Ctor.functions[item.value];
+
+                if ( func == null ) {
+                    throw EX_NOT_FORMATTED;
+                }
+
+                if ( curChar == ' ' ) {
+                    // skip it as it is a placeholder
+                    continue;
+                }
+
+                context = {
+                    prev: str.charAt(i - 1)
+                };
+
+                if ( func.call( null, curChar, item.param, context ) == false ) {
+                    throw EX_NOT_FORMATTED;
+                }
+
                 ret.push( { 
-                    result: str.charAt(i),
+                    result: curChar,
                     index: {
                         formatted: i,
                         original: ret.length
                     },
                     toString: resultToString
                 });
+            }
+            else if ( item.type == MODE_CONSTANT ) {
+                if ( curChar != item.value ) {
+                    throw EX_NOT_FORMATTED;
+                }
+            }
+            else {
+                throw EX_NOT_FORMATTED;
             }
         }
 
@@ -1561,7 +1641,12 @@ define('util',[],function(){
  * Cross browser implementation to get and set input selections
  * Modified based on inptSel.js in https://github.com/firstopinion/formatter.js
  */
-define('caret',['require'],function  (argument) {
+
+if (typeof define !== 'function' && typeof module != 'undefined') {
+    var define = require('amdefine')(module);
+}
+
+define('caret',[],function () {
 
     var inptSel = {};
 
@@ -1633,6 +1718,78 @@ define('caret',['require'],function  (argument) {
 
     return inptSel;
 });
+if (typeof define !== 'function' && typeof module != 'undefined') {
+    var define = require('amdefine')(module);
+}
+
+define('differ',[],function () {
+    var differ = {
+        diff: function(original, updated){
+            var curChar, i, left = -1, right = -2, ret, longerCaret, shorterCaret, 
+                longer, shorter, reverse = 0;
+
+            if ( original.length > updated.length ) {
+                longer = original;
+                shorter = updated;  
+            } 
+            else {
+                longer = updated;
+                shorter = original;
+                reverse = 1;
+            }
+
+            // compare form left to right
+            for( i = 0; i < longer.length; i++ ) {
+                curChar = longer.charAt(i);
+
+                if ( curChar != shorter.charAt(i) ) {
+                    left = i;
+                    break;
+                }
+            }
+
+            for( i = longer.length; i--; ) {
+                curChar = longer.charAt(i);
+
+                if ( i <= left || curChar != shorter.charAt( shorter.length - (longer.length - i) ) ) {
+                    right = i;
+                    break;
+                }
+            }
+
+            longerCaret = {
+                begin: left,
+                end: right + 1
+            };
+
+            shorterCaret = {
+                begin: left,
+                end: shorter.length - ( longer.length - right ) + 1 
+            };
+
+            ret = {
+                deletion: { 
+                    text: longer.substring( longerCaret.begin, longerCaret.end ),
+                    caret: longerCaret
+                },
+                insertion: {
+                    text: shorter.substring( shorterCaret.begin, shorterCaret.end ),
+                    caret: shorterCaret
+                }
+            };
+
+            if ( reverse ) {
+                var tmp = ret.deletion;
+                ret.deletion = ret.insertion;
+                ret.insertion = tmp;
+            }
+
+            return ret;
+        }
+    };
+
+    return differ;
+});
 /*
  * Function.bind
  */
@@ -1644,23 +1801,6 @@ define('../lib/boe/src/boe/Function/bind',['../util'], function (util) {
     var FUNCTION_PROTO = util.g.Function.prototype;
 
     return FUNCTION_PROTO.bind || util.bind;
-});
-/*
- * Trim specified chars at the start and the end of current string.
- * @member String.prototype
- * @return {String} trimed string
- * @es5
- */
-if (typeof define !== 'function' && typeof module != 'undefined') {
-    var define = require('amdefine')(module);
-}
-define('../lib/boe/src/boe/String/trim',['../util'], function (util) {
-    var STRING_PROTO = util.g.String.prototype;
-    return STRING_PROTO.trim || function() {
-        var trimChar = '\\s';
-        var re = new RegExp('(^' + trimChar + '*)|(' + trimChar + '*$)', 'g');
-        return this.replace(re, "");
-    };
 });
 define('../lib/cogs/src/cogs/noop',[],function(){
     return function(){};
@@ -2059,6 +2199,7 @@ define('Chuanr',['./Formatter',
     './Pattern', 
     './util', 
     './caret', 
+    './differ', 
     '../lib/boe/src/boe/Function/bind', 
     '../lib/boe/src/boe/String/trim', 
     '../lib/boe/src/boe/Object/clone', 
@@ -2068,7 +2209,7 @@ define('Chuanr',['./Formatter',
     './shim/oninput',
     './shim/console'], 
     function ( 
-        Formatter, Pattern, util, caretUtil, 
+        Formatter, Pattern, util, caretUtil, differUtil,
         bind, trim, clone, boeUtil, 
         emittable, event, 
         InputObserver, console ) {
@@ -2089,16 +2230,25 @@ define('Chuanr',['./Formatter',
     /* Private Methods */
     function tryExtractAndResetCaret( value, caret ) {
         // do a filtering before actual inputting
-        var original;
+        var original, extraction;
 
         try{
-            original = trim.call( this.formatter.extract( value ) + '' );    
+            console.log( "Do Extraction of '" + value + "'");
+            extraction = this.formatter.extract( value );
+            if ( extraction != null ) {
+                original = trim.call( extraction + '' );
+                console.log( "Exracted", original );
+            }
         }
         catch(ex){
             original = null;
         }
 
-        if ( caret ){
+        if ( original == null ) {
+            console.log( "Extraction failed " );
+        }
+
+        if ( caret && original != null ){
 
             console.log( 'Caret before update: ', caret );
 
@@ -2131,26 +2281,110 @@ define('Chuanr',['./Formatter',
         return original;
     }
 
-    function speculateBatchInput( format ){
+    function extraRawData( input, caret ){
+        var prev, ret, prevInput, begin, end, isConstantDeletion = false,
+            prefix, postfix;
+
+        console.log('Not raw data, need some sophisicated logic to figure out');
+
+        prev = this._untouched ? this._untouched.result + '' : '';
+
+        differ = differUtil.diff(
+            prev, 
+            input
+        );
+
+        console.log("Differ '" + prev + "':'" + input + "'", differ);
+
+        extraction = this.formatter.extract( prev );
+
+        if ( extraction == null ) {
+            return ret;
+        }
+
+        prevInput = extraction + '';
+
+        isSpaceDeletion = differ.insertion.caret.begin == differ.insertion.caret.end &&
+            (
+                extraction.pattern.items[caret.begin].type == 2 && 
+                differ.deletion.text == ' '
+            );
+
+        isConstantDeletion = differ.insertion.caret.begin == differ.insertion.caret.end &&
+            differ.deletion.text.length > 0 && 
+            (
+                extraction.pattern.items[caret.begin].type == 1
+            );
+
+        begin = extraction.pattern
+            .index()
+                .of('function')
+                .by({ pattern: { index: differ.deletion.caret.begin }});
+        end = extraction.pattern
+            .index()
+                .of('function')
+                .by({ pattern: { index: differ.deletion.caret.end }})
+
+        if ( isSpaceDeletion || isConstantDeletion ) {
+            // quite possibly user deleted constant
+            console.log("User deleted " + differ.deletion.text.length + "space/constant(s)");
+            begin = extraction.pattern
+                .index().of('function').by({ pattern: { index: caret.begin }}) - (isConstantDeletion?1:0);
+        }
+
+        prefix = prevInput.substring( 0, begin );
+        postfix = prevInput.substring( end, prevInput.length + 1);
+
+        // prefix.length - trim.call( prefix ).length 
+
+        input = prefix + differ.insertion.text + postfix;
+            
+        if ( caret != null ) {
+            if ( isSpaceDeletion || isConstantDeletion ) {
+                caret.begin = begin;
+                caret.end = caret.begin;
+                caret.type = 2;
+            }
+            else {
+                caret.begin = end + differ.insertion.text.length - differ.deletion.text.length;
+                caret.end = caret.begin;
+                caret.type = 2;
+            }
+        }
+
+        console.log( 'Raw Input' , input, caret );
+
+        ret = input;
+
+        return ret;
+    }
+
+    function speculateBatchInput( input, format, caret ){
 
         var speculated, finalExtraction;
 
         console.log("Try to be smart, figure out what the user actually want to input");
-        console.log("Step 1. Try Extract");
-
+        console.log("Speculation Step 1. Try Extract");
         speculated = tryExtractAndResetCaret.call( this, this._el.value, null );
 
         if ( speculated == null ) {
 
             console.log('Failed to extract.');
-            console.log("Step 2. Try filter out puncuation and spaces.");
+            console.log("Speculation Step 2. Try filter out puncuation and spaces.");
 
-            speculated = this._el.value.replace(/\W/g,'');
+            speculated = input.replace(/\W/g,'');
 
             if ( speculated != 0 ) {
-                speculated = trim.call( speculated );
-                this._el.value = speculated;
-                format = this.formatter.reset( this._el.value );
+                // caret type still unknown, a bit trick here
+                // according to https://github.com/normanzb/chuanr/issues/11
+                console.log("Speculation Step 2.5. Comparing to get differ");
+                differ = differUtil.diff(
+                    this._untouched ? trim.call( this._untouched.result + '' ) : '', 
+                    input
+                );
+                console.log("Differ", differ);
+
+                input = trim.call( speculated );
             }
 
             // give up
@@ -2158,29 +2392,30 @@ define('Chuanr',['./Formatter',
         }
         else {
 
-            console.log('Extracted, use extrcted string.')
-
-            speculated = trim.call( speculated );
-            this._el.value = speculated;
-            format = this.formatter.reset( this._el.value );
+            console.log('Extracted, use extracted string.')
+            input = trim.call( speculated );
+            // can be extracted without problem mean the original string is formatted
+            caret.type = 1;
 
         }
 
-        return format;
+        console.log('Speculation Done, Result "' + input + '"');
+        return input;
     }
 
     function onKeyDown( evt ) {
 
-        if ( this._requireHandleKeyUp == true ) {
+        if ( this._requireHandleKeyUp == true && this._keyCode == evt.keyCode) {
             // mean user keeps key down 
             // this is not allowed because it causes oninput never happen
+            console.log('Continuous Key Down Prevented')
             util.preventDefault(evt);
             return;
         }
 
         if ( util.isAcceptableKeyCode( evt.keyCode ) == false || util.isModifier( evt ) ) {
             if ( util.isMovementKeyCode( evt.keyCode ) == false && util.isModifier( evt ) == false ) {
-                console.log('Key Down prevented')
+                console.log('Key Down Prevented')
                 util.preventDefault(evt);
             }
             
@@ -2195,9 +2430,7 @@ define('Chuanr',['./Formatter',
         this._caret = caretUtil.get( this._el );
         this._charCode = null;
 
-        if ( this._isFormatted && 
-            // in case user clear the input by X button or js function (which do not trigger oninput)
-            this._el.value !== "" ) {
+        if ( this._isFormatted && this._el.value !== "" ) {
             this._el.value = tryExtractAndResetCaret.call( this, this._el.value, this._caret );
         }
 
@@ -2267,33 +2500,32 @@ define('Chuanr',['./Formatter',
 
         var caret = {
             begin: 0,
-            end: 0
+            end: 0,
+            // Caret type only in batch mode
+            // 0 == unknown, 
+            // 1 == formatted (pattern index), 
+            // 2 == extracted (function index)
+            type: 0
         };
         var caretMove = true;
         var format;
         var undid = false;
+        // 0 == Batch Input
+        // 1 == Single Input
+        var inputType = input ? 1 : 0;
+        
 
-        if ( input ) {
-            // normal input
+        if ( inputType ) {
+            // == Single Input == 
+
+            // 1. Initial Caret
             caret = input.caret;
+
+            // 2. Initial Format
             this.formatter.input( input );
             format = this.formatter.output();
-        }
-        else {
-            // that means the change is done by pasting, dragging ...etc
-            format = this.formatter.reset( this._el.value );
-            caret = caretUtil.get( this._el );
-        }
 
-        // get a matched format by trying different type of input
-        if ( this.config.speculation.batchinput == true && 
-            input == null && 
-            format.result.matched == false ) {
-            format = speculateBatchInput.call( this , format );
-        }
-
-        // check if we need to move caret
-        if ( input ) {
+            // 3. Advance Caret?
             if ( format.result.matched == false ) {
                 caretMove = false;
             }
@@ -2305,16 +2537,45 @@ define('Chuanr',['./Formatter',
                 if ( caret.end > 0 ) {
                     caret.end -= 1
                 }
-                
             }
+
         }
         else {
-            // check if current value is shorter than previous value in batch mode
-            if ( this._untouched && 
-                this._untouched.result.toString().length > this._el.value.length ) {
-                // a delete operation? don't move caret
-                caretMove = false;
+            // == Batch Input ==
+            input = this._el.value;
+
+            // 1. Initial Caret
+            // the caret at the point could be with format or without
+            // will will handle it later
+            caret = caretUtil.get( this._el );
+
+            // 2. Initial Format
+            // that means the change is done by pasting, dragging ...etc
+            format = this.formatter.reset( input );
+
+            // 2.5 Batch Input Tricks
+            if ( format.result.matched ) {
+                // match immediately means user inputs raw numbers
+                caret.type = 2;
             }
+            else {
+
+                input = extraRawData.call( this, input, caret );
+                format = this.formatter.reset( input );
+                
+                if ( 
+                    format.result.matched == false && 
+                    this.config.speculation.batchinput == true ) {
+                    // get a matched format by trying different type of input
+                    // also caret will be adjusted here
+                    input = speculateBatchInput.call( this, input, format, caret );
+                    format = this.formatter.reset( input );
+                }
+            }
+
+            // 3. Advance Caret?
+            caretMove = false;
+
         }
 
         // revert if match failed
@@ -2333,35 +2594,45 @@ define('Chuanr',['./Formatter',
             caret.begin = tryExtractAndResetCaret.call( this, format.result.toString(), null ).length;
             caret.end = caret.begin;
             caretMove = false;
+            caret.type = 2;
         }
 
         if ( format == null ) {
             throw 'Boom, "format" is null, this should never happen.';
         }
 
-        console.log('Move caret? ', caretMove);
-
-        if ( format.result.toString() == null ) {
-            console.warn('Revert, this should never happen?');
-            // revert to original value
-            format = this._untouched;
-        }
-        this._untouched = format;
-
         console.log( 'Final Format', format.result.toString() );
 
+        // record the final format
+        this._untouched = format;
         // update the element
         this._el.value = format.result;
 
-        // update the caret
+        // update the caret accordingly
         console.log('Caret before format: ', caret );
+        console.log('Move caret? ', caretMove);
 
-        caret.begin = this.formatter
-            .index()
-                .of('pattern')
-                .by({ 'function': { index: caret.begin + ( caretMove ? 1 : 0 ) } });
-        if ( caret.begin < 0 ) {
-            caret.begin = this._el.value.length;
+        if ( inputType ) {
+            caret.begin = this.formatter
+                .index()
+                    .of('pattern')
+                    .by({ 'function': { index: caret.begin + ( caretMove ? 1 : 0 ) } });
+
+            if ( caret.begin < 0 ) {
+                caret.begin = this._el.value.length;
+            }    
+        }
+        else {
+            if ( caret.type === 2 ) {
+                caret.begin = this.formatter
+                    .index()
+                        .of('pattern')
+                        .by({ 'function': { index: caret.begin } });
+
+            }
+            else if ( caret.type === 1 ) {
+                // do nothing?
+            }
         }
 
         console.log('Caret after format: ', caret);
