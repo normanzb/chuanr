@@ -279,12 +279,26 @@ define([
             throw EX_NOT_FORMATTED;
         }
 
-        var ret = [], item, items = this.items;
+        var ret = [], item, items = this.items, func, context;
 
         for( var i = 0; i < items.length ; i++ ) {
             var item = items[i];
 
             if ( item.type == MODE_FUNCTION ) {
+                func = Ctor.functions[item.value];
+
+                if ( func == null ) {
+                    break;
+                }
+
+                context = {
+                    prev: str.charAt(i - 1)
+                };
+
+                if ( func.call( null, str.charAt(i), item.param, context ) == false ) {
+                    break;
+                }
+
                 ret.push( { 
                     result: str.charAt(i),
                     index: {

@@ -3,7 +3,7 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
     var define = require('amdefine')(module);
 }
 
-define(['./shim/console'], function (console) {
+define(['./shim/console', '../lib/boe/src/boe/String/trim'], function (console, trim) {
 
     var EX_NO_PATTERN = 'No pattern specified';
 
@@ -23,6 +23,7 @@ define(['./shim/console'], function (console) {
         for( var i = 0; i < this.patterns.length; i++ ) {
             pattern = this.patterns[ i ];
             if ( resultObject = pattern.apply( cache ) ) {
+                console.log('  ', pattern + '', resultObject.counts);
                 if ( resultObject.matched ) {
                     bestMatchResultObject = resultObject;
                     bestMatchPattern = pattern;
@@ -138,7 +139,28 @@ define(['./shim/console'], function (console) {
      * Remove the format and return the actual user data according to current pattern
      */
     p.extract = function( formatted ) {
-        return this._current.pattern.extract( formatted );
+        var ret = '',
+            extraction;
+
+        if ( this._current && this._current.pattern ) {
+            ret = this._current.pattern.extract( formatted );    
+        }
+
+        // try to find out best extraction
+        for( var l = this.patterns.length; l--; ) {
+            try{
+                extraction = this.patterns[l].extract( trim.call(formatted) );
+            }
+            catch(ex) {
+                continue;
+            }
+
+            if ( extraction.length > ret.length ) {
+                ret = extraction
+            }
+        }
+
+        return ret;
     };
 
     p.index = function ( ) {
