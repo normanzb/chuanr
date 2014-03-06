@@ -73,7 +73,7 @@ Once you gained the access to Chuanr constructor, by doing below you can instant
 ##Options
 
 * speculation
-    * batchinput - true to enable automatical speculation on Batch Input, figure out what the user actually want to input by extracting real input from a formatted string or filtering out punctuations. For example, when this option is turned OFF (set to false), for pattern "({dd}) {ddd}", if the user input "(23) 456", we consider it as an incorrect input because it doesn't match the pattern (the pattern doesn't expect the parentheses and space). However if this option is turned ON, we consider it is a acceptable input because we will try to filter it or match with format.
+    * batchinput - (Default to) true to enable automatical speculation on Batch Input, figure out what the user actually want to input by extracting real input from a formatted string or filtering out punctuations. For example, when this option is turned OFF (set to false), for pattern "({dd}) {ddd}", if the user pastes "(23) 456", Chuanr considers it as an incorrect input because it doesn't match the pattern (the pattern doesn't expect the parentheses and space). However if this option is turned ON, we consider it is a acceptable input because we will try to filter it or match with format.
 
 ##Properties
 
