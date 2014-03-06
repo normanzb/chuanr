@@ -50,11 +50,20 @@ describe('PatternIndexQuery', function(){
         assert.equal( index, -1 );
     });
 
-    it('return -1 when function index exceeds the max number of function available', function(){
+    it('return last item index + 1 when function index exceeds the max number of function available', function(){
         var tester = 'abcd{1234}';
         var pattern = Pattern.parse( tester );
         
         var index = pattern.index().of('pattern').by( { function: { index: 4 } } );
+
+        assert.equal( index, 8 );
+    });
+
+    it('return -1 when function index exceeds the max number of function + 1', function(){
+        var tester = 'abcd{1234}';
+        var pattern = Pattern.parse( tester );
+        
+        var index = pattern.index().of('pattern').by( { function: { index: 5 } } );
 
         assert.equal( index, -1 );
     });

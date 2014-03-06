@@ -7,6 +7,7 @@ define(['./Formatter',
     './Pattern', 
     './util', 
     './caret', 
+    './differ', 
     '../lib/boe/src/boe/Function/bind', 
     '../lib/boe/src/boe/String/trim', 
     '../lib/boe/src/boe/Object/clone', 
@@ -16,7 +17,7 @@ define(['./Formatter',
     './shim/oninput',
     './shim/console'], 
     function ( 
-        Formatter, Pattern, util, caretUtil, 
+        Formatter, Pattern, util, caretUtil, differUtil,
         bind, trim, clone, boeUtil, 
         emittable, event, 
         InputObserver, console ) {
@@ -37,16 +38,25 @@ define(['./Formatter',
     /* Private Methods */
     function tryExtractAndResetCaret( value, caret ) {
         // do a filtering before actual inputting
-        var original;
+        var original, extraction;
 
         try{
-            original = trim.call( this.formatter.extract( value ) + '' );    
+            console.log( "Do Extraction of '" + value + "'");
+            extraction = this.formatter.extract( value );
+            if ( extraction != null ) {
+                original = trim.call( extraction + '' );
+                console.log( "Exracted", original );
+            }
         }
         catch(ex){
             original = null;
         }
 
-        if ( caret ){
+        if ( original == null ) {
+            console.log( "Extraction failed " );
+        }
+
+        if ( caret && original != null ){
 
             console.log( 'Caret before update: ', caret );
 
@@ -79,26 +89,110 @@ define(['./Formatter',
         return original;
     }
 
-    function speculateBatchInput( format ){
+    function extraRawData( input, caret ){
+        var prev, ret, prevInput, begin, end, isConstantDeletion = false,
+            prefix, postfix;
+
+        console.log('Not raw data, need some sophisicated logic to figure out');
+
+        prev = this._untouched ? this._untouched.result + '' : '';
+
+        differ = differUtil.diff(
+            prev, 
+            input
+        );
+
+        console.log("Differ '" + prev + "':'" + input + "'", differ);
+
+        extraction = this.formatter.extract( prev );
+
+        if ( extraction == null ) {
+            return ret;
+        }
+
+        prevInput = extraction + '';
+
+        isSpaceDeletion = differ.insertion.caret.begin == differ.insertion.caret.end &&
+            (
+                extraction.pattern.items[caret.begin].type == 2 && 
+                differ.deletion.text == ' '
+            );
+
+        isConstantDeletion = differ.insertion.caret.begin == differ.insertion.caret.end &&
+            differ.deletion.text.length > 0 && 
+            (
+                extraction.pattern.items[caret.begin].type == 1
+            );
+
+        begin = extraction.pattern
+            .index()
+                .of('function')
+                .by({ pattern: { index: differ.deletion.caret.begin }});
+        end = extraction.pattern
+            .index()
+                .of('function')
+                .by({ pattern: { index: differ.deletion.caret.end }})
+
+        if ( isSpaceDeletion || isConstantDeletion ) {
+            // quite possibly user deleted constant
+            console.log("User deleted " + differ.deletion.text.length + "space/constant(s)");
+            begin = extraction.pattern
+                .index().of('function').by({ pattern: { index: caret.begin }}) - (isConstantDeletion?1:0);
+        }
+
+        prefix = prevInput.substring( 0, begin );
+        postfix = prevInput.substring( end, prevInput.length + 1);
+
+        // prefix.length - trim.call( prefix ).length 
+
+        input = prefix + differ.insertion.text + postfix;
+            
+        if ( caret != null ) {
+            if ( isSpaceDeletion || isConstantDeletion ) {
+                caret.begin = begin;
+                caret.end = caret.begin;
+                caret.type = 2;
+            }
+            else {
+                caret.begin = end + differ.insertion.text.length - differ.deletion.text.length;
+                caret.end = caret.begin;
+                caret.type = 2;
+            }
+        }
+
+        console.log( 'Raw Input' , input, caret );
+
+        ret = input;
+
+        return ret;
+    }
+
+    function speculateBatchInput( input, format, caret ){
 
         var speculated, finalExtraction;
 
         console.log("Try to be smart, figure out what the user actually want to input");
-        console.log("Step 1. Try Extract");
-
+        console.log("Speculation Step 1. Try Extract");
         speculated = tryExtractAndResetCaret.call( this, this._el.value, null );
 
         if ( speculated == null ) {
 
             console.log('Failed to extract.');
-            console.log("Step 2. Try filter out puncuation and spaces.");
+            console.log("Speculation Step 2. Try filter out puncuation and spaces.");
 
-            speculated = this._el.value.replace(/\W/g,'');
+            speculated = input.replace(/\W/g,'');
 
             if ( speculated != 0 ) {
-                speculated = trim.call( speculated );
-                this._el.value = speculated;
-                format = this.formatter.reset( this._el.value );
+                // caret type still unknown, a bit trick here
+                // according to https://github.com/normanzb/chuanr/issues/11
+                console.log("Speculation Step 2.5. Comparing to get differ");
+                differ = differUtil.diff(
+                    this._untouched ? trim.call( this._untouched.result + '' ) : '', 
+                    input
+                );
+                console.log("Differ", differ);
+
+                input = trim.call( speculated );
             }
 
             // give up
@@ -106,29 +200,30 @@ define(['./Formatter',
         }
         else {
 
-            console.log('Extracted, use extrcted string.')
-
-            speculated = trim.call( speculated );
-            this._el.value = speculated;
-            format = this.formatter.reset( this._el.value );
+            console.log('Extracted, use extracted string.')
+            input = trim.call( speculated );
+            // can be extracted without problem mean the original string is formatted
+            caret.type = 1;
 
         }
 
-        return format;
+        console.log('Speculation Done, Result "' + input + '"');
+        return input;
     }
 
     function onKeyDown( evt ) {
 
-        if ( this._requireHandleKeyUp == true ) {
+        if ( this._requireHandleKeyUp == true && this._keyCode == evt.keyCode) {
             // mean user keeps key down 
             // this is not allowed because it causes oninput never happen
+            console.log('Continuous Key Down Prevented')
             util.preventDefault(evt);
             return;
         }
 
         if ( util.isAcceptableKeyCode( evt.keyCode ) == false || util.isModifier( evt ) ) {
             if ( util.isMovementKeyCode( evt.keyCode ) == false && util.isModifier( evt ) == false ) {
-                console.log('Key Down prevented')
+                console.log('Key Down Prevented')
                 util.preventDefault(evt);
             }
             
@@ -143,9 +238,7 @@ define(['./Formatter',
         this._caret = caretUtil.get( this._el );
         this._charCode = null;
 
-        if ( this._isFormatted && 
-            // in case user clear the input by X button or js function (which do not trigger oninput)
-            this._el.value !== "" ) {
+        if ( this._isFormatted && this._el.value !== "" ) {
             this._el.value = tryExtractAndResetCaret.call( this, this._el.value, this._caret );
         }
 
@@ -215,33 +308,32 @@ define(['./Formatter',
 
         var caret = {
             begin: 0,
-            end: 0
+            end: 0,
+            // Caret type only in batch mode
+            // 0 == unknown, 
+            // 1 == formatted (pattern index), 
+            // 2 == extracted (function index)
+            type: 0
         };
         var caretMove = true;
         var format;
         var undid = false;
+        // 0 == Batch Input
+        // 1 == Single Input
+        var inputType = input ? 1 : 0;
+        
 
-        if ( input ) {
-            // normal input
+        if ( inputType ) {
+            // == Single Input == 
+
+            // 1. Initial Caret
             caret = input.caret;
+
+            // 2. Initial Format
             this.formatter.input( input );
             format = this.formatter.output();
-        }
-        else {
-            // that means the change is done by pasting, dragging ...etc
-            format = this.formatter.reset( this._el.value );
-            caret = caretUtil.get( this._el );
-        }
 
-        // get a matched format by trying different type of input
-        if ( this.config.speculation.batchinput == true && 
-            input == null && 
-            format.result.matched == false ) {
-            format = speculateBatchInput.call( this , format );
-        }
-
-        // check if we need to move caret
-        if ( input ) {
+            // 3. Advance Caret?
             if ( format.result.matched == false ) {
                 caretMove = false;
             }
@@ -253,16 +345,45 @@ define(['./Formatter',
                 if ( caret.end > 0 ) {
                     caret.end -= 1
                 }
-                
             }
+
         }
         else {
-            // check if current value is shorter than previous value in batch mode
-            if ( this._untouched && 
-                this._untouched.result.toString().length > this._el.value.length ) {
-                // a delete operation? don't move caret
-                caretMove = false;
+            // == Batch Input ==
+            input = this._el.value;
+
+            // 1. Initial Caret
+            // the caret at the point could be with format or without
+            // will will handle it later
+            caret = caretUtil.get( this._el );
+
+            // 2. Initial Format
+            // that means the change is done by pasting, dragging ...etc
+            format = this.formatter.reset( input );
+
+            // 2.5 Batch Input Tricks
+            if ( format.result.matched ) {
+                // match immediately means user inputs raw numbers
+                caret.type = 2;
             }
+            else {
+
+                input = extraRawData.call( this, input, caret );
+                format = this.formatter.reset( input );
+                
+                if ( 
+                    format.result.matched == false && 
+                    this.config.speculation.batchinput == true ) {
+                    // get a matched format by trying different type of input
+                    // also caret will be adjusted here
+                    input = speculateBatchInput.call( this, input, format, caret );
+                    format = this.formatter.reset( input );
+                }
+            }
+
+            // 3. Advance Caret?
+            caretMove = false;
+
         }
 
         // revert if match failed
@@ -281,35 +402,45 @@ define(['./Formatter',
             caret.begin = tryExtractAndResetCaret.call( this, format.result.toString(), null ).length;
             caret.end = caret.begin;
             caretMove = false;
+            caret.type = 2;
         }
 
         if ( format == null ) {
             throw 'Boom, "format" is null, this should never happen.';
         }
 
-        console.log('Move caret? ', caretMove);
-
-        if ( format.result.toString() == null ) {
-            console.warn('Revert, this should never happen?');
-            // revert to original value
-            format = this._untouched;
-        }
-        this._untouched = format;
-
         console.log( 'Final Format', format.result.toString() );
 
+        // record the final format
+        this._untouched = format;
         // update the element
         this._el.value = format.result;
 
-        // update the caret
+        // update the caret accordingly
         console.log('Caret before format: ', caret );
+        console.log('Move caret? ', caretMove);
 
-        caret.begin = this.formatter
-            .index()
-                .of('pattern')
-                .by({ 'function': { index: caret.begin + ( caretMove ? 1 : 0 ) } });
-        if ( caret.begin < 0 ) {
-            caret.begin = this._el.value.length;
+        if ( inputType ) {
+            caret.begin = this.formatter
+                .index()
+                    .of('pattern')
+                    .by({ 'function': { index: caret.begin + ( caretMove ? 1 : 0 ) } });
+
+            if ( caret.begin < 0 ) {
+                caret.begin = this._el.value.length;
+            }    
+        }
+        else {
+            if ( caret.type === 2 ) {
+                caret.begin = this.formatter
+                    .index()
+                        .of('pattern')
+                        .by({ 'function': { index: caret.begin } });
+
+            }
+            else if ( caret.type === 1 ) {
+                // do nothing?
+            }
         }
 
         console.log('Caret after format: ', caret);

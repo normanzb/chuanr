@@ -275,38 +275,52 @@ define([
      * return the chars which matched the position of pattern function
      */
     p.extract = function ( str ) {
-        if ( str.length != this.items.length ) {
+        if ( str.length > this.items.length ) {
             throw EX_NOT_FORMATTED;
         }
 
-        var ret = [], item, items = this.items, func, context;
+        var ret = [], item, items = this.items, func, context, curChar;
 
-        for( var i = 0; i < items.length ; i++ ) {
-            var item = items[i];
+        for( var i = 0; i < str.length ; i++ ) {
+            item = items[i];
+            curChar = str.charAt(i);
 
             if ( item.type == MODE_FUNCTION ) {
                 func = Ctor.functions[item.value];
 
                 if ( func == null ) {
-                    break;
+                    throw EX_NOT_FORMATTED;
+                }
+
+                if ( curChar == ' ' ) {
+                    // skip it as it is a placeholder
+                    continue;
                 }
 
                 context = {
                     prev: str.charAt(i - 1)
                 };
 
-                if ( func.call( null, str.charAt(i), item.param, context ) == false ) {
-                    break;
+                if ( func.call( null, curChar, item.param, context ) == false ) {
+                    throw EX_NOT_FORMATTED;
                 }
 
                 ret.push( { 
-                    result: str.charAt(i),
+                    result: curChar,
                     index: {
                         formatted: i,
                         original: ret.length
                     },
                     toString: resultToString
                 });
+            }
+            else if ( item.type == MODE_CONSTANT ) {
+                if ( curChar != item.value ) {
+                    throw EX_NOT_FORMATTED;
+                }
+            }
+            else {
+                throw EX_NOT_FORMATTED;
             }
         }
 

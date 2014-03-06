@@ -13,7 +13,7 @@ define(['./PatternConstant'], function ( PatternConstant ) {
     function getIndex() {
         var query = this._query;
         var targetName = this._target;
-        var funcIndex, item, items = this._pattern.items;
+        var funcIndex, item, items = this._pattern.items, lastIndex;
 
         if ( query == null || targetName == null ) {
             return this;
@@ -21,14 +21,20 @@ define(['./PatternConstant'], function ( PatternConstant ) {
 
         if ( query['function'] && query['function'].index != null && targetName == "pattern" ) {
             funcIndex = -1
+
             for ( var i = 0 ; i < items.length; i++ ) {
                 item = items[i];
                 if ( item.type == MODE_FUNCTION ) {
                     funcIndex++;
+                    lastIndex = i;
                     if ( funcIndex ==  query['function'].index ) {
                         return i;
                     }
                 }
+            }
+
+            if ( query['function'].index == funcIndex + 1 ) {
+                return lastIndex + 1;
             }
 
             return -1;

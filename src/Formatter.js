@@ -139,11 +139,17 @@ define(['./shim/console', '../lib/boe/src/boe/String/trim'], function (console, 
      * Remove the format and return the actual user data according to current pattern
      */
     p.extract = function( formatted ) {
-        var ret = '',
+        var ret = null,
             extraction;
 
         if ( this._current && this._current.pattern ) {
-            ret = this._current.pattern.extract( formatted );    
+            try{
+                ret = this._current.pattern.extract( formatted );
+                ret.pattern = this._current.pattern;
+            }
+            catch(ex){
+                console.log('Best bet extraction failed, will try the others...');
+            }
         }
 
         // try to find out best extraction
@@ -155,8 +161,9 @@ define(['./shim/console', '../lib/boe/src/boe/String/trim'], function (console, 
                 continue;
             }
 
-            if ( extraction.length > ret.length ) {
-                ret = extraction
+            if ( ret == null || extraction.length > ret.length ) {
+                ret = extraction;
+                ret.pattern = this.patterns[l];
             }
         }
 
