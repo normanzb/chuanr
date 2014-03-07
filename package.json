@@ -17,8 +17,7 @@
     "mocha": "~1.9.0",
     "sinon": "~1.7.3",
     "chai": "~1.6.0",
-    "amdefine": "~0.1.0",
-    "almond": "~0.2.9"
+    "amdefine": "~0.1.0"
   },
   "scripts": {
     "test": "./node_modules/.bin/mocha --reporter spec"

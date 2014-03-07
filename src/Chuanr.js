@@ -1,7 +1,9 @@
 
+//>>excludeStart("release", pragmas.release);
 if (typeof define !== 'function' && typeof module != 'undefined') {
     var define = require('amdefine')(module);
 }
+//>>excludeEnd("release");
 
 define(['./Formatter', 
     './Pattern', 
@@ -14,13 +16,20 @@ define(['./Formatter',
     '../lib/boe/src/boe/util', 
     '../lib/cogs/src/cogs/emittable',
     '../lib/cogs/src/cogs/event',
-    './shim/oninput',
-    './shim/console'], 
+    './shim/oninput'
+    //>>excludeStart("release", pragmas.release);
+    ,'./shim/console'
+    //>>excludeEnd("release");
+    ], 
     function ( 
         Formatter, Pattern, util, caretUtil, differUtil,
         bind, trim, clone, boeUtil, 
         emittable, event, 
-        InputObserver, console ) {
+        InputObserver
+        //>>excludeStart("release", pragmas.release);
+        , console
+        //>>excludeEnd("release");
+     ) {
 
     // ioc settings
     var ioc = {
@@ -41,11 +50,15 @@ define(['./Formatter',
         var original, extraction;
 
         try{
+            //>>excludeStart("release", pragmas.release);
             console.log( "Do Extraction of '" + value + "'");
+            //>>excludeEnd("release");
             extraction = this.formatter.extract( value );
             if ( extraction != null ) {
                 original = trim.call( extraction + '' );
+                //>>excludeStart("release", pragmas.release);
                 console.log( "Exracted", original );
+                //>>excludeEnd("release");
             }
         }
         catch(ex){
@@ -53,12 +66,15 @@ define(['./Formatter',
         }
 
         if ( original == null ) {
+            //>>excludeStart("release", pragmas.release);
             console.log( "Extraction failed " );
+            //>>excludeEnd("release");
         }
 
         if ( caret && original != null ){
-
+            //>>excludeStart("release", pragmas.release);
             console.log( 'Caret before update: ', caret );
+            //>>excludeEnd("release");
 
             // calculate the original caret position
             caret.begin = this.formatter
@@ -78,8 +94,9 @@ define(['./Formatter',
                 caret.end = original.length;
             }
 
+            //>>excludeStart("release", pragmas.release);
             console.log( 'Original input extracted: "' + original + '"' , 'Updated caret: ', caret );
-
+            //>>excludeEnd("release");
         }
 
         if ( original == 0 ) {
@@ -93,7 +110,9 @@ define(['./Formatter',
         var prev, ret, prevInput, begin, end, isConstantDeletion = false,
             prefix, postfix;
 
+        //>>excludeStart("release", pragmas.release);
         console.log('Not raw data, need some sophisicated logic to figure out');
+        //>>excludeEnd("release");
 
         prev = this._untouched ? this._untouched.result + '' : '';
 
@@ -102,7 +121,9 @@ define(['./Formatter',
             input
         );
 
+        //>>excludeStart("release", pragmas.release);
         console.log("Differ '" + prev + "':'" + input + "'", differ);
+        //>>excludeEnd("release");
 
         extraction = this.formatter.extract( prev );
 
@@ -136,7 +157,9 @@ define(['./Formatter',
 
         if ( isSpaceDeletion || isConstantDeletion ) {
             // quite possibly user deleted constant
+            //>>excludeStart("release", pragmas.release);
             console.log("User deleted " + differ.deletion.text.length + "space/constant(s)");
+            //>>excludeEnd("release");
             begin = extraction.pattern
                 .index().of('function').by({ pattern: { index: caret.begin }}) - (isConstantDeletion?1:0);
         }
@@ -161,8 +184,9 @@ define(['./Formatter',
             }
         }
 
+        //>>excludeStart("release", pragmas.release);
         console.log( 'Raw Input' , input, caret );
-
+        //>>excludeEnd("release");
         ret = input;
 
         return ret;
@@ -172,26 +196,33 @@ define(['./Formatter',
 
         var speculated, finalExtraction;
 
+        //>>excludeStart("release", pragmas.release);
         console.log("Try to be smart, figure out what the user actually want to input");
         console.log("Speculation Step 1. Try Extract");
+        //>>excludeEnd("release");
         speculated = tryExtractAndResetCaret.call( this, this._el.value, null );
 
         if ( speculated == null ) {
 
+            //>>excludeStart("release", pragmas.release);
             console.log('Failed to extract.');
             console.log("Speculation Step 2. Try filter out puncuation and spaces.");
-
+            //>>excludeEnd("release");
             speculated = input.replace(/\W/g,'');
 
             if ( speculated != 0 ) {
                 // caret type still unknown, a bit trick here
                 // according to https://github.com/normanzb/chuanr/issues/11
+                //>>excludeStart("release", pragmas.release);
                 console.log("Speculation Step 2.5. Comparing to get differ");
+                //>>excludeEnd("release");
                 differ = differUtil.diff(
                     this._untouched ? trim.call( this._untouched.result + '' ) : '', 
                     input
                 );
+                //>>excludeStart("release", pragmas.release);
                 console.log("Differ", differ);
+                //>>excludeEnd("release");
 
                 input = trim.call( speculated );
             }
@@ -200,15 +231,17 @@ define(['./Formatter',
             
         }
         else {
-
-            console.log('Extracted, use extracted string.')
+            //>>excludeStart("release", pragmas.release);
+            console.log('Extracted, use extracted string.');
+            //>>excludeEnd("release");
             input = trim.call( speculated );
             // can be extracted without problem mean the original string is formatted
             caret.type = 1;
 
         }
-
+        //>>excludeStart("release", pragmas.release);
         console.log('Speculation Done, Result "' + input + '"');
+        //>>excludeEnd("release");
         return input;
     }
 
@@ -217,14 +250,18 @@ define(['./Formatter',
         if ( this._requireHandleKeyUp == true && this._keyCode == evt.keyCode) {
             // mean user keeps key down 
             // this is not allowed because it causes oninput never happen
+            //>>excludeStart("release", pragmas.release);
             console.log('Continuous Key Down Prevented')
+            //>>excludeEnd("release");
             util.preventDefault(evt);
             return;
         }
 
         if ( util.isAcceptableKeyCode( evt.keyCode ) == false || util.isModifier( evt ) ) {
             if ( util.isMovementKeyCode( evt.keyCode ) == false && util.isModifier( evt ) == false ) {
-                console.log('Key Down Prevented')
+                //>>excludeStart("release", pragmas.release);
+                console.log('Key Down Prevented');
+                //>>excludeEnd("release");
                 util.preventDefault(evt);
             }
             
@@ -234,7 +271,9 @@ define(['./Formatter',
     }
 
     function onInput( ) {
+        //>>excludeStart("release", pragmas.release);
         console.hr();
+        //>>excludeEnd("release");
 
         render.call(this);
     }
@@ -302,11 +341,14 @@ define(['./Formatter',
 
             undid = format;
             format = this.formatter.undo()
-
+            //>>excludeStart("release", pragmas.release);
             console.log('Failed to format, undo.');
+            //>>excludeEnd("release");
 
             if ( format == null ) {
+                //>>excludeStart("release", pragmas.release);
                 console.log('Tried to undo, but failed.');
+                //>>excludeEnd("release");
                 break;
             }
 
@@ -319,7 +361,9 @@ define(['./Formatter',
             throw 'Boom, "format" is null, this should never happen.';
         }
 
+        //>>excludeStart("release", pragmas.release);
         console.log( 'Final Format', format.result.toString() );
+        //>>excludeEnd("release");
 
         // record the final format
         this._untouched = format;
@@ -327,7 +371,9 @@ define(['./Formatter',
         this._el.value = format.result;
 
         // update the caret accordingly
+        //>>excludeStart("release", pragmas.release);
         console.log('Caret before format: ', caret );
+        //>>excludeEnd("release");
 
         if ( caret.type === 2 ) {
             caret.begin = this.formatter
@@ -339,8 +385,9 @@ define(['./Formatter',
         else if ( caret.type === 1 ) {
             // do nothing?
         }
-
+        //>>excludeStart("release", pragmas.release);
         console.log('Caret after format: ', caret);
+        //>>excludeEnd("release");
 
         // set cursor
         caretUtil.set( this._el, caret.begin );

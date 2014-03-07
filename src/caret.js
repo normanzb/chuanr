@@ -4,7 +4,12 @@
  * Cross browser implementation to get and set input selections
  * Modified based on inptSel.js in https://github.com/firstopinion/formatter.js
  */
-define(function  (argument) {
+//>>excludeStart("release", pragmas.release);
+if (typeof define !== 'function' && typeof module != 'undefined') {
+    var define = require('amdefine')(module);
+}
+//>>excludeEnd("release");
+define(function () {
 
     var inptSel = {};
 

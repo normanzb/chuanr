@@ -1,9 +1,20 @@
 
+//>>excludeStart("release", pragmas.release);
 if (typeof define !== 'function' && typeof module != 'undefined') {
     var define = require('amdefine')(module);
 }
+//>>excludeEnd("release");
 
-define(['./shim/console', '../lib/boe/src/boe/String/trim'], function (console, trim) {
+define([
+    '../lib/boe/src/boe/String/trim'
+    //>>excludeStart("release", pragmas.release);
+    , './shim/console'
+    //>>excludeEnd("release");
+], function (trim
+    //>>excludeStart("release", pragmas.release);
+    ,console
+    //>>excludeEnd("release");
+    ) {
 
     var EX_NO_PATTERN = 'No pattern specified';
 
@@ -18,12 +29,16 @@ define(['./shim/console', '../lib/boe/src/boe/String/trim'], function (console, 
             bestMatchResultObject,
             bestMatchPattern;
 
+        //>>excludeStart("release", pragmas.release);
         console.log('Start Formating: "' + cache + '"');
+        //>>excludeEnd("release");
 
         for( var i = 0; i < this.patterns.length; i++ ) {
             pattern = this.patterns[ i ];
             if ( resultObject = pattern.apply( cache ) ) {
+                //>>excludeStart("release", pragmas.release);
                 console.log('  ', pattern + '', resultObject.counts);
+                //>>excludeEnd("release");
                 if ( resultObject.matched ) {
                     bestMatchResultObject = resultObject;
                     bestMatchPattern = pattern;
@@ -40,8 +55,9 @@ define(['./shim/console', '../lib/boe/src/boe/String/trim'], function (console, 
         }
 
         if ( bestMatchPattern != null && bestMatchResultObject ) {
-
+            //>>excludeStart("release", pragmas.release);
             console.log( 'Best Matching Pattern: ', bestMatchPattern.toString(), bestMatchResultObject)
+            //>>excludeEnd("release");
 
             this._current = { 
                 pattern: bestMatchPattern,
@@ -148,7 +164,9 @@ define(['./shim/console', '../lib/boe/src/boe/String/trim'], function (console, 
                 ret.pattern = this._current.pattern;
             }
             catch(ex){
+                //>>excludeStart("release", pragmas.release);
                 console.log('Best bet extraction failed, will try the others...');
+                //>>excludeEnd("release");
             }
         }
 

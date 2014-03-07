@@ -1,7 +1,9 @@
 
+//>>excludeStart("release", pragmas.release);
 if (typeof define !== 'function' && typeof module != 'undefined') {
     var define = require('amdefine')(module);
 }
+//>>excludeEnd("release");
 
 /** 
  * for debugging in iOS 5 simulator, you will need technic here:

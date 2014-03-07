@@ -18,7 +18,7 @@ module.exports = function(grunt) {
             dist : {
                 options : {
                     baseUrl: './src',
-                    name: '../node_modules/almond/almond',
+                    name: '../lib/amdshim/amdshim',
                     include: FILE_NAME_ENTRY,
                     out: FILE_NAME_OUT_MAX,
                     wrap: {
@@ -33,14 +33,14 @@ module.exports = function(grunt) {
                             "parentDefine(function() { return require('" + SPACE_NAME + "'); }); \n" + 
                             "}());"
                     },
+                    pragmas: {
+                        release: true
+                    },
                     optimize : "none"
                 }
             }
         },
         uglify : {
-            options : {
-                banner : '/* http://github.com/normanzb/ */',
-            },
             dist : {
                 src : [ FILE_NAME_OUT_MAX ],
                 dest : FILE_NAME_OUT_MIN
