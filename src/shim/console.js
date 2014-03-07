@@ -15,11 +15,10 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
 define(['../../lib/boe/src/boe/util'], function (boeUtil) {
     var MAX_NESTING = 3;
     var logs = '';
-    var userAgent = navigator.userAgent;
-    var isIE = userAgent.toUpperCase().indexOf('MSIE') > 0 || 
-        userAgent.toUpperCase().indexOf('TRIDENT') > 0 ;
-    var iOS5 = userAgent.toUpperCase().indexOf('IPHONE SIMULATOR') > 0 &&
-        userAgent.toUpperCase().indexOf('OS 5_0') > 0
+    var userAgent = navigator.userAgent.toUpperCase();
+    var isIE = userAgent.indexOf('MSIE') > 0 || 
+        userAgent.indexOf('TRIDENT') > 0 ;
+    var iOS5 = userAgent.indexOf('OS 5_0 LIKE MAC OS X') > 0
     var ret, nestingCount, isIE, shim = {
         log: iOS5 ? iOS5Log :noop,
         error: redir,
