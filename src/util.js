@@ -13,14 +13,6 @@ define(function(){
         iPhone = /iphone/i.test(uAgent);
 
     //
-    // Return true/false is num false between bounds
-    //
-    util.isBetween = function (num, bounds) {
-        bounds.sort(function(a,b) { return a-b; });
-        return (num > bounds[0] && num < bounds[1]);
-    };
-
-    //
     // Helper method for cross browser event listeners
     //
     util.addListener = function (el, evt, handler) {
@@ -34,15 +26,6 @@ define(function(){
     //
     util.preventDefault = function (evt) {
         return (evt.preventDefault) ? evt.preventDefault() : (evt.returnValue = false);
-    };
-
-    //
-    // Helper method for cross browser implementation for grabbing
-    // clipboard data
-    //
-    util.getClip = function (evt) {
-        if (evt.clipboardData) { return evt.clipboardData.getData('Text'); }
-        if (window.clipboardData) { return window.clipboardData.getData('Text'); }
     };
 
     //

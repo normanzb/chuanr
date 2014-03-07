@@ -227,81 +227,15 @@ define(['./Formatter',
                 util.preventDefault(evt);
             }
             
-            this._requireHandlePress = false;
-            this._requireHandleInput = false;
             return;
         }
 
-        console.hr();
-
-        this._keyCode = evt.keyCode;
-        this._caret = caretUtil.get( this._el );
-        this._charCode = null;
-
-        if ( this._isFormatted && this._el.value !== "" ) {
-            this._el.value = tryExtractAndResetCaret.call( this, this._el.value, this._caret );
-        }
-
-        if ( util.isDelKey( evt.keyCode ) == false && 
-            util.isBackSpaceKey( evt.keyCode ) == false ) {
-            this._requireHandlePress = true;
-        }
-        
-        this._requireHandleInput = true;
-        this._requireHandleKeyUp = true;
-    }
-
-    function onKeyPress( evt ) {
-        if ( this._requireHandlePress == false ) {
-            return;
-        }
-
-        this._charCode = evt.keyCode || evt.charCode;
-
-        this._requireHandlePress = false;
     }
 
     function onInput( ) {
-        if ( this._requireHandleInput && 
-            // if below check == true, means keyDown happen but keypress never happen, 
-            // quite possible it is a undo
-            this._requireHandlePress != true ) {
+        console.hr();
 
-            console.log ( 'Input Type: Single: ', String.fromCharCode( this._charCode ) );
-
-            render.call( this, {
-                'key': this._keyCode,
-                'char': this._charCode,
-                'del': util.isDelKey( this._keyCode ),
-                'back': util.isBackSpaceKey( this._keyCode ),
-                'caret': this._caret
-            } );
-            
-        }
-        else {
-
-            console.hr();
-
-            console.log ( 'Input Type: Batch: ', this._el.value );
-
-            render.call(this);
-
-        }
-
-        this._requireHandlePress = false;
-        this._requireHandleInput = false;
-    }
-
-    function onKeyUp( evt ) {
-        // protection mechanism
-        // some browsers (e.g. IE) doesn't support oninput
-        // so we compulsorily make it here
-        if ( this._requireHandleInput == true ) {
-            console.log('Compulsorily call into onInput')
-            onInput.call(this);
-        }
-
-        this._requireHandleKeyUp = false;
+        render.call(this);
     }
 
     function render( input ) {
@@ -315,75 +249,52 @@ define(['./Formatter',
             // 2 == extracted (function index)
             type: 0
         };
-        var caretMove = true;
         var format;
         var undid = false;
-        // 0 == Batch Input
-        // 1 == Single Input
-        var inputType = input ? 1 : 0;
         
 
-        if ( inputType ) {
-            // == Single Input == 
+        // == Batch Input ==
+        input = this._el.value;
 
-            // 1. Initial Caret
-            caret = input.caret;
+        // 1. Initial Caret
+        // the caret at the point could be with format or without
+        // will will handle it later
+        caret = caretUtil.get( this._el );
 
-            // 2. Initial Format
-            this.formatter.input( input );
-            format = this.formatter.output();
+        // 2. Initial Format
+        // that means the change is done by pasting, dragging ...etc
+        format = this.formatter.reset( input );
 
-            // 3. Advance Caret?
-            if ( format.result.matched == false ) {
-                caretMove = false;
+        // 2.5 Batch Input Tricks
+        if ( format.result.matched ) {
+            if ( 
+                this._isFormatted == false && 
+                (
+                    this._el.value != false ||
+                    this._el.value === "0"
+                ) &&
+                caret.begin == 0
+            ) {
+                // you must on ios 5, which sucks
+                caret.begin = trim.call( this._el.value.length );
+                caret.end = caret.begin;
             }
-            else if ( input.del || input.back ) {
-                caretMove = false;
-                if ( caret.begin > 0 ) {
-                   caret.begin -= 1; 
-                }
-                if ( caret.end > 0 ) {
-                    caret.end -= 1
-                }
-            }
-
+            // match immediately means user inputs raw numbers
+            caret.type = 2;
         }
         else {
-            // == Batch Input ==
-            input = this._el.value;
 
-            // 1. Initial Caret
-            // the caret at the point could be with format or without
-            // will will handle it later
-            caret = caretUtil.get( this._el );
-
-            // 2. Initial Format
-            // that means the change is done by pasting, dragging ...etc
+            input = extraRawData.call( this, input, caret );
             format = this.formatter.reset( input );
-
-            // 2.5 Batch Input Tricks
-            if ( format.result.matched ) {
-                // match immediately means user inputs raw numbers
-                caret.type = 2;
-            }
-            else {
-
-                input = extraRawData.call( this, input, caret );
+            
+            if ( 
+                format.result.matched == false && 
+                this.config.speculation.batchinput == true ) {
+                // get a matched format by trying different type of input
+                // also caret will be adjusted here
+                input = speculateBatchInput.call( this, input, format, caret );
                 format = this.formatter.reset( input );
-                
-                if ( 
-                    format.result.matched == false && 
-                    this.config.speculation.batchinput == true ) {
-                    // get a matched format by trying different type of input
-                    // also caret will be adjusted here
-                    input = speculateBatchInput.call( this, input, format, caret );
-                    format = this.formatter.reset( input );
-                }
             }
-
-            // 3. Advance Caret?
-            caretMove = false;
-
         }
 
         // revert if match failed
@@ -401,7 +312,6 @@ define(['./Formatter',
 
             caret.begin = tryExtractAndResetCaret.call( this, format.result.toString(), null ).length;
             caret.end = caret.begin;
-            caretMove = false;
             caret.type = 2;
         }
 
@@ -418,29 +328,16 @@ define(['./Formatter',
 
         // update the caret accordingly
         console.log('Caret before format: ', caret );
-        console.log('Move caret? ', caretMove);
 
-        if ( inputType ) {
+        if ( caret.type === 2 ) {
             caret.begin = this.formatter
                 .index()
                     .of('pattern')
-                    .by({ 'function': { index: caret.begin + ( caretMove ? 1 : 0 ) } });
+                    .by({ 'function': { index: caret.begin } });
 
-            if ( caret.begin < 0 ) {
-                caret.begin = this._el.value.length;
-            }    
         }
-        else {
-            if ( caret.type === 2 ) {
-                caret.begin = this.formatter
-                    .index()
-                        .of('pattern')
-                        .by({ 'function': { index: caret.begin } });
-
-            }
-            else if ( caret.type === 1 ) {
-                // do nothing?
-            }
+        else if ( caret.type === 1 ) {
+            // do nothing?
         }
 
         console.log('Caret after format: ', caret);
@@ -485,12 +382,6 @@ define(['./Formatter',
         boeUtil.mixin( this.config, config );
 
         this._el = null;
-        this._requireHandlePress = false;
-        this._requireHandleInput = false;
-        this._requireHandleKeyUp = false;
-        this._keyCode = null;
-        this._charCode = null;
-        this._caret = null;
         this._untouched = null;
         this._isFormatted = false;
 
@@ -524,8 +415,6 @@ define(['./Formatter',
         this.oninput.oninput = bind.call(onInput, this);
 
         util.addListener(el, 'keydown', bind.call(onKeyDown, this));
-        util.addListener(el, 'keypress', bind.call(onKeyPress, this));
-        util.addListener(el, 'keyup', bind.call(onKeyUp, this));
 
         if ( this._el.value != "" ) {
             // not equal to empty spaces
