@@ -305,7 +305,7 @@ define(['./Formatter',
     }
 
     function render( input ) {
-
+        var me = this;
         var caret = {
             begin: 0,
             end: 0,
@@ -447,6 +447,17 @@ define(['./Formatter',
 
         // set cursor
         caretUtil.set( this._el, caret.begin );
+
+        // this is to prevent some iOS shits to reset the caret after we set it
+        // TODO: user setImmediate shim to make it faster?
+        setTimeout(function(){
+            if ( caretUtil.get( me._el) == caret.begin ) {
+                return;
+            }
+
+            // oh shit, we failed
+            caretUtil.set( me._el, caret.begin );
+        });
 
         if ( format.result != 0 ) {
             this._isFormatted = true;
