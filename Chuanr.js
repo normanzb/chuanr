@@ -2173,19 +2173,30 @@ define('shim/oninput',[],function () {
 
         var me = this;
 
-        if ( hasOnInput ) {
+        function diff ( evt ){
+            if ( el.value != me._old ) {
+                me._old = el.value;
+                me.oninput();
+            }
+        }
+
+        // higher priority to use prooperty change
+        // because IE9 oninput is not implemented correctly
+        // when you do backspace it doesn't fire oninput
+        if ( el.attachEvent ) {
+            me._old = el.value;
+            el.attachEvent('onpropertychange', diff);
+            el.attachEvent('onfocus', function(){
+                document.attachEvent('onselectionchange', diff);
+            });
+            el.attachEvent('onblur', function(){
+                document.detachEvent('onselectionchange', diff);
+            });
+        }
+        else if ( hasOnInput ) {
             el.addEventListener(INPUT, function() {
                 me.oninput();
             }, false);
-        }
-        else if (el.attachEvent) {
-            this._old = el.value;
-            el.attachEvent('onpropertychange', function(evt){
-                if ( evt.propertyName == "value" && el.value != this._old ) {
-                    this._old = el.value;
-                    me.oninput();
-                }
-            });
         }
         else {
             throw "Something wrong, should never goes to here.";
@@ -2311,6 +2322,7 @@ define('Chuanr',['./Formatter',
 
         isSpaceDeletion = differ.insertion.caret.begin == differ.insertion.caret.end &&
             (
+                caret.begin < extraction.pattern.items.length &&
                 extraction.pattern.items[caret.begin].type == 2 && 
                 differ.deletion.text == ' '
             );
@@ -2447,8 +2459,7 @@ define('Chuanr',['./Formatter',
             type: 0
         };
         var format;
-        var undid = false;
-        
+        var undid = false;    
 
         // == Batch Input ==
         input = this._el.value;
