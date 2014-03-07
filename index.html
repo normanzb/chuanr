@@ -220,7 +220,7 @@
 
                     var output = genericFormatter.output();
                     var msg = '"' + output.result + '" is not an valid telephone number!';
-                    console.error('Prevented!! ' + msg);
+                    window.console && window.console.error('Prevented!! ' + msg);
                     elMessageBox.innerHTML = msg;
                     elMessageBox.parentNode.parentNode.style.opacity = '1';
 
