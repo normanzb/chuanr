@@ -112,7 +112,7 @@ Once you gained the access to Chuanr constructor, by doing below you can instant
     * Says a input which is 8576 can match a positive pattern of "+|{d}{d}{d}{d}{d}" but cannot match the pattern's negative counterpart "-|{d}{d}{d}{d}{d}".
 * Validation Passed - Stop pattern iteration, set property isValid to true and allow further input.
 * Validation Failed - Stop pattern iteration, set property isValid to false and do not allow the number be input.
-* Pattern Function - The text which wrapped by "{" and "}".
+* Pattern Function - Its a javascript function which takes 1 char as input and return true/false to indicate the matching result. You can specify the pattern function by wrapping the function name with "{" and "}" in the pattern.
 * Shorthand - Any consecutive set of Pattern Functions can be written within same {}, for example, "{d}{d(5)}" can be written as "{dd(5)}".
 * Batch Input - Means inputting several characters at once, for example, pasting, droping, undo...
 
