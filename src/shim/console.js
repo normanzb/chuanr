@@ -3,19 +3,42 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
     var define = require('amdefine')(module);
 }
 
+/** 
+ * for debugging in iOS 5 simulator, you will need technic here:
+ * https://gist.github.com/normanzb/9409129
+ * and then download chromium verion 12
+ * visit http://localhost:9999
+ * and then run script here: 
+ * https://gist.github.com/normanzb/9410988 in your console
+ */
+
 define(['../../lib/boe/src/boe/util'], function (boeUtil) {
     var MAX_NESTING = 3;
+    var logs = '';
+    var userAgent = navigator.userAgent;
+    var isIE = userAgent.toUpperCase().indexOf('MSIE') > 0 || 
+        userAgent.toUpperCase().indexOf('TRIDENT') > 0 ;
+    var iOS5 = userAgent.toUpperCase().indexOf('IPHONE SIMULATOR') > 0 &&
+        userAgent.toUpperCase().indexOf('OS 5_0') > 0
     var ret, nestingCount, isIE, shim = {
-        log: noop,
+        log: iOS5 ? iOS5Log :noop,
         error: redir,
         warn: redir,
         debug: redir
     };
-
-    isIE = navigator.userAgent.toUpperCase().indexOf('MSIE') > 0 || 
-        navigator.userAgent.toUpperCase().indexOf('TRIDENT') > 0 ;
+    var bak = {};
 
     function noop(){};
+
+    function iOS5Log(msg) {
+        if ( bak['log'] ) {
+            bak.log.call(ret, msg);
+        }
+        // var img = document.createElement('image');
+        // img.src = './log.gif?' + encodeURI(msg);
+
+        logs = logs + '\n' + msg;
+    }
 
     function redir(){
         return this.log.apply(this, arguments);
@@ -68,11 +91,12 @@ define(['../../lib/boe/src/boe/util'], function (boeUtil) {
             continue;
         }
 
-        if ( ret[key] == null  ) {
+        if ( ret[ key ] == null || iOS5 ) {
+            bak[ key ] = ret[ key ];
             ret[ key ] = shim[ key ];
         }
 
-        if ( isIE ) {
+        if ( isIE  || iOS5 ) {
             ret[ key ] = ieFuncWrapper( ret[ key ] );
         }
 
@@ -80,6 +104,10 @@ define(['../../lib/boe/src/boe/util'], function (boeUtil) {
 
     ret.hr = function() {
         ret.log('=======================================');
+    };
+
+    ret.logs = function(){
+        return logs;
     };
 
     return ret;
