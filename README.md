@@ -154,3 +154,6 @@ Pattern function is useful for simplify the long pattern list by adding a bit fl
 
     npm test
 
+##Special Thanks
+
+[FirstOpinion's Formatter.js](github.com/firstopinion/formatter.js) - Stolen the pattern concept and the caret controling utility from there.
