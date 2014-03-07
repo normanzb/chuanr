@@ -60,19 +60,30 @@ define(function () {
 
         var me = this;
 
-        if ( hasOnInput ) {
+        function diff ( evt ){
+            if ( el.value != me._old ) {
+                me._old = el.value;
+                me.oninput();
+            }
+        }
+
+        // higher priority to use prooperty change
+        // because IE9 oninput is not implemented correctly
+        // when you do backspace it doesn't fire oninput
+        if ( el.attachEvent ) {
+            me._old = el.value;
+            el.attachEvent('onpropertychange', diff);
+            el.attachEvent('onfocus', function(){
+                document.attachEvent('onselectionchange', diff);
+            });
+            el.attachEvent('onblur', function(){
+                document.detachEvent('onselectionchange', diff);
+            });
+        }
+        else if ( hasOnInput ) {
             el.addEventListener(INPUT, function() {
                 me.oninput();
             }, false);
-        }
-        else if (el.attachEvent) {
-            this._old = el.value;
-            el.attachEvent('onpropertychange', function(evt){
-                if ( evt.propertyName == "value" && el.value != this._old ) {
-                    this._old = el.value;
-                    me.oninput();
-                }
-            });
         }
         else {
             throw "Something wrong, should never goes to here.";
