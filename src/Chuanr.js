@@ -114,6 +114,7 @@ define(['./Formatter',
 
         isSpaceDeletion = differ.insertion.caret.begin == differ.insertion.caret.end &&
             (
+                caret.begin < extraction.pattern.items.length &&
                 extraction.pattern.items[caret.begin].type == 2 && 
                 differ.deletion.text == ' '
             );
@@ -250,8 +251,7 @@ define(['./Formatter',
             type: 0
         };
         var format;
-        var undid = false;
-        
+        var undid = false;    
 
         // == Batch Input ==
         input = this._el.value;
