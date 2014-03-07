@@ -4,12 +4,7 @@
  * Cross browser implementation to get and set input selections
  * Modified based on inptSel.js in https://github.com/firstopinion/formatter.js
  */
-
-if (typeof define !== 'function' && typeof module != 'undefined') {
-    var define = require('amdefine')(module);
-}
-
-define(function () {
+define(function  (argument) {
 
     var inptSel = {};
 
@@ -18,65 +13,65 @@ define(function () {
     // if there is no selectiion data
     //
     inptSel.get = function (el) {
-      // If normal browser return with result
-      if (typeof el.selectionStart == "number") {
-        return { 
-          begin: el.selectionStart,
-          end: el.selectionEnd
-        };
-      }
-
-      // Uh-Oh. We must be IE. Fun with TextRange!!
-      var range = document.selection.createRange();
-      // Determine if there is a selection
-      if (range && range.parentElement() == el) {
-        var inputRange = el.createTextRange(),
-            endRange   = el.createTextRange(),
-            length     = el.value.length;
-
-        // Create a working TextRange for the input selection
-        inputRange.moveToBookmark(range.getBookmark());
-
-        // Move endRange begin pos to end pos (hence endRange)
-        endRange.collapse(false);
-        
-        // If we are at the very end of the input, begin and end
-        // must both be the length of the el.value
-        if (inputRange.compareEndPoints("StartToEnd", endRange) > -1) {
-          return { begin: length, end: length };
+        // If normal browser return with result
+        if (typeof el.selectionStart == "number") {
+            return { 
+              begin: el.selectionStart,
+              end: el.selectionEnd
+            };
         }
 
-        // Note: moveStart usually returns the units moved, which 
-        // one may think is -length, however, it will stop when it
-        // gets to the begin of the range, thus giving us the
-        // negative value of the pos.
-        return {
-          begin: -inputRange.moveStart("character", -length),
-          end: -inputRange.moveEnd("character", -length)
-        };
-      }
+        // Uh-Oh. We must be IE. Fun with TextRange!!
+        var range = document.selection.createRange();
+        // Determine if there is a selection
+        if (range && range.parentElement() == el) {
+            var inputRange = el.createTextRange(),
+                endRange   = el.createTextRange(),
+                length     = el.value.length;
 
-      //Return 0's on no selection data
-      return { begin: 0, end: 0 };
+            // Create a working TextRange for the input selection
+            inputRange.moveToBookmark(range.getBookmark());
+
+            // Move endRange begin pos to end pos (hence endRange)
+            endRange.collapse(false);
+            
+            // If we are at the very end of the input, begin and end
+            // must both be the length of the el.value
+            if (inputRange.compareEndPoints("StartToEnd", endRange) > -1) {
+                return { begin: length, end: length };
+            }
+
+            // Note: moveStart usually returns the units moved, which 
+            // one may think is -length, however, it will stop when it
+            // gets to the begin of the range, thus giving us the
+            // negative value of the pos.
+            return {
+                begin: -inputRange.moveStart("character", -length),
+                end: -inputRange.moveEnd("character", -length)
+            };
+        }
+
+        //Return 0's on no selection data
+        return { begin: 0, end: 0 };
     };
 
     //
     // Set the caret position at a specified location
     //
     inptSel.set = function (el, pos) {
-      // If normal browser
-      if (el.setSelectionRange) {
-        el.focus();
-        el.setSelectionRange(pos,pos);
+        // If normal browser
+        if (el.setSelectionRange) {
+            el.focus();
+            el.setSelectionRange(pos,pos);
 
-      // IE = TextRange fun
-      } else if (el.createTextRange) {
-        var range = el.createTextRange();
-        range.collapse(true);
-        range.moveEnd('character', pos);
-        range.moveStart('character', pos);
-        range.select();
-      }
+        // IE = TextRange fun
+        } else if (el.createTextRange) {
+            var range = el.createTextRange();
+            range.collapse(true);
+            range.moveEnd('character', pos);
+            range.moveStart('character', pos);
+            range.select();
+        }
     };
 
     return inptSel;
