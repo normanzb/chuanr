@@ -100,6 +100,87 @@ describe('Pattern', function(){
         
     });
 
+    it('parse string with negative pattern type correctly', function(){
+        var pattern = Pattern.parse('-|(+86) {ddd(2345)ddd} - {dd(25)ddd}');
+        assert.equal(pattern.type, 'negative');
+        assert.deepEqual(pattern.items, [ 
+            { type: 1, value: '(' },
+            { type: 1, value: '+' },
+            { type: 1, value: '8' },
+            { type: 1, value: '6' },
+            { type: 1, value: ')' },
+            { type: 1, value: ' ' },
+            { type: 2, value: 'd', param: '' },
+            { type: 2, value: 'd', param: '' },
+            { type: 2, value: 'd', param: '2345' },
+            { type: 2, value: 'd', param: '' },
+            { type: 2, value: 'd', param: '' },
+            { type: 2, value: 'd', param: '' },
+            { type: 1, value: ' ' },
+            { type: 1, value: '-' },
+            { type: 1, value: ' ' },
+            { type: 2, value: 'd', param: '' },
+            { type: 2, value: 'd', param: '25' },
+            { type: 2, value: 'd', param: '' },
+            { type: 2, value: 'd', param: '' },
+            { type: 2, value: 'd', param: '' } 
+        ]);
+    });
+
+    it('parse string with positive pattern type correctly', function(){
+        var pattern = Pattern.parse('+|(+86) {ddd(2345)ddd} - {dd(25)ddd}');
+        assert.equal(pattern.type, 'positive');
+        assert.deepEqual(pattern.items, [ 
+            { type: 1, value: '(' },
+            { type: 1, value: '+' },
+            { type: 1, value: '8' },
+            { type: 1, value: '6' },
+            { type: 1, value: ')' },
+            { type: 1, value: ' ' },
+            { type: 2, value: 'd', param: '' },
+            { type: 2, value: 'd', param: '' },
+            { type: 2, value: 'd', param: '2345' },
+            { type: 2, value: 'd', param: '' },
+            { type: 2, value: 'd', param: '' },
+            { type: 2, value: 'd', param: '' },
+            { type: 1, value: ' ' },
+            { type: 1, value: '-' },
+            { type: 1, value: ' ' },
+            { type: 2, value: 'd', param: '' },
+            { type: 2, value: 'd', param: '25' },
+            { type: 2, value: 'd', param: '' },
+            { type: 2, value: 'd', param: '' },
+            { type: 2, value: 'd', param: '' } 
+        ]);
+    });
+
+    it('parse string with implict positive pattern type correctly', function(){
+        var pattern = Pattern.parse('|(+86) {ddd(2345)ddd} - {dd(25)ddd}');
+        assert.equal(pattern.type, 'positive');
+        assert.deepEqual(pattern.items, [ 
+            { type: 1, value: '(' },
+            { type: 1, value: '+' },
+            { type: 1, value: '8' },
+            { type: 1, value: '6' },
+            { type: 1, value: ')' },
+            { type: 1, value: ' ' },
+            { type: 2, value: 'd', param: '' },
+            { type: 2, value: 'd', param: '' },
+            { type: 2, value: 'd', param: '2345' },
+            { type: 2, value: 'd', param: '' },
+            { type: 2, value: 'd', param: '' },
+            { type: 2, value: 'd', param: '' },
+            { type: 1, value: ' ' },
+            { type: 1, value: '-' },
+            { type: 1, value: ' ' },
+            { type: 2, value: 'd', param: '' },
+            { type: 2, value: 'd', param: '25' },
+            { type: 2, value: 'd', param: '' },
+            { type: 2, value: 'd', param: '' },
+            { type: 2, value: 'd', param: '' } 
+        ]);
+    });
+
     /* Exceptions */
 
     it('throw exception when function pattern did not close.', function(){
