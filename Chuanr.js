@@ -163,11 +163,26 @@ define('Formatter',[
             cache = this._cache,
             resultObject,
             bestMatchResultObject,
-            bestMatchPattern;
+            bestMatchPattern,
+            skip = false;
 
         
         for( var i = 0; i < this.patterns.length; i++ ) {
             pattern = this.patterns[ i ];
+            if ( pattern.type == 'positive' ) { continue; }
+            if ( resultObject = pattern.apply( cache ) ) {
+                if ( resultObject.matched ) {
+                    bestMatchPattern = pattern;
+                    bestMatchResultObject = resultObject;
+                    skip = true;
+                    break;
+                }
+            }
+        }
+
+        for( var i = 0; i < this.patterns.length && skip == false; i++ ) {
+            pattern = this.patterns[ i ];
+            if ( pattern.type == 'negative' ) { continue; }
             if ( resultObject = pattern.apply( cache ) ) {
                                 if ( resultObject.matched ) {
                     bestMatchResultObject = resultObject;
@@ -624,6 +639,7 @@ define('Pattern',[
     var PLACE_HOLDER_FUNCTION_END = "}";
     var PLACE_HOLDER_CALL_START = "(";
     var PLACE_HOLDER_CALL_END = ")";
+    var PLACE_HOLDER_TYPE_SEPARATOR = "|";
 
     var MODE_CONSTANT = PatternConstant.MODE_CONSTANT;
     var MODE_FUNCTION = PatternConstant.MODE_FUNCTION;
@@ -684,7 +700,15 @@ define('Pattern',[
             curChar = str.charAt( i );
 
             // Check for special chars
-            if ( mode == MODE_CONSTANT && 
+            if ( i == 0 && str.charAt( i + 1 ) == PLACE_HOLDER_TYPE_SEPARATOR ) {
+                if ( curChar == '-' ) {
+                    me.type = 'negative';
+                }
+            }
+            else if ( i <= 1 && curChar == PLACE_HOLDER_TYPE_SEPARATOR ) {
+                // skip it
+            }
+            else if ( mode == MODE_CONSTANT && 
                 curChar == PLACE_HOLDER_FUNCTION_START ) {
 
                 stack.push( { 'char': curChar, mode: mode } );
@@ -774,6 +798,7 @@ define('Pattern',[
         // a list of items to be matched
         this.items = [];
         this.pattern = pattern;
+        this.type = 'positive';
         this._query = null;
         parse.call(this, pattern);
 
@@ -801,6 +826,11 @@ define('Pattern',[
             if ( item.type == MODE_FUNCTION ) {
                 matches.push( item );
             }
+        }
+
+        if ( this.type == 'negative' ) {
+            // compulsory set it if current pattern is negative one
+            isFullyMatch = true;
         }
 
         if ( isFullyMatch ) {
@@ -868,6 +898,7 @@ define('Pattern',[
             result: result, 
             // indicate if application is successful
             matched: matched, 
+            legitimate: this.type == 'positive' ? matched : !matched ,
             counts: { 
                 // the number of total match, successful application means a full match
                 total: len, 
@@ -888,7 +919,7 @@ define('Pattern',[
             throw EX_NOT_FORMATTED;
         }
 
-        var ret = [], item, items = this.items, func, context, curChar;
+        var ret = [], item, items = this.items, func, context, curChar, prevInput = '';
 
         for( var i = 0; i < str.length ; i++ ) {
             item = items[i];
@@ -907,7 +938,7 @@ define('Pattern',[
                 }
 
                 context = {
-                    prev: str.charAt(i - 1)
+                    prev: prevInput
                 };
 
                 if ( func.call( null, curChar, item.param, context ) == false ) {
@@ -922,6 +953,8 @@ define('Pattern',[
                     },
                     toString: resultToString
                 });
+
+                prevInput = curChar;
             }
             else if ( item.type == MODE_CONSTANT ) {
                 if ( curChar != item.value ) {
@@ -1866,7 +1899,7 @@ define('Chuanr',['./Formatter',
         format = this.formatter.reset( input );
 
         // 2.5 Batch Input Tricks
-        if ( format.result.matched ) {
+        if ( format.result.legitimate ) {
             if ( 
                 this._isFormatted == false && 
                 (
@@ -1888,7 +1921,7 @@ define('Chuanr',['./Formatter',
             format = this.formatter.reset( input );
             
             if ( 
-                format.result.matched == false && 
+                format.result.legitimate == false && 
                 this.config.speculation.batchinput == true ) {
                 // get a matched format by trying different type of input
                 // also caret will be adjusted here
@@ -1898,9 +1931,10 @@ define('Chuanr',['./Formatter',
         }
 
         // revert if match failed
-        while ( format.result.matched == false ) {
-
-            undid = format;
+        while ( format.result.legitimate == false ) {
+            if ( undid == false ) {
+                undid = format;
+            }
             format = this.formatter.undo()
             
             if ( format == null ) {
@@ -2026,7 +2060,7 @@ define('Chuanr',['./Formatter',
 
         var result = this._untouched.pattern.apply( this._untouched.input , true );
 
-        return result.matched;
+        return result.legitimate;
     };
 
     // expose ioc setting
