@@ -17,6 +17,7 @@ define([
     var PLACE_HOLDER_FUNCTION_END = "}";
     var PLACE_HOLDER_CALL_START = "(";
     var PLACE_HOLDER_CALL_END = ")";
+    var PLACE_HOLDER_TYPE_SEPARATOR = "|";
 
     var MODE_CONSTANT = PatternConstant.MODE_CONSTANT;
     var MODE_FUNCTION = PatternConstant.MODE_FUNCTION;
@@ -77,7 +78,15 @@ define([
             curChar = str.charAt( i );
 
             // Check for special chars
-            if ( mode == MODE_CONSTANT && 
+            if ( i == 0 && str.charAt( i + 1 ) == PLACE_HOLDER_TYPE_SEPARATOR ) {
+                if ( curChar == '-' ) {
+                    me.type = 'negative';
+                }
+            }
+            else if ( i <= 1 && curChar == PLACE_HOLDER_TYPE_SEPARATOR ) {
+                // skip it
+            }
+            else if ( mode == MODE_CONSTANT && 
                 curChar == PLACE_HOLDER_FUNCTION_START ) {
 
                 stack.push( { 'char': curChar, mode: mode } );
@@ -167,6 +176,7 @@ define([
         // a list of items to be matched
         this.items = [];
         this.pattern = pattern;
+        this.type = 'positive';
         this._query = null;
         parse.call(this, pattern);
 
@@ -281,7 +291,7 @@ define([
             throw EX_NOT_FORMATTED;
         }
 
-        var ret = [], item, items = this.items, func, context, curChar;
+        var ret = [], item, items = this.items, func, context, curChar, prevInput = '';
 
         for( var i = 0; i < str.length ; i++ ) {
             item = items[i];
@@ -300,7 +310,7 @@ define([
                 }
 
                 context = {
-                    prev: str.charAt(i - 1)
+                    prev: prevInput
                 };
 
                 if ( func.call( null, curChar, item.param, context ) == false ) {
@@ -315,6 +325,8 @@ define([
                     },
                     toString: resultToString
                 });
+
+                prevInput = curChar;
             }
             else if ( item.type == MODE_CONSTANT ) {
                 if ( curChar != item.value ) {
