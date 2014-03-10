@@ -305,7 +305,7 @@ define(['./Formatter',
         format = this.formatter.reset( input );
 
         // 2.5 Batch Input Tricks
-        if ( format.result.matched ) {
+        if ( format.result.legitimate ) {
             if ( 
                 this._isFormatted == false && 
                 (
@@ -327,7 +327,7 @@ define(['./Formatter',
             format = this.formatter.reset( input );
             
             if ( 
-                format.result.matched == false && 
+                format.result.legitimate == false && 
                 this.config.speculation.batchinput == true ) {
                 // get a matched format by trying different type of input
                 // also caret will be adjusted here
@@ -337,9 +337,10 @@ define(['./Formatter',
         }
 
         // revert if match failed
-        while ( format.result.matched == false ) {
-
-            undid = format;
+        while ( format.result.legitimate == false ) {
+            if ( undid == false ) {
+                undid = format;
+            }
             format = this.formatter.undo()
             //>>excludeStart("release", pragmas.release);
             console.log('Failed to format, undo.');
@@ -480,7 +481,7 @@ define(['./Formatter',
 
         var result = this._untouched.pattern.apply( this._untouched.input , true );
 
-        return result.matched;
+        return result.legitimate;
     };
 
     // expose ioc setting

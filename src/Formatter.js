@@ -27,7 +27,8 @@ define([
             cache = this._cache,
             resultObject,
             bestMatchResultObject,
-            bestMatchPattern;
+            bestMatchPattern,
+            skip = false;
 
         //>>excludeStart("release", pragmas.release);
         console.log('Start Formating: "' + cache + '"');
@@ -35,9 +36,23 @@ define([
 
         for( var i = 0; i < this.patterns.length; i++ ) {
             pattern = this.patterns[ i ];
+            if ( pattern.type == 'positive' ) { continue; }
+            if ( resultObject = pattern.apply( cache ) ) {
+                if ( resultObject.matched ) {
+                    bestMatchPattern = pattern;
+                    bestMatchResultObject = resultObject;
+                    skip = true;
+                    break;
+                }
+            }
+        }
+
+        for( var i = 0; i < this.patterns.length && skip == false; i++ ) {
+            pattern = this.patterns[ i ];
+            if ( pattern.type == 'negative' ) { continue; }
             if ( resultObject = pattern.apply( cache ) ) {
                 //>>excludeStart("release", pragmas.release);
-                console.log('  ', pattern + '', resultObject.counts);
+                console.log('  ', pattern + '', pattern.type, resultObject.counts);
                 //>>excludeEnd("release");
                 if ( resultObject.matched ) {
                     bestMatchResultObject = resultObject;

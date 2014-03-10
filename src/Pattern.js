@@ -206,6 +206,11 @@ define([
             }
         }
 
+        if ( this.type == 'negative' ) {
+            // compulsory set it if current pattern is negative one
+            isFullyMatch = true;
+        }
+
         if ( isFullyMatch ) {
             len = matches.length;
         }
@@ -271,6 +276,7 @@ define([
             result: result, 
             // indicate if application is successful
             matched: matched, 
+            legitimate: this.type == 'positive' ? matched : !matched ,
             counts: { 
                 // the number of total match, successful application means a full match
                 total: len, 
