@@ -9,9 +9,10 @@ define([
     './PatternFunction/digit', 
     './PatternFunction/alphabet', 
     '../lib/boe/src/boe/Object/clone', 
+    '../lib/boe/src/boe/util', 
     './PatternIndexQuery', 
     './PatternConstant'
-], function ( pfDigit, pfAlphabet, boeClone, PatternIndexQuery, PatternConstant ) {
+], function ( pfDigit, pfAlphabet, boeClone, boeUtil, PatternIndexQuery, PatternConstant ) {
 
     var PLACE_HOLDER_FUNCTION_START = "{";
     var PLACE_HOLDER_FUNCTION_END = "}";
@@ -28,6 +29,11 @@ define([
     var EX_NOT_TAG = 'Not a tag.';
     var EX_NOT_FORMATTED = 'Not a formatted string.';
 
+    var defaultSettings = {
+        placeholder: {
+            empty: ' '
+        }
+    };
 
     /**
      * return a formatted string for throwing exception
@@ -171,9 +177,11 @@ define([
 
     /* Public Methods */
 
-    function Ctor ( pattern ) {
+    function Ctor ( pattern, config ) {
 
         // a list of items to be matched
+        this.config = boeClone.call(defaultSettings, true);
+        boeUtil.mixin( this.config, config );
         this.items = [];
         this.pattern = pattern;
         this.type = 'positive';
@@ -267,7 +275,7 @@ define([
                 result += item.value;
             }
             else {
-                result += ' ';
+                result += this.config.placeholder.empty;
             }
         }
 
@@ -310,7 +318,7 @@ define([
                     throw EX_NOT_FORMATTED;
                 }
 
-                if ( curChar == ' ' ) {
+                if ( curChar == this.config.placeholder.empty ) {
                     // skip it as it is a placeholder
                     continue;
                 }
@@ -379,8 +387,8 @@ define([
         Ctor.functions[i] = getShorthandDigit(i);
     }
 
-    Ctor.parse = function( str ) {
-        var ret = new Ctor( str );
+    Ctor.parse = function( str, config ) {
+        var ret = new Ctor( str, config );
         return ret;
     };
 

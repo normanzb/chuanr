@@ -19,9 +19,14 @@ define(function(){
     // Helper method for cross browser event listeners
     //
     util.addListener = function (el, evt, handler) {
-        return (typeof el.addEventListener != "undefined")
+        return (el.addEventListener)
             ? el.addEventListener(evt, handler, false)
             : el.attachEvent('on' + evt, handler);
+    };
+    util.removeListener = function (el, evt, handler) {
+        return (el.removeEventListener)
+            ? el.removeEventListener(evt, handler, false)
+            : el.detachEvent('on' + evt, handler);
     };
 
     //

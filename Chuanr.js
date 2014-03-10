@@ -631,9 +631,10 @@ define('Pattern',[
     './PatternFunction/digit', 
     './PatternFunction/alphabet', 
     '../lib/boe/src/boe/Object/clone', 
+    '../lib/boe/src/boe/util', 
     './PatternIndexQuery', 
     './PatternConstant'
-], function ( pfDigit, pfAlphabet, boeClone, PatternIndexQuery, PatternConstant ) {
+], function ( pfDigit, pfAlphabet, boeClone, boeUtil, PatternIndexQuery, PatternConstant ) {
 
     var PLACE_HOLDER_FUNCTION_START = "{";
     var PLACE_HOLDER_FUNCTION_END = "}";
@@ -650,6 +651,11 @@ define('Pattern',[
     var EX_NOT_TAG = 'Not a tag.';
     var EX_NOT_FORMATTED = 'Not a formatted string.';
 
+    var defaultSettings = {
+        placeholder: {
+            empty: ' '
+        }
+    };
 
     /**
      * return a formatted string for throwing exception
@@ -793,9 +799,11 @@ define('Pattern',[
 
     /* Public Methods */
 
-    function Ctor ( pattern ) {
+    function Ctor ( pattern, config ) {
 
         // a list of items to be matched
+        this.config = boeClone.call(defaultSettings, true);
+        boeUtil.mixin( this.config, config );
         this.items = [];
         this.pattern = pattern;
         this.type = 'positive';
@@ -889,7 +897,7 @@ define('Pattern',[
                 result += item.value;
             }
             else {
-                result += ' ';
+                result += this.config.placeholder.empty;
             }
         }
 
@@ -932,7 +940,7 @@ define('Pattern',[
                     throw EX_NOT_FORMATTED;
                 }
 
-                if ( curChar == ' ' ) {
+                if ( curChar == this.config.placeholder.empty ) {
                     // skip it as it is a placeholder
                     continue;
                 }
@@ -1001,8 +1009,8 @@ define('Pattern',[
         Ctor.functions[i] = getShorthandDigit(i);
     }
 
-    Ctor.parse = function( str ) {
-        var ret = new Ctor( str );
+    Ctor.parse = function( str, config ) {
+        var ret = new Ctor( str, config );
         return ret;
     };
 
@@ -1024,9 +1032,14 @@ define('util',[],function(){
     // Helper method for cross browser event listeners
     //
     util.addListener = function (el, evt, handler) {
-        return (typeof el.addEventListener != "undefined")
+        return (el.addEventListener)
             ? el.addEventListener(evt, handler, false)
             : el.attachEvent('on' + evt, handler);
+    };
+    util.removeListener = function (el, evt, handler) {
+        return (el.removeEventListener)
+            ? el.removeEventListener(evt, handler, false)
+            : el.detachEvent('on' + evt, handler);
     };
 
     //
@@ -1568,7 +1581,80 @@ define('../lib/cogs/src/cogs/emittable',['./event'], function (event) {
 
     return emittable;
 });
-define('shim/oninput',[],function () {
+define('shim/../../lib/boe/src/boe/Function/../util',[],function(){
+    
+    
+    var global = (Function("return this"))();
+
+    var OBJECT_PROTO = global.Object.prototype;
+    var ARRAY_PROTO = global.Array.prototype;
+    var FUNCTION_PROTO = global.Function.prototype;
+    var FUNCTION = 'function';
+
+    var ret = {
+        mixinAsStatic: function(target, fn){
+            for(var key in fn){
+                if (!fn.hasOwnProperty(key)){
+                    continue;
+                }
+
+                target[key] = ret.bind.call(FUNCTION_PROTO.call, fn[key]);
+            }
+
+            return target;
+        },
+        type: function(obj){
+            var typ = OBJECT_PROTO.toString.call(obj);
+            var closingIndex = typ.indexOf(']');
+            return typ.substring(8, closingIndex);
+        },
+        mixin: function(target, source, map){
+
+            // in case only source specified
+            if (source == null){
+                source = target;
+                target= {};
+            }
+
+            for(var key in source){
+                if (!source.hasOwnProperty(key)){
+                    continue;
+                }
+
+                target[key] = ( typeof map == FUNCTION ? map( key, source[key] ) : source[key] );
+            }
+
+            return target;
+        },
+        bind: function(context) {
+            var slice = ARRAY_PROTO.slice;
+            var __method = this, args = slice.call(arguments);
+            args.shift();
+            return function wrapper() {
+                if (this instanceof wrapper){
+                    context = this;
+                }
+                return __method.apply(context, args.concat(slice.call(arguments)));
+            };
+        },
+        slice: function(arr) {
+            return ARRAY_PROTO.slice.call(arr);
+        },
+        g: global
+    };
+
+    return ret;
+});
+/*
+ * Function.bind
+ */
+define('shim/../../lib/boe/src/boe/Function/bind',['../util'], function (util) {
+    // simply alias it
+    var FUNCTION_PROTO = util.g.Function.prototype;
+
+    return FUNCTION_PROTO.bind || util.bind;
+});
+define('shim/oninput',['../../lib/boe/src/boe/Function/bind'], function (bind) {
     var INPUT = 'input';
 
     /* Feature Detection */
@@ -1610,10 +1696,37 @@ define('shim/oninput',[],function () {
         return "oninput" in testee || checkEvent(testee);
     }();
 
+    /* Private */
+
+    function onchange( evt ){
+        var me = this;
+        if ( me._el.value != me._old ) {
+            me._old = me._el.value;
+            me.oninput();
+        }
+    }
+
+    function onfocus () {
+        document.attachEvent('onselectionchange', this._onchange);
+    }
+
+    function onblur() {
+        document.detachEvent('onselectionchange', this._onchange);
+    }
+
+    function oninput(){
+        this.oninput();
+    }
+
     /* Public */
     
     function Observer(){
         this._old = '';
+        this._el = null;
+        this._onchange = bind.call(onchange, this);
+        this._onfocus = bind.call(onfocus, this);
+        this._onblur = bind.call(onblur, this);
+        this._oninput = bind.call(oninput, this);
         this.oninput = function(){};
     }
 
@@ -1625,35 +1738,37 @@ define('shim/oninput',[],function () {
         }
 
         var me = this;
-
-        function diff ( evt ){
-            if ( el.value != me._old ) {
-                me._old = el.value;
-                me.oninput();
-            }
-        }
+        me._el = el;
 
         // higher priority to use prooperty change
         // because IE9 oninput is not implemented correctly
         // when you do backspace it doesn't fire oninput
         if ( el.attachEvent ) {
             me._old = el.value;
-            el.attachEvent('onpropertychange', diff);
-            el.attachEvent('onfocus', function(){
-                document.attachEvent('onselectionchange', diff);
-            });
-            el.attachEvent('onblur', function(){
-                document.detachEvent('onselectionchange', diff);
-            });
+            el.attachEvent('onpropertychange', me._onchange);
+            el.attachEvent('onfocus', me._onfocus);
+            el.attachEvent('onblur', me._onblur);
         }
         else if ( hasOnInput ) {
-            el.addEventListener(INPUT, function() {
-                me.oninput();
-            }, false);
+            el.addEventListener(INPUT, me._oninput, false);
         }
         else {
             throw "Something wrong, should never goes to here.";
         }
+    };
+
+    p.dispose = function (){
+        var me = this;
+        var el = me._el;
+        if ( el.attachEvent ) {
+            el.attachEvent('onpropertychange', me._onchange);
+            el.attachEvent('onfocus', me._onfocus);
+            el.attachEvent('onblur', me._onblur);
+        }
+        else {
+            el.removeEventListener(INPUT, me._oninput);
+        }
+
     };
 
     return Observer;
@@ -1689,6 +1804,9 @@ define('Chuanr',['./Formatter',
     };
 
     var defaultSettings = {
+        placeholder: {
+            empty: ' '
+        },
         speculation: {
             batchinput: true
         }
@@ -1766,7 +1884,7 @@ define('Chuanr',['./Formatter',
             (
                 caret.begin < extraction.pattern.items.length &&
                 extraction.pattern.items[caret.begin].type == 2 && 
-                differ.deletion.text == ' '
+                differ.deletion.text == this.config.placeholder.empty
             );
 
         isConstantDeletion = differ.insertion.caret.begin == differ.insertion.caret.end &&
@@ -1790,10 +1908,13 @@ define('Chuanr',['./Formatter',
                 .index().of('function').by({ pattern: { index: caret.begin }}) - (isConstantDeletion?1:0);
         }
 
+        if ( begin > prevInput.length - 1 ) {
+            begin = prevInput.length;
+            end = begin;
+        }
+
         prefix = prevInput.substring( 0, begin );
         postfix = prevInput.substring( end, prevInput.length + 1);
-
-        // prefix.length - trim.call( prefix ).length 
 
         input = prefix + differ.insertion.text + postfix;
             
@@ -2012,6 +2133,8 @@ define('Chuanr',['./Formatter',
         this._untouched = null;
         this._isFormatted = false;
 
+        this._onKeyDown = bind.call(onKeyDown, this);
+
         this.onPrevented = event();
         this.onResumed = event();
         emittable( this );
@@ -2032,7 +2155,7 @@ define('Chuanr',['./Formatter',
         this._el = el;
 
         for( var i = 0 ; i < patterns.length; i++ ) {
-            this.patterns.push( ioc.Pattern.parse( patterns[ i ] ) );
+            this.patterns.push( ioc.Pattern.parse( patterns[ i ], this.config ) );
         }
 
         this.formatter = new ioc.Formatter(this.patterns);
@@ -2041,13 +2164,18 @@ define('Chuanr',['./Formatter',
         this.oninput.observe(el);
         this.oninput.oninput = bind.call(onInput, this);
 
-        util.addListener(el, 'keydown', bind.call(onKeyDown, this));
+        util.addListener(el, 'keydown', this._onKeyDown );
 
         if ( this._el.value != "" ) {
             // not equal to empty spaces
             onInput.call(this);
         }
 
+    };
+
+    p.dispose = function() {
+        this.oninput.dispose();
+        util.removeListener( this._el, 'keydown', this._onKeyDown );
     };
 
     /**

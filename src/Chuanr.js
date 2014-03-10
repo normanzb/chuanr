@@ -39,6 +39,9 @@ define(['./Formatter',
     };
 
     var defaultSettings = {
+        placeholder: {
+            empty: ' '
+        },
         speculation: {
             batchinput: true
         }
@@ -137,7 +140,7 @@ define(['./Formatter',
             (
                 caret.begin < extraction.pattern.items.length &&
                 extraction.pattern.items[caret.begin].type == 2 && 
-                differ.deletion.text == ' '
+                differ.deletion.text == this.config.placeholder.empty
             );
 
         isConstantDeletion = differ.insertion.caret.begin == differ.insertion.caret.end &&
@@ -164,10 +167,13 @@ define(['./Formatter',
                 .index().of('function').by({ pattern: { index: caret.begin }}) - (isConstantDeletion?1:0);
         }
 
+        if ( begin > prevInput.length - 1 ) {
+            begin = prevInput.length;
+            end = begin;
+        }
+
         prefix = prevInput.substring( 0, begin );
         postfix = prevInput.substring( end, prevInput.length + 1);
-
-        // prefix.length - trim.call( prefix ).length 
 
         input = prefix + differ.insertion.text + postfix;
             
@@ -433,6 +439,8 @@ define(['./Formatter',
         this._untouched = null;
         this._isFormatted = false;
 
+        this._onKeyDown = bind.call(onKeyDown, this);
+
         this.onPrevented = event();
         this.onResumed = event();
         emittable( this );
@@ -453,7 +461,7 @@ define(['./Formatter',
         this._el = el;
 
         for( var i = 0 ; i < patterns.length; i++ ) {
-            this.patterns.push( ioc.Pattern.parse( patterns[ i ] ) );
+            this.patterns.push( ioc.Pattern.parse( patterns[ i ], this.config ) );
         }
 
         this.formatter = new ioc.Formatter(this.patterns);
@@ -462,13 +470,18 @@ define(['./Formatter',
         this.oninput.observe(el);
         this.oninput.oninput = bind.call(onInput, this);
 
-        util.addListener(el, 'keydown', bind.call(onKeyDown, this));
+        util.addListener(el, 'keydown', this._onKeyDown );
 
         if ( this._el.value != "" ) {
             // not equal to empty spaces
             onInput.call(this);
         }
 
+    };
+
+    p.dispose = function() {
+        this.oninput.dispose();
+        util.removeListener( this._el, 'keydown', this._onKeyDown );
     };
 
     /**

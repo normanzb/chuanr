@@ -3,7 +3,7 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
     var define = require('amdefine')(module);
 }
 //>>excludeEnd("release");
-define(function () {
+define(['../../lib/boe/src/boe/Function/bind'], function (bind) {
     var INPUT = 'input';
 
     /* Feature Detection */
@@ -45,10 +45,37 @@ define(function () {
         return "oninput" in testee || checkEvent(testee);
     }();
 
+    /* Private */
+
+    function onchange( evt ){
+        var me = this;
+        if ( me._el.value != me._old ) {
+            me._old = me._el.value;
+            me.oninput();
+        }
+    }
+
+    function onfocus () {
+        document.attachEvent('onselectionchange', this._onchange);
+    }
+
+    function onblur() {
+        document.detachEvent('onselectionchange', this._onchange);
+    }
+
+    function oninput(){
+        this.oninput();
+    }
+
     /* Public */
     
     function Observer(){
         this._old = '';
+        this._el = null;
+        this._onchange = bind.call(onchange, this);
+        this._onfocus = bind.call(onfocus, this);
+        this._onblur = bind.call(onblur, this);
+        this._oninput = bind.call(oninput, this);
         this.oninput = function(){};
     }
 
@@ -60,35 +87,37 @@ define(function () {
         }
 
         var me = this;
-
-        function diff ( evt ){
-            if ( el.value != me._old ) {
-                me._old = el.value;
-                me.oninput();
-            }
-        }
+        me._el = el;
 
         // higher priority to use prooperty change
         // because IE9 oninput is not implemented correctly
         // when you do backspace it doesn't fire oninput
         if ( el.attachEvent ) {
             me._old = el.value;
-            el.attachEvent('onpropertychange', diff);
-            el.attachEvent('onfocus', function(){
-                document.attachEvent('onselectionchange', diff);
-            });
-            el.attachEvent('onblur', function(){
-                document.detachEvent('onselectionchange', diff);
-            });
+            el.attachEvent('onpropertychange', me._onchange);
+            el.attachEvent('onfocus', me._onfocus);
+            el.attachEvent('onblur', me._onblur);
         }
         else if ( hasOnInput ) {
-            el.addEventListener(INPUT, function() {
-                me.oninput();
-            }, false);
+            el.addEventListener(INPUT, me._oninput, false);
         }
         else {
             throw "Something wrong, should never goes to here.";
         }
+    };
+
+    p.dispose = function (){
+        var me = this;
+        var el = me._el;
+        if ( el.attachEvent ) {
+            el.attachEvent('onpropertychange', me._onchange);
+            el.attachEvent('onfocus', me._onfocus);
+            el.attachEvent('onblur', me._onblur);
+        }
+        else {
+            el.removeEventListener(INPUT, me._oninput);
+        }
+
     };
 
     return Observer;
