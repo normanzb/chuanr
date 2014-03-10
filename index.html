@@ -173,7 +173,7 @@
     <script type="text/javascript">
         window.onload = function () {
             var isDebug = location.hash.indexOf('debug') > 0;
-            require([ (isDebug ? './src/Chuanr': './Chuanr.min')], function( Chuanr ){
+            require([ (isDebug ? './src/Chuanr': './Chuanr')], function( Chuanr ){
 
                 function scheduleErrorClear(){
                     if ( schHandle ) {
@@ -215,7 +215,7 @@
                     var genericPattern = Chuanr.setting.Pattern.parse(
                         format.pattern.pattern + '{d}'
                     );
-
+                    genericPattern.type = 'positive';
                     for(var i = 0; i < genericPattern.items.length; i++) {
                         curItem = genericPattern.items[i];
                         if ( curItem.type == 2 ) {
