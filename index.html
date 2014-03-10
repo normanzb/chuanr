@@ -207,15 +207,29 @@
                     "({dd}) {792d(03489)}-{dddd}",
                     "({dd}) {793d(012456789)}-{dddd}",
                     "({dd}) {794d}-{dddd}",
-                    "({11}) {d(2345)ddd}-{dddd}"
+                    "({11}) {d(2345)ddd}-{dddd}",
+                    "-|({11}) {d(2345)d(+1)d(+1)d(+1)}-{d(+1)d(+1)}"
                 ]);
                 chuanr.on('prevented', function(format) {
+                    var curItem;
+                    var genericPattern = Chuanr.setting.Pattern.parse(
+                        format.pattern.pattern + '{d}'
+                    );
 
-                    var genericPattern = Chuanr.setting.Pattern.parse("({dd}) {ddddd}-{ddddd}");
+                    for(var i = 0; i < genericPattern.items.length; i++) {
+                        curItem = genericPattern.items[i];
+                        if ( curItem.type == 2 ) {
+                            curItem.param = '';
+                            curItem.value = 'd';
+                        }
+                    }
+
                     var genericFormatter = new Chuanr.setting.Formatter([genericPattern]);
 
-                    for(var i = 0; i < format.input.length; i++){
-                        genericFormatter.input(format.input.charAt(i));    
+                    var input = format.input.replace(/[\(\){}\-\ ]/g, '');
+
+                    for(var i = 0; i < input.length; i++){
+                        genericFormatter.input(input.charAt(i));    
                     }
 
                     var output = genericFormatter.output();
