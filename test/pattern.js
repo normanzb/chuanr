@@ -234,6 +234,7 @@ describe('Pattern', function(){
         assert.deepEqual( result,  { 
             result: '(11) 99386-    ',
             matched: true,
+            legitimate: true,
             counts: { total: 7, matched: 7 },
             toString: result.toString
         } );
@@ -250,6 +251,7 @@ describe('Pattern', function(){
         assert.deepEqual( result,  { 
             result: '(11) 99386-3845',
             matched: true,
+            legitimate: true,
             counts: { total: 11, matched: 11 },
             toString: result.toString
         } );
@@ -266,6 +268,7 @@ describe('Pattern', function(){
         assert.deepEqual( result,  { 
             result: '(11) 99386-3845',
             matched: false,
+            legitimate: false,
             counts: { total: 12, matched: 11 },
             toString: result.toString
         } );

@@ -28,6 +28,7 @@ describe('PatternFunction.digit', function(){
         assert.deepEqual( result,  { 
             result: '1234567890-1234567890',
             matched: true,
+            legitimate: true,
             counts: { total: 20, matched: 20 },
             toString: result.toString
         } );
@@ -51,6 +52,7 @@ describe('PatternFunction.digit', function(){
             assert.deepEqual( result,  { 
                 result: " ",
                 matched: false,
+                legitimate: false,
                 counts: { total: 1, matched: 0 },
                 toString: result.toString
             } );
@@ -70,6 +72,7 @@ describe('PatternFunction.digit', function(){
                 assert.deepEqual( result,  { 
                     result: " ",
                     matched: false,
+                    legitimate: false,
                     counts: { total: 1, matched: 0 },
                     toString: result.toString
                 } );
@@ -96,6 +99,7 @@ describe('PatternFunction.digit', function(){
             assert.deepEqual( result,  { 
                 result: correctResult[i]?i+'':' ',
                 matched: correctResult[i]?true:false,
+                legitimate: correctResult[i]?true:false,
                 counts: { total: 1, matched: correctResult[i]?1:0 },
                 toString: result.toString
             } );
@@ -119,6 +123,7 @@ describe('PatternFunction.digit', function(){
             assert.deepEqual( result,  { 
                 result: correctResult[i]?i+'':' ',
                 matched: correctResult[i]?true:false,
+                legitimate: correctResult[i]?true:false,
                 counts: { total: 1, matched: correctResult[i]?1:0 },
                 toString: result.toString
             } );
@@ -137,6 +142,7 @@ describe('PatternFunction.digit', function(){
         assert.deepEqual( result,  { 
             result: '3-3',
             matched: true,
+            legitimate: true,
             counts: { total: 2, matched: 2 },
             toString: result.toString
         } );
@@ -152,6 +158,7 @@ describe('PatternFunction.digit', function(){
         assert.deepEqual( result,  { 
             result: '3- ',
             matched: false,
+            legitimate: false,
             counts: { total: 2, matched: 1 },
             toString: result.toString
         } );
@@ -167,6 +174,7 @@ describe('PatternFunction.digit', function(){
         assert.deepEqual( result,  { 
             result: 'a- ',
             matched: false,
+            legitimate: false,
             counts: { total: 2, matched: 1 },
             toString: result.toString
         } );
@@ -182,6 +190,7 @@ describe('PatternFunction.digit', function(){
         assert.deepEqual( result,  { 
             result: '- -',
             matched: false,
+            legitimate: false,
             counts: { total: 1, matched: 0 },
             toString: result.toString
         } );
@@ -199,6 +208,7 @@ describe('PatternFunction.digit', function(){
         assert.deepEqual( result,  { 
             result: '1-2',
             matched: true,
+            legitimate: true,
             counts: { total: 2, matched: 2 },
             toString: result.toString
         } );
@@ -214,6 +224,7 @@ describe('PatternFunction.digit', function(){
         assert.deepEqual( result,  { 
             result: '1-2',
             matched: true,
+            legitimate: true,
             counts: { total: 2, matched: 2 },
             toString: result.toString
         } );
@@ -229,6 +240,7 @@ describe('PatternFunction.digit', function(){
         assert.deepEqual( result,  { 
             result: '0- ',
             matched: false,
+            legitimate: false,
             counts: { total: 2, matched: 1 },
             toString: result.toString
         } );
@@ -244,6 +256,7 @@ describe('PatternFunction.digit', function(){
         assert.deepEqual( result,  { 
             result: '0- ',
             matched: false,
+            legitimate: false,
             counts: { total: 2, matched: 1 },
             toString: result.toString
         } );
@@ -259,6 +272,7 @@ describe('PatternFunction.digit', function(){
         assert.deepEqual( result,  { 
             result: '9- ',
             matched: false,
+            legitimate: false,
             counts: { total: 3, matched: 1 },
             toString: result.toString
         } );
@@ -274,6 +288,7 @@ describe('PatternFunction.digit', function(){
         assert.deepEqual( result,  { 
             result: '1-4',
             matched: true,
+            legitimate: true,
             counts: { total: 2, matched: 2 },
             toString: result.toString
         } );
@@ -289,6 +304,7 @@ describe('PatternFunction.digit', function(){
         assert.deepEqual( result,  { 
             result: '3- ',
             matched: false,
+            legitimate: false,
             counts: { total: 2, matched: 1 },
             toString: result.toString
         } );
@@ -304,6 +320,7 @@ describe('PatternFunction.digit', function(){
         assert.deepEqual( result,  { 
             result: '- -',
             matched: false,
+            legitimate: false,
             counts: { total: 1, matched: 0 },
             toString: result.toString
         } );
@@ -321,6 +338,7 @@ describe('PatternFunction.digit', function(){
         assert.deepEqual( result,  { 
             result: '1-0',
             matched: true,
+            legitimate: true,
             counts: { total: 2, matched: 2 },
             toString: result.toString
         } );
@@ -336,6 +354,7 @@ describe('PatternFunction.digit', function(){
         assert.deepEqual( result,  { 
             result: '1-0',
             matched: true,
+            legitimate: true,
             counts: { total: 2, matched: 2 },
             toString: result.toString
         } );
@@ -351,6 +370,7 @@ describe('PatternFunction.digit', function(){
         assert.deepEqual( result,  { 
             result: '0- ',
             matched: false,
+            legitimate: false,
             counts: { total: 2, matched: 1 },
             toString: result.toString
         } );
@@ -366,6 +386,7 @@ describe('PatternFunction.digit', function(){
         assert.deepEqual( result,  { 
             result: '0- ',
             matched: false,
+            legitimate: false,
             counts: { total: 2, matched: 1 },
             toString: result.toString
         } );
@@ -381,6 +402,7 @@ describe('PatternFunction.digit', function(){
         assert.deepEqual( result,  { 
             result: '0- ',
             matched: false,
+            legitimate: false,
             counts: { total: 3, matched: 1 },
             toString: result.toString
         } );
@@ -396,6 +418,7 @@ describe('PatternFunction.digit', function(){
         assert.deepEqual( result,  { 
             result: '7-1',
             matched: true,
+            legitimate: true,
             counts: { total: 2, matched: 2 },
             toString: result.toString
         } );
@@ -411,6 +434,7 @@ describe('PatternFunction.digit', function(){
         assert.deepEqual( result,  { 
             result: '7- ',
             matched: false,
+            legitimate: false,
             counts: { total: 2, matched: 1 },
             toString: result.toString
         } );
@@ -426,6 +450,7 @@ describe('PatternFunction.digit', function(){
         assert.deepEqual( result,  { 
             result: '- -',
             matched: false,
+            legitimate: false,
             counts: { total: 1, matched: 0 },
             toString: result.toString
         } );

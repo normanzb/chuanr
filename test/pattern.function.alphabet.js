@@ -27,6 +27,7 @@ describe('PatternFunction.alphabet', function(){
         assert.deepEqual( result,  { 
             result: '-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
             matched: true,
+            legitimate: true,
             counts: { total: 52, matched: 52 },
             toString: result.toString
         } );
@@ -42,6 +43,7 @@ describe('PatternFunction.alphabet', function(){
         assert.deepEqual( result,  { 
             result: '-                    ',
             matched: false,
+            legitimate: false,
             counts: { total: 20, matched: 0 },
             toString: result.toString
         } );
