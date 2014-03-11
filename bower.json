@@ -1,9 +1,9 @@
 {
   "name": "chuanr",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "devDependencies": {
     "boe": "~1.1.9",
     "cogs": "~1.0.1",
-    "amdshim": "~0.0.1"
+    "amdshim": "~0.0.2"
   }
 }
