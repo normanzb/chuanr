@@ -74,6 +74,17 @@ var global = new Function('return this')();var parentDefine = global.define || (
 }());
 define("../lib/amdshim/amdshim", function(){});
 
+
+define('PatternConstant',[],function(){
+    return {
+        MODE_CONSTANT : 1,
+        MODE_FUNCTION : 2,
+        MODE_PARAMETER : 4,
+        TYPE_POSITIVE : 'positive',
+        TYPE_NEGATIVE : 'negative',
+        TYPE_PARTIAL : 'partial'
+    };
+});
 define('../lib/boe/src/boe/util',[],function(){
     
     
@@ -155,8 +166,11 @@ define('../lib/boe/src/boe/String/trim',['../util'], function (util) {
 
 
 define('Formatter',[
+    './PatternConstant', 
     '../lib/boe/src/boe/String/trim'
-    ], function (trim
+    ], function (
+    PatternConstant,
+    trim
         ) {
 
     var EX_NO_PATTERN = 'No pattern specified';
@@ -176,7 +190,7 @@ define('Formatter',[
         
         for( var i = 0; i < this.patterns.length; i++ ) {
             pattern = this.patterns[ i ];
-            if ( pattern.type == 'positive' ) { continue; }
+            if ( pattern.type == PatternConstant.TYPE_POSITIVE ) { continue; }
             if ( resultObject = pattern.apply( cache ) ) {
                 if ( resultObject.matched ) {
                     bestMatchPattern = pattern;
@@ -189,7 +203,10 @@ define('Formatter',[
 
         for( var i = 0; i < this.patterns.length && skip == false; i++ ) {
             pattern = this.patterns[ i ];
-            if ( pattern.type == 'negative' ) { continue; }
+            if ( 
+                pattern.type == PatternConstant.TYPE_NEGATIVE ||
+                pattern.type == PatternConstant.TYPE_PARTIAL
+            ) { continue; }
             if ( resultObject = pattern.apply( cache ) ) {
                                 if ( resultObject.matched ) {
                     bestMatchResultObject = resultObject;
@@ -470,6 +487,53 @@ define( 'PatternFunction/alphabet',[],function () {
 
     return ret;
 });
+define( 'PatternFunction/duplicate',[],function () {
+    var ret = function(input, param, context){
+        var index = context.index >>> 0;
+        var items = context.pattern.items;
+        var prevItem;
+        var prevFunc;
+        var matches = [];
+
+        if ( param == 'o' && input == '') {
+            return true;
+        }
+
+        for(var l = items.length;l--; ){
+            if ( items[l].type == 2 ) {
+                matches.unshift(items[l]);
+            }
+        }
+
+        for(var l = matches.length;l--; ){
+            if ( l == index - 1 ) {
+                prevItem = matches[l];
+                prevFunc = context.pattern.constructor.functions[prevItem.value];
+                if ( ret !== prevFunc ) {
+                    break;
+                }
+                else {
+                    index--;
+                }
+            }
+        }
+
+        if ( prevFunc == null || ret == prevFunc ) {
+            throw new Error("No previous function");
+        }
+
+        return prevFunc.call(this, input, prevItem.param, context);
+    };
+
+    return ret;
+});
+define( 'PatternFunction/never',[],function duplicate() {
+    var ret = function(input, param, context){
+        return false;
+    };
+
+    return ret;
+});
 define('../lib/boe/src/boe/Object/clone',['../util'], function(util){
 
     var FUNCTION = 'function';
@@ -534,14 +598,6 @@ define('../lib/boe/src/boe/Object/clone',['../util'], function(util){
     };
 
     return boeObjectClone;
-});
-
-define('PatternConstant',[],function(){
-    return {
-        MODE_CONSTANT : 1,
-        MODE_FUNCTION : 2,
-        MODE_PARAMETER : 4
-    };
 });
 
 define('PatternIndexQuery',['./PatternConstant'], function ( PatternConstant ) {
@@ -637,17 +693,24 @@ define('PatternIndexQuery',['./PatternConstant'], function ( PatternConstant ) {
 define('Pattern',[
     './PatternFunction/digit', 
     './PatternFunction/alphabet', 
+    './PatternFunction/duplicate',
+    './PatternFunction/never',
     '../lib/boe/src/boe/Object/clone', 
     '../lib/boe/src/boe/util', 
     './PatternIndexQuery', 
     './PatternConstant'
-], function ( pfDigit, pfAlphabet, boeClone, boeUtil, PatternIndexQuery, PatternConstant ) {
+], function ( pfDigit, pfAlphabet, pfDuplicate, pfNever, 
+    boeClone, boeUtil, PatternIndexQuery, PatternConstant ) {
 
     var PLACE_HOLDER_FUNCTION_START = "{";
     var PLACE_HOLDER_FUNCTION_END = "}";
     var PLACE_HOLDER_CALL_START = "(";
     var PLACE_HOLDER_CALL_END = ")";
     var PLACE_HOLDER_TYPE_SEPARATOR = "|";
+
+    var TYPE_POSITIVE = PatternConstant.TYPE_POSITIVE;
+    var TYPE_NEGATIVE = PatternConstant.TYPE_NEGATIVE;
+    var TYPE_PARTIAL = PatternConstant.TYPE_PARTIAL;
 
     var MODE_CONSTANT = PatternConstant.MODE_CONSTANT;
     var MODE_FUNCTION = PatternConstant.MODE_FUNCTION;
@@ -715,7 +778,12 @@ define('Pattern',[
             // Check for special chars
             if ( i == 0 && str.charAt( i + 1 ) == PLACE_HOLDER_TYPE_SEPARATOR ) {
                 if ( curChar == '-' ) {
-                    me.type = 'negative';
+                    me.type = TYPE_NEGATIVE;
+                }
+            }
+            if ( i == 0 && str.charAt( i + 1 ) == PLACE_HOLDER_TYPE_SEPARATOR ) {
+                if ( curChar == '~' ) {
+                    me.type = TYPE_PARTIAL;
                 }
             }
             else if ( i <= 1 && curChar == PLACE_HOLDER_TYPE_SEPARATOR ) {
@@ -813,7 +881,7 @@ define('Pattern',[
         boeUtil.mixin( this.config, config );
         this.items = [];
         this.pattern = pattern;
-        this.type = 'positive';
+        this.type = TYPE_POSITIVE;
         this._query = null;
         parse.call(this, pattern);
 
@@ -843,7 +911,7 @@ define('Pattern',[
             }
         }
 
-        if ( this.type == 'negative' ) {
+        if ( this.type == TYPE_NEGATIVE ) {
             // compulsory set it if current pattern is negative one
             isFullyMatch = true;
         }
@@ -855,7 +923,14 @@ define('Pattern',[
             len = input.length;
         }
 
-        if ( string.length > matches.length ) {
+        if ( string.length > matches.length && 
+            // make sure negative pattern matches even when string length larger than
+            // pattern length, e.g. input = 123456 matches -|1234
+            // If want to stop user from inputting "1234" but allow input "123488"
+            // negative pattern -|1234 won't work, because it will prevent user from inputing 88
+            // In that case, we can make a positive pattern to match anything but "1234" instead
+            // e.g. ["{123d(1-35-9)}", "{dddddd}"]
+            this.type == TYPE_POSITIVE ) {
             matched = false;
         }
 
@@ -874,6 +949,8 @@ define('Pattern',[
                 }
 
                 context = {
+                    pattern: this,
+                    index: i, 
                     prev: input.charAt( i - 1 )
                 };
 
@@ -934,7 +1011,7 @@ define('Pattern',[
             throw EX_NOT_FORMATTED;
         }
 
-        var ret = [], item, items = this.items, func, context, curChar, prevInput = '';
+        var ret = [], item, items = this.items, func, context, curChar, prevInput = '', index = 0;
 
         for( var i = 0; i < str.length ; i++ ) {
             item = items[i];
@@ -953,6 +1030,8 @@ define('Pattern',[
                 }
 
                 context = {
+                    pattern: this,
+                    index: index,
                     prev: prevInput
                 };
 
@@ -970,6 +1049,7 @@ define('Pattern',[
                 });
 
                 prevInput = curChar;
+                index++;
             }
             else if ( item.type == MODE_CONSTANT ) {
                 if ( curChar != item.value ) {
@@ -1010,6 +1090,8 @@ define('Pattern',[
     Ctor.functions = {
         'd': pfDigit,
         'a': pfAlphabet,
+        'x': pfDuplicate,
+        'n': pfNever
     };
 
     for ( var i = 10; i--; ) {
@@ -1783,8 +1865,10 @@ define('shim/oninput',['../../lib/boe/src/boe/Function/bind'], function (bind) {
 });
 
 
-define('Chuanr',['./Formatter', 
+define('Chuanr',[
+    './Formatter', 
     './Pattern', 
+    './PatternConstant', 
     './util', 
     './caret', 
     './differ', 
@@ -1797,7 +1881,10 @@ define('Chuanr',['./Formatter',
     './shim/oninput'
         ], 
     function ( 
-        Formatter, Pattern, util, caretUtil, differUtil,
+        Formatter, 
+        Pattern, 
+        PatternConstant,
+        util, caretUtil, differUtil,
         bind, trim, clone, boeUtil, 
         emittable, event, 
         InputObserver
@@ -1890,15 +1977,13 @@ define('Chuanr',['./Formatter',
         isSpaceDeletion = differ.insertion.caret.begin == differ.insertion.caret.end &&
             (
                 caret.begin < extraction.pattern.items.length &&
-                extraction.pattern.items[caret.begin].type == 2 && 
+                extraction.pattern.items[caret.begin].type == PatternConstant.MODE_FUNCTION && 
                 differ.deletion.text == this.config.placeholder.empty
             );
 
         isConstantDeletion = differ.insertion.caret.begin == differ.insertion.caret.end &&
             differ.deletion.text.length > 0 && 
-            (
-                extraction.pattern.items[caret.begin].type == 1
-            );
+            extraction.pattern.items[caret.begin].type == PatternConstant.MODE_CONSTANT;
 
         begin = extraction.pattern
             .index()

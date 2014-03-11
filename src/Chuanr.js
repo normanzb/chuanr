@@ -5,8 +5,10 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
 }
 //>>excludeEnd("release");
 
-define(['./Formatter', 
+define([
+    './Formatter', 
     './Pattern', 
+    './PatternConstant', 
     './util', 
     './caret', 
     './differ', 
@@ -22,7 +24,10 @@ define(['./Formatter',
     //>>excludeEnd("release");
     ], 
     function ( 
-        Formatter, Pattern, util, caretUtil, differUtil,
+        Formatter, 
+        Pattern, 
+        PatternConstant,
+        util, caretUtil, differUtil,
         bind, trim, clone, boeUtil, 
         emittable, event, 
         InputObserver
@@ -139,15 +144,13 @@ define(['./Formatter',
         isSpaceDeletion = differ.insertion.caret.begin == differ.insertion.caret.end &&
             (
                 caret.begin < extraction.pattern.items.length &&
-                extraction.pattern.items[caret.begin].type == 2 && 
+                extraction.pattern.items[caret.begin].type == PatternConstant.MODE_FUNCTION && 
                 differ.deletion.text == this.config.placeholder.empty
             );
 
         isConstantDeletion = differ.insertion.caret.begin == differ.insertion.caret.end &&
             differ.deletion.text.length > 0 && 
-            (
-                extraction.pattern.items[caret.begin].type == 1
-            );
+            extraction.pattern.items[caret.begin].type == PatternConstant.MODE_CONSTANT;
 
         begin = extraction.pattern
             .index()

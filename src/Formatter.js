@@ -6,11 +6,14 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
 //>>excludeEnd("release");
 
 define([
+    './PatternConstant', 
     '../lib/boe/src/boe/String/trim'
     //>>excludeStart("release", pragmas.release);
     , './shim/console'
     //>>excludeEnd("release");
-], function (trim
+], function (
+    PatternConstant,
+    trim
     //>>excludeStart("release", pragmas.release);
     ,console
     //>>excludeEnd("release");
@@ -36,7 +39,7 @@ define([
 
         for( var i = 0; i < this.patterns.length; i++ ) {
             pattern = this.patterns[ i ];
-            if ( pattern.type == 'positive' ) { continue; }
+            if ( pattern.type == PatternConstant.TYPE_POSITIVE ) { continue; }
             if ( resultObject = pattern.apply( cache ) ) {
                 if ( resultObject.matched ) {
                     bestMatchPattern = pattern;
@@ -49,7 +52,10 @@ define([
 
         for( var i = 0; i < this.patterns.length && skip == false; i++ ) {
             pattern = this.patterns[ i ];
-            if ( pattern.type == 'negative' ) { continue; }
+            if ( 
+                pattern.type == PatternConstant.TYPE_NEGATIVE ||
+                pattern.type == PatternConstant.TYPE_PARTIAL
+            ) { continue; }
             if ( resultObject = pattern.apply( cache ) ) {
                 //>>excludeStart("release", pragmas.release);
                 console.log('  ', pattern + '', pattern.type, resultObject.counts);

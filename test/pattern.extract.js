@@ -17,7 +17,15 @@ describe('Pattern.extract', function(){
         var pattern = Pattern.parse( tester );
         
         var extraction = pattern.extract('(12) 3456-7893');
-        console.log(extraction)
+        assert.equal(extraction + '',  '1234567893');
+    });
+
+    it('extract correctly from a pattern which used duplication function', function(){
+        var tester = "({1d(+1)}) {d(+1)xd(+1)d(+1)}-{d(=)xxx}";
+        var pattern = Pattern.parse( tester );
+        
+        var extraction = pattern.extract('(12) 3456-6666');
+        assert.equal(extraction + '',  '1234566666');
     });
 
 });

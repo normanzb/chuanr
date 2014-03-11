@@ -8,6 +8,9 @@ define(function(){
     return {
         MODE_CONSTANT : 1,
         MODE_FUNCTION : 2,
-        MODE_PARAMETER : 4
+        MODE_PARAMETER : 4,
+        TYPE_POSITIVE : 'positive',
+        TYPE_NEGATIVE : 'negative',
+        TYPE_PARTIAL : 'partial'
     };
 });

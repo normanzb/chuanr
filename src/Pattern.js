@@ -8,17 +8,24 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
 define([
     './PatternFunction/digit', 
     './PatternFunction/alphabet', 
+    './PatternFunction/duplicate',
+    './PatternFunction/never',
     '../lib/boe/src/boe/Object/clone', 
     '../lib/boe/src/boe/util', 
     './PatternIndexQuery', 
     './PatternConstant'
-], function ( pfDigit, pfAlphabet, boeClone, boeUtil, PatternIndexQuery, PatternConstant ) {
+], function ( pfDigit, pfAlphabet, pfDuplicate, pfNever, 
+    boeClone, boeUtil, PatternIndexQuery, PatternConstant ) {
 
     var PLACE_HOLDER_FUNCTION_START = "{";
     var PLACE_HOLDER_FUNCTION_END = "}";
     var PLACE_HOLDER_CALL_START = "(";
     var PLACE_HOLDER_CALL_END = ")";
     var PLACE_HOLDER_TYPE_SEPARATOR = "|";
+
+    var TYPE_POSITIVE = PatternConstant.TYPE_POSITIVE;
+    var TYPE_NEGATIVE = PatternConstant.TYPE_NEGATIVE;
+    var TYPE_PARTIAL = PatternConstant.TYPE_PARTIAL;
 
     var MODE_CONSTANT = PatternConstant.MODE_CONSTANT;
     var MODE_FUNCTION = PatternConstant.MODE_FUNCTION;
@@ -86,7 +93,12 @@ define([
             // Check for special chars
             if ( i == 0 && str.charAt( i + 1 ) == PLACE_HOLDER_TYPE_SEPARATOR ) {
                 if ( curChar == '-' ) {
-                    me.type = 'negative';
+                    me.type = TYPE_NEGATIVE;
+                }
+            }
+            if ( i == 0 && str.charAt( i + 1 ) == PLACE_HOLDER_TYPE_SEPARATOR ) {
+                if ( curChar == '~' ) {
+                    me.type = TYPE_PARTIAL;
                 }
             }
             else if ( i <= 1 && curChar == PLACE_HOLDER_TYPE_SEPARATOR ) {
@@ -184,7 +196,7 @@ define([
         boeUtil.mixin( this.config, config );
         this.items = [];
         this.pattern = pattern;
-        this.type = 'positive';
+        this.type = TYPE_POSITIVE;
         this._query = null;
         parse.call(this, pattern);
 
@@ -214,7 +226,7 @@ define([
             }
         }
 
-        if ( this.type == 'negative' ) {
+        if ( this.type == TYPE_NEGATIVE ) {
             // compulsory set it if current pattern is negative one
             isFullyMatch = true;
         }
@@ -226,7 +238,14 @@ define([
             len = input.length;
         }
 
-        if ( string.length > matches.length ) {
+        if ( string.length > matches.length && 
+            // make sure negative pattern matches even when string length larger than
+            // pattern length, e.g. input = 123456 matches -|1234
+            // If want to stop user from inputting "1234" but allow input "123488"
+            // negative pattern -|1234 won't work, because it will prevent user from inputing 88
+            // In that case, we can make a positive pattern to match anything but "1234" instead
+            // e.g. ["{123d(1-35-9)}", "{dddddd}"]
+            this.type == TYPE_POSITIVE ) {
             matched = false;
         }
 
@@ -245,6 +264,8 @@ define([
                 }
 
                 context = {
+                    pattern: this,
+                    index: i, 
                     prev: input.charAt( i - 1 )
                 };
 
@@ -305,7 +326,7 @@ define([
             throw EX_NOT_FORMATTED;
         }
 
-        var ret = [], item, items = this.items, func, context, curChar, prevInput = '';
+        var ret = [], item, items = this.items, func, context, curChar, prevInput = '', index = 0;
 
         for( var i = 0; i < str.length ; i++ ) {
             item = items[i];
@@ -324,6 +345,8 @@ define([
                 }
 
                 context = {
+                    pattern: this,
+                    index: index,
                     prev: prevInput
                 };
 
@@ -341,6 +364,7 @@ define([
                 });
 
                 prevInput = curChar;
+                index++;
             }
             else if ( item.type == MODE_CONSTANT ) {
                 if ( curChar != item.value ) {
@@ -381,6 +405,8 @@ define([
     Ctor.functions = {
         'd': pfDigit,
         'a': pfAlphabet,
+        'x': pfDuplicate,
+        'n': pfNever
     };
 
     for ( var i = 10; i--; ) {
