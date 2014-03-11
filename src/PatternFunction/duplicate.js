@@ -11,7 +11,7 @@ define( function () {
         var prevFunc;
         var matches = [];
 
-        if ( param == 'o' && input == '') {
+        if ( param == '?' && input == '') {
             return true;
         }
 
