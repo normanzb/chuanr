@@ -80,10 +80,127 @@ define('PatternConstant',[],function(){
         MODE_CONSTANT : 1,
         MODE_FUNCTION : 2,
         MODE_PARAMETER : 4,
-        TYPE_POSITIVE : 'positive',
-        TYPE_NEGATIVE : 'negative',
-        TYPE_PARTIAL : 'partial'
+        TYPE_POSITIVE : 0,
+        TYPE_NEGATIVE : 1,
+        TYPE_PARTIAL : 2,
+        TYPE_PASSIVE : 4
     };
+});
+/**
+ * Modified based on util.js in https://github.com/firstopinion/formatter.js
+ */
+
+define('util',[],function(){
+
+    var util = {};
+
+    // Useragent info for keycode handling
+    var uAgent = (typeof navigator !== 'undefined') ? navigator.userAgent : null,
+        iPhone = /iphone/i.test(uAgent);
+
+    //
+    // Helper method for cross browser event listeners
+    //
+    util.addListener = function (el, evt, handler) {
+        return (el.addEventListener)
+            ? el.addEventListener(evt, handler, false)
+            : el.attachEvent('on' + evt, handler);
+    };
+    util.removeListener = function (el, evt, handler) {
+        return (el.removeEventListener)
+            ? el.removeEventListener(evt, handler, false)
+            : el.detachEvent('on' + evt, handler);
+    };
+
+    //
+    // Helper method for cross browser implementation of preventDefault
+    //
+    util.preventDefault = function (evt) {
+        return (evt.preventDefault) ? evt.preventDefault() : (evt.returnValue = false);
+    };
+
+    //
+    // Returns true/false if k is a del key
+    //
+    util.isDelKey = function (k) {
+        return k === 46 || (iPhone && k === 127);
+    };
+
+    //
+    // Returns true/false if k is a backspace key
+    //
+    util.isBackSpaceKey = function (k) {
+        return k === 8;
+    }
+
+    //
+    // Returns true/false if k is an arrow key
+    //
+    util.isSpecialKey = function (k) {
+        var codes = {
+            '9' : 'tab',
+            '13': 'enter',
+            '35': 'end',
+            '36': 'home',
+            '37': 'leftarrow',
+            '38': 'uparrow',
+            '39': 'rightarrow',
+            '40': 'downarrow',
+            '116': 'F5'
+        };
+        // If del or special key
+        return codes[k];
+    };
+
+    //
+    // Returns true/false if modifier key is held down
+    //
+    util.isModifier = function (evt) {
+        return evt.ctrlKey || evt.altKey || evt.metaKey;
+    };
+
+    //
+    // Return true if the input is in the range of acceptable keycode
+    // 
+    util.isAcceptableKeyCode = function(kc) {
+
+        if ( 
+            // 0-9
+            ( kc >= 48 && kc <= 57 ) || 
+            // a-z
+            ( kc >= 65 && kc <= 90 ) || 
+            // keypad 0-9
+            ( kc >= 96 && kc <= 105 ) ||
+            util.isDelKey( kc ) ||
+            util.isBackSpaceKey( kc )
+        ) {
+            return true;
+        }
+
+        return false;
+    };
+
+    util.isMovementKeyCode = function( k ) {
+
+        if ( 
+            k >= 37 && k <= 40 || k == 9
+        ) {
+            return true;
+        }
+
+        return false;
+
+    };
+
+    util.hasBit = function (who, what ) {
+        if ( what == 0 ) {
+            return ( who & 1 ) != 1;
+        }
+        return ( who & what ) == what;
+        
+    };
+
+    return util;
 });
 define('../lib/boe/src/boe/util',[],function(){
     
@@ -167,9 +284,11 @@ define('../lib/boe/src/boe/String/trim',['../util'], function (util) {
 
 define('Formatter',[
     './PatternConstant', 
+    './util',
     '../lib/boe/src/boe/String/trim'
     ], function (
     PatternConstant,
+    util,
     trim
         ) {
 
@@ -190,7 +309,12 @@ define('Formatter',[
         
         for( var i = 0; i < this.patterns.length; i++ ) {
             pattern = this.patterns[ i ];
-            if ( pattern.type == PatternConstant.TYPE_POSITIVE ) { continue; }
+            if ( 
+                util.hasBit( pattern.type , PatternConstant.TYPE_POSITIVE ) ||
+                util.hasBit( pattern.type , PatternConstant.TYPE_PASSIVE ) 
+            ) { continue; }
+
+            
             if ( resultObject = pattern.apply( cache ) ) {
                 if ( resultObject.matched ) {
                     bestMatchPattern = pattern;
@@ -201,11 +325,11 @@ define('Formatter',[
             }
         }
 
+        
         for( var i = 0; i < this.patterns.length && skip == false; i++ ) {
             pattern = this.patterns[ i ];
             if ( 
-                pattern.type == PatternConstant.TYPE_NEGATIVE ||
-                pattern.type == PatternConstant.TYPE_PARTIAL
+                util.hasBit( pattern.type, PatternConstant.TYPE_NEGATIVE )
             ) { continue; }
             if ( resultObject = pattern.apply( cache ) ) {
                                 if ( resultObject.matched ) {
@@ -364,6 +488,35 @@ define('Formatter',[
         this._cache = cache;
         this._current = null;
         return format.call( this );
+    };
+
+    p.isIntact = function( input ){
+        var pttn;
+        // check against passive
+        for( var l = this.patterns.length; l--; ) {
+            pttn = this.patterns[l];
+            if ( !util.hasBit( pttn.type, PatternConstant.TYPE_PASSIVE ) ) {
+                continue;
+            }
+            result = pttn.apply( input );
+            if ( result.legitimate == false ) {
+                return false;
+            }
+        }
+
+        // check against all positive 
+        for( var l = this.patterns.length; l--; ) {
+            pttn = this.patterns[l];
+            if ( !util.hasBit( pttn.type, PatternConstant.TYPE_POSITIVE ) ) {
+                continue;
+            }
+            result = pttn.apply( input, true );
+            if ( result.legitimate == true ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     return Ctor;
@@ -534,7 +687,17 @@ define( 'PatternFunction/duplicate',[],function () {
 });
 define( 'PatternFunction/never',[],function duplicate() {
     var ret = function(input, param, context){
-        return false;
+        if ( param == '' || param == null || 
+            input === '' || 
+            input === context.pattern.config.placeholder.empty ){
+            return false;
+        }
+
+        if ( param == '=' ) {
+            return !(context.prev === input);
+        }
+
+        return !(input === param);
     };
 
     return ret;
@@ -696,6 +859,7 @@ define('PatternIndexQuery',['./PatternConstant'], function ( PatternConstant ) {
 /* Pattern */
 
 define('Pattern',[
+    './util',
     './PatternFunction/digit', 
     './PatternFunction/alphabet', 
     './PatternFunction/duplicate',
@@ -704,7 +868,8 @@ define('Pattern',[
     '../lib/boe/src/boe/util', 
     './PatternIndexQuery', 
     './PatternConstant'
-], function ( pfDigit, pfAlphabet, pfDuplicate, pfNever, 
+], function ( util,
+    pfDigit, pfAlphabet, pfDuplicate, pfNever, 
     boeClone, boeUtil, PatternIndexQuery, PatternConstant ) {
 
     var PLACE_HOLDER_FUNCTION_START = "{";
@@ -716,6 +881,7 @@ define('Pattern',[
     var TYPE_POSITIVE = PatternConstant.TYPE_POSITIVE;
     var TYPE_NEGATIVE = PatternConstant.TYPE_NEGATIVE;
     var TYPE_PARTIAL = PatternConstant.TYPE_PARTIAL;
+    var TYPE_PASSIVE = PatternConstant.TYPE_PASSIVE;
 
     var MODE_CONSTANT = PatternConstant.MODE_CONSTANT;
     var MODE_FUNCTION = PatternConstant.MODE_FUNCTION;
@@ -783,12 +949,15 @@ define('Pattern',[
             // Check for special chars
             if ( i == 0 && str.charAt( i + 1 ) == PLACE_HOLDER_TYPE_SEPARATOR ) {
                 if ( curChar == '-' ) {
-                    me.type = TYPE_NEGATIVE;
+                    me.type |= TYPE_NEGATIVE;
                 }
-            }
-            if ( i == 0 && str.charAt( i + 1 ) == PLACE_HOLDER_TYPE_SEPARATOR ) {
-                if ( curChar == '~' ) {
-                    me.type = TYPE_PARTIAL;
+                else if ( curChar == '~' ) {
+                    me.type |= TYPE_NEGATIVE;
+                    me.type |= TYPE_PARTIAL;
+                }
+                else if ( curChar == '_' ) {
+                    me.type |= TYPE_NEGATIVE;
+                    me.type |= TYPE_PASSIVE;
                 }
             }
             else if ( i <= 1 && curChar == PLACE_HOLDER_TYPE_SEPARATOR ) {
@@ -916,7 +1085,7 @@ define('Pattern',[
             }
         }
 
-        if ( this.type == TYPE_NEGATIVE ) {
+        if ( util.hasBit( this.type , TYPE_NEGATIVE ) ) {
             // compulsory set it if current pattern is negative one
             isFullyMatch = true;
         }
@@ -928,14 +1097,7 @@ define('Pattern',[
             len = input.length;
         }
 
-        if ( string.length > matches.length && 
-            // make sure negative pattern matches even when string length larger than
-            // pattern length, e.g. input = 123456 matches -|1234
-            // If want to stop user from inputting "1234" but allow input "123488"
-            // negative pattern -|1234 won't work, because it will prevent user from inputing 88
-            // In that case, we can make a positive pattern to match anything but "1234" instead
-            // e.g. ["{123d(1-35-9)}", "{dddddd}"]
-            this.type == TYPE_POSITIVE ) {
+        if ( string.length > matches.length ) {
             matched = false;
         }
 
@@ -995,7 +1157,7 @@ define('Pattern',[
             result: result, 
             // indicate if application is successful
             matched: matched, 
-            legitimate: this.type == 'positive' ? matched : !matched ,
+            legitimate: util.hasBit( this.type, TYPE_POSITIVE ) ? matched : !matched ,
             counts: { 
                 // the number of total match, successful application means a full match
                 total: len, 
@@ -1098,7 +1260,7 @@ define('Pattern',[
         'x': pfDuplicate,
         'n': pfNever,
         '?': function(input, param, context){
-            pfDuplicate.call(this, input, '?', context)
+            return pfDuplicate.call(this, input, '?', context)
         }
     };
 
@@ -1112,114 +1274,6 @@ define('Pattern',[
     };
 
     return Ctor;
-});
-/**
- * Modified based on util.js in https://github.com/firstopinion/formatter.js
- */
-
-define('util',[],function(){
-
-    var util = {};
-
-    // Useragent info for keycode handling
-    var uAgent = (typeof navigator !== 'undefined') ? navigator.userAgent : null,
-        iPhone = /iphone/i.test(uAgent);
-
-    //
-    // Helper method for cross browser event listeners
-    //
-    util.addListener = function (el, evt, handler) {
-        return (el.addEventListener)
-            ? el.addEventListener(evt, handler, false)
-            : el.attachEvent('on' + evt, handler);
-    };
-    util.removeListener = function (el, evt, handler) {
-        return (el.removeEventListener)
-            ? el.removeEventListener(evt, handler, false)
-            : el.detachEvent('on' + evt, handler);
-    };
-
-    //
-    // Helper method for cross browser implementation of preventDefault
-    //
-    util.preventDefault = function (evt) {
-        return (evt.preventDefault) ? evt.preventDefault() : (evt.returnValue = false);
-    };
-
-    //
-    // Returns true/false if k is a del key
-    //
-    util.isDelKey = function (k) {
-        return k === 46 || (iPhone && k === 127);
-    };
-
-    //
-    // Returns true/false if k is a backspace key
-    //
-    util.isBackSpaceKey = function (k) {
-        return k === 8;
-    }
-
-    //
-    // Returns true/false if k is an arrow key
-    //
-    util.isSpecialKey = function (k) {
-        var codes = {
-            '9' : 'tab',
-            '13': 'enter',
-            '35': 'end',
-            '36': 'home',
-            '37': 'leftarrow',
-            '38': 'uparrow',
-            '39': 'rightarrow',
-            '40': 'downarrow',
-            '116': 'F5'
-        };
-        // If del or special key
-        return codes[k];
-    };
-
-    //
-    // Returns true/false if modifier key is held down
-    //
-    util.isModifier = function (evt) {
-        return evt.ctrlKey || evt.altKey || evt.metaKey;
-    };
-
-    //
-    // Return true if the input is in the range of acceptable keycode
-    // 
-    util.isAcceptableKeyCode = function(kc) {
-
-        if ( 
-            // 0-9
-            ( kc >= 48 && kc <= 57 ) || 
-            // a-z
-            ( kc >= 65 && kc <= 90 ) || 
-            // keypad 0-9
-            ( kc >= 96 && kc <= 105 ) ||
-            util.isDelKey( kc ) ||
-            util.isBackSpaceKey( kc )
-        ) {
-            return true;
-        }
-
-        return false;
-    };
-
-    util.isMovementKeyCode = function( k ) {
-
-        if ( 
-            k >= 37 && k <= 40 || k == 9
-        ) {
-            return true;
-        }
-
-        return false;
-
-    };
-
-    return util;
 });
 /*
  * caret.js
@@ -2224,6 +2278,7 @@ define('Chuanr',[
     /* Public Methods */
     function Ctor( config ) {
         this.patterns = [];
+        this.passives = [];
         this.formatter = null;
         this.oninput = null;
         this.config = clone.call(defaultSettings, true);
@@ -2286,9 +2341,7 @@ define('Chuanr',[
             return false;
         }
 
-        var result = this._untouched.pattern.apply( this._untouched.input , true );
-
-        return result.legitimate;
+        return this.formatter.isIntact( this._untouched.input );
     };
 
     // expose ioc setting
