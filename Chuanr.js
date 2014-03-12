@@ -490,10 +490,12 @@ define( 'PatternFunction/alphabet',[],function () {
 define( 'PatternFunction/duplicate',[],function () {
     var ret = function(input, param, context){
         var index = context.index >>> 0;
+        var target = index;
         var items = context.pattern.items;
         var prevItem;
         var prevFunc;
         var matches = [];
+        var curFunc;
 
         if ( param == '?' && input == '') {
             return true;
@@ -506,19 +508,22 @@ define( 'PatternFunction/duplicate',[],function () {
         }
 
         for(var l = matches.length;l--; ){
-            if ( l == index - 1 ) {
-                prevItem = matches[l];
+            prevItem = matches[l];
+            if ( l == index ) {
+                curFunc = context.pattern.constructor.functions[prevItem.value];
+            }
+            if ( l == target - 1 ) {
                 prevFunc = context.pattern.constructor.functions[prevItem.value];
-                if ( ret !== prevFunc ) {
+                if ( curFunc !== prevFunc ) {
                     break;
                 }
                 else {
-                    index--;
+                    target--;
                 }
             }
         }
 
-        if ( prevFunc == null || ret == prevFunc ) {
+        if ( prevFunc == null || curFunc == prevFunc ) {
             throw new Error("No previous function");
         }
 
@@ -1091,7 +1096,10 @@ define('Pattern',[
         'd': pfDigit,
         'a': pfAlphabet,
         'x': pfDuplicate,
-        'n': pfNever
+        'n': pfNever,
+        '?': function(input, param, context){
+            pfDuplicate.call(this, input, '?', context)
+        }
     };
 
     for ( var i = 10; i--; ) {

@@ -406,7 +406,10 @@ define([
         'd': pfDigit,
         'a': pfAlphabet,
         'x': pfDuplicate,
-        'n': pfNever
+        'n': pfNever,
+        '?': function(input, param, context){
+            pfDuplicate.call(this, input, '?', context)
+        }
     };
 
     for ( var i = 10; i--; ) {

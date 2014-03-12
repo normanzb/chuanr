@@ -145,6 +145,7 @@ Pattern function is useful for simplify the long pattern list by adding a bit fl
 * S: match any non-whitespace
 * x: shortcut to duplicate previous function
     * x(o) to make the match optional 
+* ?: alias of x(o)
 * n: never match, useful when you want to allow some input but not allow the specific input to be consider validate by when calling intact(). 
 
 #Feeling Geeky
