@@ -109,6 +109,7 @@ Once you gained the access to Chuanr constructor, by doing below you can instant
 * Explicit Positive Pattern - Any pattern starts with "+|".
 * Implicit Positive Pattern - Any positive pattern without the pattern type specification ("+|").
 * Negative Pattern - Any pattern whose first 2 characters are "-|", inputs are not accepted if they fully matched a negative pattern.
+* Passive Negative Pattern - A negative pattern which only works when .intact() is called (it doesn't prevent the user from inputting).
 * Paritally Matching Negative Pattern = Any pattern whose first 2 characters are "~|", input is not accepted if any potion of it is matched.
 * Pattern Matched -
     * When it is positive pattern: testing the input against the pattern from left to right, always consider it is MATCHED unless ANY "out of expectation" is encountered. 
@@ -147,6 +148,8 @@ Pattern function is useful for simplify the long pattern list by adding a bit fl
     * x(o) to make the match optional 
 * ?: alias of x(o)
 * n: never match, useful when you want to allow some input but not allow the specific input to be consider validate by when calling intact(). 
+    * n(=) unmatch if equal to previous input
+    * n(any char) unmatch if equal to specified input
 
 #Feeling Geeky
 

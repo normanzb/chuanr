@@ -75,6 +75,31 @@ describe('PatternFunction.duplicate', function(){
         } );
     });
 
+    it('return falsed match correctly has using the alias "?"', function(){
+        var p;
+        p = Pattern.parse("-|{0d(=)d(=)d(=)d(=)}{????????????}");
+
+        var result = p.apply('00000');
+
+        assert.deepEqual( result,  { 
+            result: '00000',
+            matched: true,
+            legitimate: false,
+            counts: { total: 17, matched: 17 },
+            toString: result.toString
+        } );
+
+        var result = p.apply('000001');
+
+        assert.deepEqual( result,  { 
+            result: '00000            ',
+            matched: false,
+            legitimate: true,
+            counts: { total: 17, matched: 5 },
+            toString: result.toString
+        } );
+    });
+
 });
 
 }(requirejs, require);

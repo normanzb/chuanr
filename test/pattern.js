@@ -102,7 +102,7 @@ describe('Pattern', function(){
 
     it('parse string with negative pattern type correctly', function(){
         var pattern = Pattern.parse('-|(+86) {ddd(2345)ddd} - {dd(25)ddd}');
-        assert.equal(pattern.type, 'negative');
+        assert.equal(pattern.type, 1);
         assert.deepEqual(pattern.items, [ 
             { type: 1, value: '(' },
             { type: 1, value: '+' },
@@ -129,7 +129,7 @@ describe('Pattern', function(){
 
     it('parse string with positive pattern type correctly', function(){
         var pattern = Pattern.parse('+|(+86) {ddd(2345)ddd} - {dd(25)ddd}');
-        assert.equal(pattern.type, 'positive');
+        assert.equal(pattern.type, 0);
         assert.deepEqual(pattern.items, [ 
             { type: 1, value: '(' },
             { type: 1, value: '+' },
@@ -156,7 +156,7 @@ describe('Pattern', function(){
 
     it('parse string with implict positive pattern type correctly', function(){
         var pattern = Pattern.parse('|(+86) {ddd(2345)ddd} - {dd(25)ddd}');
-        assert.equal(pattern.type, 'positive');
+        assert.equal(pattern.type, 0);
         assert.deepEqual(pattern.items, [ 
             { type: 1, value: '(' },
             { type: 1, value: '+' },

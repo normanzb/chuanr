@@ -5,7 +5,17 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
 //>>excludeEnd("release");
 define( function duplicate() {
     var ret = function(input, param, context){
-        return false;
+        if ( param == '' || param == null || 
+            input === '' || 
+            input === context.pattern.config.placeholder.empty ){
+            return false;
+        }
+
+        if ( param == '=' ) {
+            return !(context.prev === input);
+        }
+
+        return !(input === param);
     };
 
     return ret;

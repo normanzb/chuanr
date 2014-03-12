@@ -433,6 +433,7 @@ define([
     /* Public Methods */
     function Ctor( config ) {
         this.patterns = [];
+        this.passives = [];
         this.formatter = null;
         this.oninput = null;
         this.config = clone.call(defaultSettings, true);
@@ -495,9 +496,7 @@ define([
             return false;
         }
 
-        var result = this._untouched.pattern.apply( this._untouched.input , true );
-
-        return result.legitimate;
+        return this.formatter.isIntact( this._untouched.input );
     };
 
     // expose ioc setting

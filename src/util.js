@@ -109,5 +109,13 @@ define(function(){
 
     };
 
+    util.hasBit = function (who, what ) {
+        if ( what == 0 ) {
+            return ( who & 1 ) != 1;
+        }
+        return ( who & what ) == what;
+        
+    };
+
     return util;
 });

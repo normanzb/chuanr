@@ -7,12 +7,14 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
 
 define([
     './PatternConstant', 
+    './util',
     '../lib/boe/src/boe/String/trim'
     //>>excludeStart("release", pragmas.release);
     , './shim/console'
     //>>excludeEnd("release");
 ], function (
     PatternConstant,
+    util,
     trim
     //>>excludeStart("release", pragmas.release);
     ,console
@@ -34,12 +36,20 @@ define([
             skip = false;
 
         //>>excludeStart("release", pragmas.release);
-        console.log('Start Formating: "' + cache + '"');
+        console.log('Check against negative patterns: "' + cache + '"');
         //>>excludeEnd("release");
 
         for( var i = 0; i < this.patterns.length; i++ ) {
             pattern = this.patterns[ i ];
-            if ( pattern.type == PatternConstant.TYPE_POSITIVE ) { continue; }
+            if ( 
+                util.hasBit( pattern.type , PatternConstant.TYPE_POSITIVE ) ||
+                util.hasBit( pattern.type , PatternConstant.TYPE_PASSIVE ) 
+            ) { continue; }
+
+            //>>excludeStart("release", pragmas.release);
+            console.log('  ', pattern + '', pattern.type);
+            //>>excludeEnd("release");
+
             if ( resultObject = pattern.apply( cache ) ) {
                 if ( resultObject.matched ) {
                     bestMatchPattern = pattern;
@@ -50,11 +60,14 @@ define([
             }
         }
 
+        //>>excludeStart("release", pragmas.release);
+        console.log('Start Formating: "' + cache + '"');
+        //>>excludeEnd("release");
+
         for( var i = 0; i < this.patterns.length && skip == false; i++ ) {
             pattern = this.patterns[ i ];
             if ( 
-                pattern.type == PatternConstant.TYPE_NEGATIVE ||
-                pattern.type == PatternConstant.TYPE_PARTIAL
+                util.hasBit( pattern.type, PatternConstant.TYPE_NEGATIVE )
             ) { continue; }
             if ( resultObject = pattern.apply( cache ) ) {
                 //>>excludeStart("release", pragmas.release);
@@ -222,6 +235,35 @@ define([
         this._cache = cache;
         this._current = null;
         return format.call( this );
+    };
+
+    p.isIntact = function( input ){
+        var pttn;
+        // check against passive
+        for( var l = this.patterns.length; l--; ) {
+            pttn = this.patterns[l];
+            if ( !util.hasBit( pttn.type, PatternConstant.TYPE_PASSIVE ) ) {
+                continue;
+            }
+            result = pttn.apply( input );
+            if ( result.legitimate == false ) {
+                return false;
+            }
+        }
+
+        // check against all positive 
+        for( var l = this.patterns.length; l--; ) {
+            pttn = this.patterns[l];
+            if ( !util.hasBit( pttn.type, PatternConstant.TYPE_POSITIVE ) ) {
+                continue;
+            }
+            result = pttn.apply( input, true );
+            if ( result.legitimate == true ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     return Ctor;

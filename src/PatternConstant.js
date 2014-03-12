@@ -9,8 +9,9 @@ define(function(){
         MODE_CONSTANT : 1,
         MODE_FUNCTION : 2,
         MODE_PARAMETER : 4,
-        TYPE_POSITIVE : 'positive',
-        TYPE_NEGATIVE : 'negative',
-        TYPE_PARTIAL : 'partial'
+        TYPE_POSITIVE : 0,
+        TYPE_NEGATIVE : 1,
+        TYPE_PARTIAL : 2,
+        TYPE_PASSIVE : 4
     };
 });
