@@ -7,7 +7,7 @@ This component formats the `<input />` according the declared patterns
 
 I know for formatting and masking, there are tons of them out there but the reasons for me to recreate the wheel are:
 
-* Non of existing masking lib supports "multiple patterns"
+* None of existing masking lib supports "multiple patterns"
 * They either failed to work on certain platform (e.g mobile chrome) or do not correctly handling all the different type of inputs (e.g. paste or drag and drop text)
 
 So by using Chuanr you will get:
@@ -15,7 +15,7 @@ So by using Chuanr you will get:
 #Feature
 
 
-* multiple patterns, the formatting and masking changes according to the best matching pattern.
+* Multiple patterns, the formatting and masking changes according to the best matching pattern.
 * Negative patterns, allow you to prevent some of the inputs. Says, 123456 is definitely a fake telephone number, then you can make a negative pattern to prevent user from inputting that.
 * Intuitive pattern syntax and error messages.
 * Positive and negative pattern.
