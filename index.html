@@ -50,6 +50,10 @@
         background-color: #8BC53F;
         cursor: pointer;
     }
+    .message span.highlight
+    {
+        padding: 0 .1em;
+    }
     button
     {
         cursor: pointer;
@@ -279,7 +283,7 @@
                         }
 
                         var output = genericFormatter.output();
-                        var msg = '"' + output.result + '" is not an valid telephone number!';
+                        var msg = '"' + ( output.result + '' ).replace(/(\d)(\W*)$/,'<span class="highlight">$1</span>$2')  + '" is not an valid telephone number!';
                         window.console && window.console.error('Prevented!! ' + msg);
                         elMessageBox.innerHTML = msg;
                         elMessageBox.parentNode.parentNode.style.opacity = '1';
