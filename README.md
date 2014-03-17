@@ -9,9 +9,7 @@ I know for formatting and masking, there are tons of them out there but the reas
 
 * None of existing masking lib supports "multiple patterns"
 * They either failed to work on certain platform (e.g mobile chrome) or do not correctly handling all the different type of inputs (e.g. paste or drag and drop text)
-* They do not allow you to use alpahbet or digit as part of the format, for example, no matter what the user input I would like to prefix it with +86 since that is the telephone area code of my country.
-
-So by using Chuanr you will get:
+* They do not allow you to use alphabet or digit as part of the format, for example, no matter what the user input I would like to prefix it with +86 since that is the telephone area code of my country.
 
 #Feature
 
