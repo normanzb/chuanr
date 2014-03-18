@@ -5,6 +5,7 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
 //>>excludeEnd("release");
 define(['../../lib/boe/src/boe/Function/bind'], function (bind) {
     var INPUT = 'input';
+    var CHANGE = 'change';
 
     /* Feature Detection */
 
@@ -99,7 +100,10 @@ define(['../../lib/boe/src/boe/Function/bind'], function (bind) {
             el.attachEvent('onblur', me._onblur);
         }
         else if ( hasOnInput ) {
-            el.addEventListener(INPUT, me._oninput, false);
+            el.addEventListener(INPUT, me._onchange, false);
+            // monitor onchange event as well just in case chrome browser bugs:
+            // https://code.google.com/p/chromium/issues/detail?id=353691
+            el.addEventListener(CHANGE, me._onchange, false);
         }
         else {
             throw "Something wrong, should never goes to here.";
@@ -115,7 +119,8 @@ define(['../../lib/boe/src/boe/Function/bind'], function (bind) {
             el.attachEvent('onblur', me._onblur);
         }
         else {
-            el.removeEventListener(INPUT, me._oninput);
+            el.removeEventListener(INPUT, me._onchange);
+            el.removeEventListener(CHANGE, me._onchange);
         }
 
     };

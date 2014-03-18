@@ -208,7 +208,12 @@
         </form>
     </section>
     <section>
-        <input id="tester" type=""> <button id="btn-check">Check</button>
+        <form id="form" action="http://httpbin.org/post" method="POST">
+            <input id="firstname" name="firstname" type="text" placeholder="First Name" />
+            <input id="lastname" name="lastname" type="text" placeholder="Last Name" />
+            <input id="phonenumber" name="phonenumber" type="text" placeholder="Phone Number" /> 
+            <button id="btn-check">Check</button>
+        </form>
     </section>
     <section class='info'>
         <div class="inner">
@@ -234,15 +239,18 @@
                 }
 
                 function createChuanr() {
-                    if ( chuanr ) {
-                        chuanr.dispose();
+                    if ( chuanrPhone ) {
+                        chuanrPhone.dispose();
                     }
-                    chuanr = new Chuanr({
+                    if ( chuanrName ) {
+                        chuanrName.dispose();
+                    }
+                    chuanrPhone = new Chuanr({
                         placeholder: {
                             empty: chkUnderline.checked ? '_' : ' '
                         }
                     });
-                    chuanr.roast(elInput, [
+                    chuanrPhone.roast(elInput, [
                         "({11}) {99ddd}-{dddd}",
                         "({11}) {98d}-{ddd}-{ddd}",
                         "({11}) {97d(01234569)dd}-{dddd}",
@@ -260,7 +268,7 @@
                         "({11}) {d(2345)ddd}-{dddd}",
                         "-|({11}) {d(2345)d(+1)d(+1)d(+1)}-{d(+1)d(+1)}"
                     ]);
-                    chuanr.on('prevented', function(format) {
+                    chuanrPhone.on('prevented', function(format) {
                         var curItem;
                         var genericPattern = Chuanr.setting.Pattern.parse(
                             format.pattern.pattern + '{d}'
@@ -291,32 +299,43 @@
                         elInput.className = 'error shake animated';
                         scheduleErrorClear();
                     });
-                    chuanr.on('resumed', function(){
+                    chuanrPhone.on('resumed', function(){
                         elInput.className = '';
                         // elMessageBox.innerText = '';
                         elMessageBox.parentNode.parentNode.style.opacity = '0';
                     });
+
+                    chuanrName = new Chuanr({
+                        placeholder: {
+                            empty: chkUnderline.checked ? '_' : ' '
+                        }
+                    });
+                    chuanrName.roast(elInputName, ["{aaa???????}"]);
                 }
 
                 var schHandle;
-                var chuanr;
-                var elInput = document.getElementById('tester');
+                var chuanrPhone;
+                var chuanrName;
+                var elInput = document.getElementById('phonenumber');
+                var elInputName = document.getElementById('firstname');
                 var elMessageBox = document.getElementById('message-box');
                 var elBtnPatterns = document.getElementById('btn-patterns');
                 var elBtnCheck = document.getElementById('btn-check');
                 var elPatterns = document.getElementById('patterns-detail');
                 var chkUnderline = document.getElementById('chk-placeholder');
+                var elForm = document.getElementById('form');
                 
                 elBtnPatterns.onclick = function() {
                     elPatterns.style.opacity = '1';
-                    elPatterns.children[0].innerText = chuanr.patterns.toString().replace(/,/g, ',\n');
+                    elPatterns.children[0].innerText = chuanrPhone.patterns.toString().replace(/,/g, ',\n');
                 };
-                elBtnCheck.onclick = function () {
-                    if ( chuanr.intact() ) {
+                elBtnCheck.onclick = function ( evt ) {
+                    if ( chuanrPhone.intact() && chuanrName.intact() ) {
                         elBtnCheck.className = 'validate';
                     }
                     else {
                         elBtnCheck.className = 'error';   
+                        evt.preventDefault ? evt.preventDefault() : (evt.returnValue = true);
                     }
                 };
                 chkUnderline.onchange = function(){
