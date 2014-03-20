@@ -82,6 +82,14 @@ define(['../../lib/boe/src/boe/Function/bind'], function (bind) {
 
     var p = Observer.prototype;
 
+    p.trigger = function () {
+        return this._onchange();
+    };
+
+    p.sync = function () {
+        this._old = this._el.value;
+    };
+
     p.observe = function(el){
         if ( el == null || el.tagName.toLowerCase() != INPUT ) {
             throw "Target input element must be specified.";
