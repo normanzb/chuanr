@@ -1884,6 +1884,14 @@ define('shim/oninput',['../../lib/boe/src/boe/Function/bind'], function (bind) {
 
     var p = Observer.prototype;
 
+    p.trigger = function () {
+        return this._onchange();
+    };
+
+    p.sync = function () {
+        this._old = this._el.value;
+    };
+
     p.observe = function(el){
         if ( el == null || el.tagName.toLowerCase() != INPUT ) {
             throw "Target input element must be specified.";
@@ -2189,7 +2197,7 @@ define('Chuanr',[
                 caret.begin == 0
             ) {
                 // you must on ios 5, which sucks
-                caret.begin = trim.call( this._el.value.length );
+                caret.begin = trim.call( this._el.value ).length ;
                 caret.end = caret.begin;
             }
             // match immediately means user inputs raw numbers
@@ -2235,6 +2243,7 @@ define('Chuanr',[
         this._untouched = format;
         // update the element
         this._el.value = format.result;
+        this.oninput.sync();
 
         // update the caret accordingly
         
