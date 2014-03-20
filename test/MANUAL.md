@@ -2,6 +2,12 @@
 
 Open index.html and then
 
+##on First Name field:
+
+* type a3, and then type 3
+
+##on Telephone Field:
+
 * Paste "(22) 7010-5592"
 * Paste "(22) 7010-5592", select all, Paste "(22) 7010-5592" again
 * Paste "(22) 7010-559", and paste 2 between 5 and 9  
