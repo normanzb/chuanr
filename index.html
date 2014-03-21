@@ -24,13 +24,29 @@
         margin: 1em auto;
         width: 80%;
 
-        overflow: hidden;
         text-align: center;
         transition: all .5s;
+        zoom: 1;
+    }
+    section:before
+    {
+        display: table;
+        content: ' '
+    }
+    section:after
+    {
+        display: table;
+        content: ' '
     }
     section > .inner
     {
         margin: 1em;
+    }
+    section > .inner > .column
+    {
+        width: 152px;
+        float: left;
+        font-size: 12px;
     }
     section:empty
     {
@@ -99,6 +115,25 @@
     input[type=checkbox]:checked
     {
         background-color: #125B9A;
+    }
+    input + .tip
+    {
+        position: absolute;
+
+        margin: 2px;
+        padding: 5px;
+        width: 154px;
+
+        opacity: 0;
+        font-size: 9px;
+        text-align: left;
+        
+        background-color: #8BC53F;
+    }
+    .field
+    {
+        position: relative;
+        display: inline-block;
     }
     section > * 
     {
@@ -209,10 +244,19 @@
     </section>
     <section>
         <form id="form" action="http://httpbin.org/post" method="POST">
-            <input id="firstname" name="firstname" type="text" placeholder="First Name" />
-            <input id="lastname" name="lastname" type="text" placeholder="Last Name" />
-            <input id="phonenumber" name="phonenumber" type="text" placeholder="Phone Number" /> 
-            <button id="btn-check">Check</button>
+            <div class="field">
+                <input id="firstname" name="firstname" type="text" placeholder="First Name" />
+                <div class="firstname tip"></div>
+            </div>
+            <div class="field">
+                <input id="lastname" name="lastname" type="text" placeholder="Last Name" />
+                <div class="lastname tip"></div>
+            </div>
+            <div class="field">
+                <input id="phone" name="phone" type="text" placeholder="Phone Number" /> 
+                <div class="phone tip"></div>
+            </div>
+            <button id="btn-check">Check Integrity and Submit</button>
         </form>
     </section>
     <section class='info'>
@@ -220,166 +264,204 @@
             <pre id="message-box" class="message">no error</pre>
         </div>
     </section>
-    <section id="patterns-detail" class='patterns'>
-        <div class="inner"></div>
-    </section>
     <script type="text/javascript">
-        window.onload = function () {
-            var isDebug = location.hash.indexOf('debug') > 0;
-            require([ (isDebug ? './src/Chuanr': './Chuanr')], function( Chuanr ){
+        require(['./res/ready'], function(domready){
+            domready(function () {
+                var isDebug = location.hash.indexOf('debug') > 0;
+                require([ (isDebug ? './src/Chuanr': './Chuanr')], function( Chuanr ){
 
-                function scheduleErrorClear(){
-                    if ( schHandle ) {
-                        clearTimeout( schHandle );
-                        schHandle = null;
+                    function showPatterns(){
+                        var tips = document.getElementsByClassName('tip');
+                        tips[0].style.opacity = '1';
+                        tips[1].style.opacity = '1';
+                        tips[2].style.opacity = '1';
+                        tips[0].innerText = chuanrFirstName.patterns.toString().replace(/,/g, ',\n');
+                        tips[1].innerText = chuanrPhone.patterns.toString().replace(/,/g, ',\n');
+                        tips[2].innerText = chuanrPhone.patterns.toString().replace(/,/g, ',\n');
                     }
-                    schHandle = setTimeout(function(){
-                        elInput.className = '';
-                    }, 1000);
-                }
+                    function hidePatterns(){
+                        var tips = document.getElementsByClassName('tip');
+                        tips[0].style.opacity = '0';
+                        tips[1].style.opacity = '0';
+                        tips[2].style.opacity = '0';
+                    }
 
-                function createChuanr() {
-                    if ( chuanrPhone ) {
-                        chuanrPhone.dispose();
-                    }
-                    if ( chuanrName ) {
-                        chuanrName.dispose();
-                    }
-                    chuanrPhone = new Chuanr({
-                        placeholder: {
-                            empty: chkUnderline.checked ? '_' : ' '
+                    function scheduleErrorClear(elInput){
+                        if ( schHandle ) {
+                            clearTimeout( schHandle );
+                            schHandle = null;
                         }
-                    });
-                    chuanrPhone.roast(elInput, [
-                        "({11}) {99ddd}-{dddd}",
-                        "({11}) {98d}-{ddd}-{ddd}",
-                        "({11}) {97d(01234569)dd}-{dddd}",
-                        "({11}) {96ddd}-{dddd}",
-                        "({11}) {95ddd}-{dddd}",
-                        "({dd}) {700d}-{dddd}",
-                        "({dd}) {7010}-{dddd}",
-                        "({dd}) {77dd}-{dddd}",
-                        "({dd}) {78dd}-{dddd}",
-                        "({dd}) {790d(124)}-{dddd}",
-                        "({dd}) {791d(2-9)}-{dddd}",
-                        "({dd}) {792d(03489)}-{dddd}",
-                        "({dd}) {793d(012456789)}-{dddd}",
-                        "({dd}) {794d}-{dddd}",
-                        "({11}) {d(2345)ddd}-{dddd}",
-                        "-|({11}) {d(2345)d(+1)d(+1)d(+1)}-{d(+1)d(+1)}"
-                    ]);
-                    chuanrPhone.on('prevented', function(format) {
-                        var curItem;
-                        var genericPattern = Chuanr.setting.Pattern.parse(
-                            format.pattern.pattern + '{d}'
-                        );
-                        genericPattern.type = 'positive';
-                        for(var i = 0; i < genericPattern.items.length; i++) {
-                            curItem = genericPattern.items[i];
-                            if ( curItem.type == 2 ) {
-                                curItem.param = '';
-                                curItem.value = 'd';
+                        schHandle = setTimeout(function(){
+                            elInput.className = '';
+                        }, 1000);
+                    }
+
+                    function getOnResume(elInput){
+                        return function(){
+                            elInput.className = '';
+                            // elMessageBox.innerText = '';
+                            elMessageBox.parentNode.parentNode.style.opacity = '0';
+                        }
+                    }
+
+                    function getOnPrevent(elInput) {
+                        return function onPrevent(format){
+                            var curItem;
+                            var genericPattern = Chuanr.setting.Pattern.parse(
+                                format.pattern.pattern + '{d}'
+                            );
+                            genericPattern.type = 'positive';
+                            for(var i = 0; i < genericPattern.items.length; i++) {
+                                curItem = genericPattern.items[i];
+                                if ( curItem.type == 2 ) {
+                                    curItem.param = '';
+                                    curItem.value = 'd';
+                                }
                             }
+
+                            var genericFormatter = new Chuanr.setting.Formatter([genericPattern]);
+
+                            var input = format.input.replace(/[\(\){}\-\ ]/g, '');
+
+                            for(var i = 0; i < input.length; i++){
+                                genericFormatter.input(input.charAt(i));    
+                            }
+
+                            var output = genericFormatter.output();
+                            var msg = '"' + ( output.result + '' ).replace(/(\d)(\W*)$/,'<span class="highlight">$1</span>$2')  + '" is not an valid input for current field!';
+                            window.console && window.console.error('Prevented!! ' + msg);
+                            elMessageBox.innerHTML = msg;
+                            elMessageBox.parentNode.parentNode.style.opacity = '1';
+
+                            elInput.className = 'error shake animated';
+                            scheduleErrorClear(elInput);
+                            hidePatterns();
                         }
-
-                        var genericFormatter = new Chuanr.setting.Formatter([genericPattern]);
-
-                        var input = format.input.replace(/[\(\){}\-\ ]/g, '');
-
-                        for(var i = 0; i < input.length; i++){
-                            genericFormatter.input(input.charAt(i));    
-                        }
-
-                        var output = genericFormatter.output();
-                        var msg = '"' + ( output.result + '' ).replace(/(\d)(\W*)$/,'<span class="highlight">$1</span>$2')  + '" is not an valid telephone number!';
-                        window.console && window.console.error('Prevented!! ' + msg);
-                        elMessageBox.innerHTML = msg;
-                        elMessageBox.parentNode.parentNode.style.opacity = '1';
-
-                        elInput.className = 'error shake animated';
-                        scheduleErrorClear();
-                    });
-                    chuanrPhone.on('resumed', function(){
-                        elInput.className = '';
-                        // elMessageBox.innerText = '';
-                        elMessageBox.parentNode.parentNode.style.opacity = '0';
-                    });
-
-                    chuanrName = new Chuanr({
-                        placeholder: {
-                            empty: chkUnderline.checked ? '_' : ' '
-                        }
-                    });
-                    chuanrName.roast(elInputName, ["{aaa???????}"]);
-                }
-
-                var schHandle;
-                var chuanrPhone;
-                var chuanrName;
-                var elInput = document.getElementById('phonenumber');
-                var elInputName = document.getElementById('firstname');
-                var elMessageBox = document.getElementById('message-box');
-                var elBtnPatterns = document.getElementById('btn-patterns');
-                var elBtnCheck = document.getElementById('btn-check');
-                var elPatterns = document.getElementById('patterns-detail');
-                var chkUnderline = document.getElementById('chk-placeholder');
-                var elForm = document.getElementById('form');
-                
-                elBtnPatterns.onclick = function() {
-                    elPatterns.style.opacity = '1';
-                    elPatterns.children[0].innerText = chuanrPhone.patterns.toString().replace(/,/g, ',\n');
-                };
-                elBtnCheck.onclick = function ( evt ) {
-                    if ( chuanrPhone.intact() && chuanrName.intact() ) {
-                        elBtnCheck.className = 'validate';
-                    }
-                    else {
-                        elBtnCheck.className = 'error';   
-                        evt.preventDefault ? evt.preventDefault() : (evt.returnValue = true);
-                    }
-                };
-                chkUnderline.onchange = function(){
-                    createChuanr();
-                };
-                createChuanr();
-
-
-                isDebug && require(['./src/util', './src/shim/oninput', './src/shim/console'], 
-                    function( util, InputObserver, console ){
-                    // for testing
-                    var oninput = new InputObserver;
-                    oninput.observe(elInput);
-                    oninput.oninput = function(){
-                        console.log('xoninput "' + elInput.value + '"');
                     };
-                    util.addListener(elInput, 'keydown', function(evt){
-                        console.log('onkeydown: keyCode', evt.keyCode);
-                    });
-                    util.addListener(elInput, 'keypress', function(evt){
-                        console.log('onkeypress: charCode', evt.charCode || evt.keyCode);
-                    });
-                    util.addListener(elInput, 'input', function(evt){
-                        console.log('oninput "' + elInput.value + '"');
-                    });
-                    util.addListener(elInput, 'propertychange', function(evt){
-                        console.log('onpropertychange', evt.propertyName);
-                    });
-                    util.addListener(elInput, 'keyup', function(evt){
-                        console.log('onkeyup "' + evt.keyCode + '"');
-                    });
-                    var MutationObserver = window.MutationObserver || window.webkitMutationObserver;
-                    if ( MutationObserver ) {
-                        var observer = new MutationObserver(function(mutations){
-                            mutations.forEach(function(mutation){
-                                console.log('Mutation: ' , mutation);
-                            });
-                        })
-                        observer.observe(elInput, { attributes: true, childList: true, characterData: true, subtree: true, attributeOldValue: true });
-                        // observer.disconnect();
+
+                    function createChuanr() {
+                        if ( chuanrPhone ) {
+                            chuanrPhone.dispose();
+                        }
+                        
+                        chuanrPhone = new Chuanr({
+                            placeholder: {
+                                empty: chkUnderline.checked ? '_' : ' '
+                            }
+                        });
+                        chuanrPhone.roast(elInput, [
+                            "({11}) {99ddd}-{dddd}",
+                            "({11}) {98d}-{ddd}-{ddd}",
+                            "({11}) {97d(01234569)dd}-{dddd}",
+                            "({11}) {96ddd}-{dddd}",
+                            "({11}) {95ddd}-{dddd}",
+                            "({dd}) {700d}-{dddd}",
+                            "({dd}) {7010}-{dddd}",
+                            "({dd}) {77dd}-{dddd}",
+                            "({dd}) {78dd}-{dddd}",
+                            "({dd}) {790d(124)}-{dddd}",
+                            "({dd}) {791d(2-9)}-{dddd}",
+                            "({dd}) {792d(03489)}-{dddd}",
+                            "({dd}) {793d(012456789)}-{dddd}",
+                            "({dd}) {794d}-{dddd}",
+                            "({11}) {d(2345)ddd}-{dddd}",
+                            "-|({11}) {d(2345)d(+1)d(+1)d(+1)}-{d(+1)d(+1)}"
+                        ]);
+                        chuanrPhone.on('prevented', getOnPrevent(elInput));
+                        chuanrPhone.on('resumed', getOnResume(elInput));
+
+                        /* first name */
+
+                        if ( chuanrFirstName ) {
+                            chuanrFirstName.dispose();
+                        }
+                        chuanrFirstName = new Chuanr({
+                            placeholder: {
+                                empty: chkUnderline.checked ? '_' : ' '
+                            }
+                        });
+                        var pttns = [];
+
+                        for(var i = 3; i < 20; i++ ) {
+                            var sPttn = '{';
+                            for(var j = 0; j < i ; j++ ) {
+                                sPttn+='a';
+                            }
+                            sPttn +='}';
+                            pttns.push(sPttn);
+                        }
+
+                        chuanrFirstName.roast(elInputName, pttns);
+                        chuanrFirstName.on('prevented', getOnPrevent(elInputName));
+                        chuanrFirstName.on('resumed', getOnResume(elInputName));
                     }
+
+                    var schHandle;
+                    var chuanrPhone;
+                    var chuanrFirstName;
+                    var elInput = document.getElementById('phone');
+                    var elInputName = document.getElementById('firstname');
+                    var elMessageBox = document.getElementById('message-box');
+                    var elBtnPatterns = document.getElementById('btn-patterns');
+                    var elBtnCheck = document.getElementById('btn-check');
+                    var chkUnderline = document.getElementById('chk-placeholder');
+                    var elForm = document.getElementById('form');
+                    
+                    elBtnPatterns.onclick = function() {
+                        showPatterns();
+                    };
+                    elBtnCheck.onclick = function ( evt ) {
+                        if ( chuanrPhone.intact() && chuanrFirstName.intact() ) {
+                            elBtnCheck.className = 'validate';
+                        }
+                        else {
+                            elBtnCheck.className = 'error';   
+                            evt.preventDefault ? evt.preventDefault() : (evt.returnValue = true);
+                        }
+                    };
+                    chkUnderline.onchange = function(){
+                        createChuanr();
+                    };
+                    createChuanr();
+
+
+                    isDebug && require(['./src/util', './src/shim/oninput', './src/shim/console'], 
+                        function( util, InputObserver, console ){
+                        // for testing
+                        var oninput = new InputObserver;
+                        oninput.observe(elInput);
+                        oninput.oninput = function(){
+                            console.log('xoninput "' + elInput.value + '"');
+                        };
+                        util.addListener(elInput, 'keydown', function(evt){
+                            console.log('onkeydown: keyCode', evt.keyCode);
+                        });
+                        util.addListener(elInput, 'keypress', function(evt){
+                            console.log('onkeypress: charCode', evt.charCode || evt.keyCode);
+                        });
+                        util.addListener(elInput, 'input', function(evt){
+                            console.log('oninput "' + elInput.value + '"');
+                        });
+                        util.addListener(elInput, 'propertychange', function(evt){
+                            console.log('onpropertychange', evt.propertyName);
+                        });
+                        util.addListener(elInput, 'keyup', function(evt){
+                            console.log('onkeyup "' + evt.keyCode + '"');
+                        });
+                        var MutationObserver = window.MutationObserver || window.webkitMutationObserver;
+                        if ( MutationObserver ) {
+                            var observer = new MutationObserver(function(mutations){
+                                mutations.forEach(function(mutation){
+                                    console.log('Mutation: ' , mutation);
+                                });
+                            })
+                            observer.observe(elInput, { attributes: true, childList: true, characterData: true, subtree: true, attributeOldValue: true });
+                            // observer.disconnect();
+                        }
+                    });
                 });
             });
-        };
+        });
     </script>
     <a href="https://github.com/normanzb/chuanr"><img style="position: absolute; top: 0; right: 30px; border: 0;" src="https://github.com/jamesflorentino/fork-ribbons/raw/master/ribbons/orange-black.png" alt="Fork me on GitHub"></a>
 </body>
