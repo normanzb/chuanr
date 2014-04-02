@@ -5,14 +5,13 @@ This component formats the `<input />` according the declared patterns
 
 #Motivation
 
-I know for formatting and masking, there are tons of them out there but the reasons for me to recreate the wheel are:
+There are tons of input formatter out there but the reasons to recreate the wheel are:
 
 * None of existing masking lib supports "multiple patterns"
 * They either failed to work on certain platform (e.g mobile chrome) or do not correctly handling all the different type of inputs (e.g. paste or drag and drop text)
 * They do not allow you to use alphabet or digit as part of the format, for example, no matter what the user input I would like to prefix it with +86 since that is the telephone area code of my country.
 
 #Feature
-
 
 * Multiple patterns, the formatting and masking changes according to the best matching pattern.
 * Negative patterns, allow you to prevent some of the inputs. Says, 123456 is definitely a fake telephone number, then you can make a negative pattern to prevent user from inputting that.
@@ -176,4 +175,4 @@ Pattern function is useful for simplify the long pattern list by adding a bit fl
 
 ##Special Thanks
 
-[FirstOpinion's Formatter.js](github.com/firstopinion/formatter.js) - Stolen the pattern concept and the caret controling utility from there.
+[FirstOpinion's Formatter.js](https://github.com/firstopinion/formatter.js) - Stolen the pattern concept and the caret controling utility from there.
