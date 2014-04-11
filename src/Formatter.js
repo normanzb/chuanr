@@ -36,7 +36,7 @@ define([
             skip = false;
 
         //>>excludeStart("release", pragmas.release);
-        console.log('Check against negative patterns: "' + cache + '"');
+        console.log('Start negative patterns matching with input: "' + cache + '"');
         //>>excludeEnd("release");
 
         for( var i = 0; i < this.patterns.length; i++ ) {
