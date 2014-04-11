@@ -347,25 +347,13 @@
                         chuanrPhone = new Chuanr({
                             placeholder: {
                                 empty: chkUnderline.checked ? '_' : ' '
+                            },
+                            speculation: {
+                                batchinput:false
                             }
                         });
                         chuanrPhone.roast(elInput, [
-                            "({11}) {99ddd}-{dddd}",
-                            "({11}) {98d}-{ddd}-{ddd}",
-                            "({11}) {97d(01234569)dd}-{dddd}",
-                            "({11}) {96ddd}-{dddd}",
-                            "({11}) {95ddd}-{dddd}",
-                            "({dd}) {700d}-{dddd}",
-                            "({dd}) {7010}-{dddd}",
-                            "({dd}) {77dd}-{dddd}",
-                            "({dd}) {78dd}-{dddd}",
-                            "({dd}) {790d(124)}-{dddd}",
-                            "({dd}) {791d(2-9)}-{dddd}",
-                            "({dd}) {792d(03489)}-{dddd}",
-                            "({dd}) {793d(012456789)}-{dddd}",
-                            "({dd}) {794d}-{dddd}",
-                            "({11}) {d(2345)ddd}-{dddd}",
-                            "-|({11}) {d(2345)d(+1)d(+1)d(+1)}-{d(+1)d(+1)}"
+                            "0{ddddddddd}"
                         ]);
                         chuanrPhone.on('prevented', getOnPrevent(elInput));
                         chuanrPhone.on('resumed', getOnResume(elInput));
