@@ -1,5 +1,5 @@
 (function() { 
-var global = new Function('return this')();var parentDefine = global.define || (function(factory){ var ret = factory();typeof module != 'undefined' && (module.exports = ret) ||(global.Chuanr = ret); }) ;var require, define;
+var global = new Function('return this')();var myDefine = (function(factory){ var ret = factory();typeof module != 'undefined' && (module.exports = ret);global.define && global.define(function(){return ret;});global.Chuanr = ret; });var require, define;
 (function (undef) {
     var mod = {}, g = this;
     function resolvePath(base, relative){
@@ -7,8 +7,13 @@ var global = new Function('return this')();var parentDefine = global.define || (
 
         base = base.split('/');
         relative = relative.split('/');
-        base.pop();
-        ret = base.concat(relative);
+        if ( relative[0] == '.' || relative[0] == '..' ) {
+            base.pop();
+            ret = base.concat(relative);
+        }
+        else {
+            ret = relative;
+        }
 
         for(l = ret.length ; l--; ){
             if ( ret[l] == '.' ) {
@@ -2363,5 +2368,5 @@ define('Chuanr',[
 
     return Ctor;
 });
-parentDefine(function() { return require('Chuanr'); }); 
+myDefine(function() { return require('Chuanr'); }); 
 }());
