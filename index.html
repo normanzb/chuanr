@@ -272,12 +272,27 @@
 
                     function showPatterns(){
                         var tips = document.getElementsByClassName('tip');
-                        tips[0].style.opacity = '1';
-                        tips[1].style.opacity = '1';
-                        tips[2].style.opacity = '1';
-                        tips[0].innerText = chuanrFirstName.patterns.toString().replace(/,/g, ',\n');
-                        tips[1].innerText = chuanrPhone.patterns.toString().replace(/,/g, ',\n');
-                        tips[2].innerText = chuanrPhone.patterns.toString().replace(/,/g, ',\n');
+                        var cur, text, curTip;
+
+                        for( var l = creationInfo.length; l--; ) {
+                            cur = creationInfo[l];
+                            curTip = tips[l];
+
+                            if ( curTip == null ) {
+                                continue;
+                            }
+
+                            text = cur.instance.patterns.toString().replace(/,/g, ',\n');;
+
+                            curTip.style.opacity = '1';
+                            if ( 'innerText' in curTip ) {
+                                curTip.innerText = text;
+                            }
+                            else {
+                                curTip.textContent = text;
+                            }
+
+                        }
                     }
                     function hidePatterns(){
                         var tips = document.getElementsByClassName('tip');
@@ -340,48 +355,42 @@
                     };
 
                     function createChuanr() {
-                        if ( chuanrPhone ) {
-                            chuanrPhone.dispose();
-                        }
-                        
-                        chuanrPhone = new Chuanr({
-                            placeholder: {
-                                empty: chkUnderline.checked ? '_' : ' '
+                        var cur, inst;
+
+                        for( var l = creationInfo.length; l--; ) {
+                            cur = creationInfo[l];
+                            inst = cur.instance;
+
+                            if ( inst ) {
+                                inst.dispose();
                             }
-                        });
-                        chuanrPhone.roast(elInput, [
-                            "({11}) {99ddd}-{dddd}",
-                            "({11}) {98d}-{ddd}-{ddd}",
-                            "({11}) {97d(01234569)dd}-{dddd}",
-                            "({11}) {96ddd}-{dddd}",
-                            "({11}) {95ddd}-{dddd}",
-                            "({dd}) {700d}-{dddd}",
-                            "({dd}) {7010}-{dddd}",
-                            "({dd}) {77dd}-{dddd}",
-                            "({dd}) {78dd}-{dddd}",
-                            "({dd}) {790d(124)}-{dddd}",
-                            "({dd}) {791d(2-9)}-{dddd}",
-                            "({dd}) {792d(03489)}-{dddd}",
-                            "({dd}) {793d(012456789)}-{dddd}",
-                            "({dd}) {794d}-{dddd}",
-                            "({11}) {d(2345)ddd}-{dddd}",
-                            "-|({11}) {d(2345)d(+1)d(+1)d(+1)}-{d(+1)d(+1)}"
-                        ]);
-                        chuanrPhone.on('prevented', getOnPrevent(elInput));
-                        chuanrPhone.on('resumed', getOnResume(elInput));
 
-                        /* first name */
+                            inst = new Chuanr({
+                                placeholder: {
+                                    empty: chkUnderline.checked ? '_' : ' '
+                                }
+                            });
 
-                        if ( chuanrFirstName ) {
-                            chuanrFirstName.dispose();
+                            inst.roast( cur.el, cur.patterns );
+                            inst.on('prevented', getOnPrevent(cur.el));
+                            inst.on('resumed', getOnResume(cur.el));
+
+                            cur.instance = inst;
                         }
-                        chuanrFirstName = new Chuanr({
-                            placeholder: {
-                                empty: chkUnderline.checked ? '_' : ' '
-                            }
-                        });
-                        var pttns = [];
+                    }
 
+                    var schHandle;
+                    var elInput = document.getElementById('phone');
+                    var elFirstName = document.getElementById('firstname');
+                    var elLastName = document.getElementById('lastname');
+                    var elMessageBox = document.getElementById('message-box');
+                    var elBtnPatterns = document.getElementById('btn-patterns');
+                    var elBtnCheck = document.getElementById('btn-check');
+                    var chkUnderline = document.getElementById('chk-placeholder');
+                    var elForm = document.getElementById('form');
+                    var namePatterns = [];
+
+                    !function( pttns ){
                         for(var i = 3; i < 20; i++ ) {
                             var sPttn = '{';
                             for(var j = 0; j < i ; j++ ) {
@@ -390,34 +399,60 @@
                             sPttn +='}';
                             pttns.push(sPttn);
                         }
-
-                        chuanrFirstName.roast(elInputName, pttns);
-                        chuanrFirstName.on('prevented', getOnPrevent(elInputName));
-                        chuanrFirstName.on('resumed', getOnResume(elInputName));
-                    }
-
-                    var schHandle;
-                    var chuanrPhone;
-                    var chuanrFirstName;
-                    var elInput = document.getElementById('phone');
-                    var elInputName = document.getElementById('firstname');
-                    var elMessageBox = document.getElementById('message-box');
-                    var elBtnPatterns = document.getElementById('btn-patterns');
-                    var elBtnCheck = document.getElementById('btn-check');
-                    var chkUnderline = document.getElementById('chk-placeholder');
-                    var elForm = document.getElementById('form');
+                    }(namePatterns);
+                        
+                    var creationInfo = [
+                        {
+                            'el': elFirstName,
+                            'patterns': namePatterns
+                        },
+                        {
+                            'el': elLastName,
+                            'patterns': namePatterns
+                        },
+                        {
+                            'el': elInput,
+                            'patterns': [
+                                "({11}) {99ddd}-{dddd}",
+                                "({11}) {98d}-{ddd}-{ddd}",
+                                "({11}) {97d(01234569)dd}-{dddd}",
+                                "({11}) {96ddd}-{dddd}",
+                                "({11}) {95ddd}-{dddd}",
+                                "({dd}) {700d}-{dddd}",
+                                "({dd}) {7010}-{dddd}",
+                                "({dd}) {77dd}-{dddd}",
+                                "({dd}) {78dd}-{dddd}",
+                                "({dd}) {790d(124)}-{dddd}",
+                                "({dd}) {791d(2-9)}-{dddd}",
+                                "({dd}) {792d(03489)}-{dddd}",
+                                "({dd}) {793d(012456789)}-{dddd}",
+                                "({dd}) {794d}-{dddd}",
+                                "({11}) {d(2345)ddd}-{dddd}",
+                                "-|({11}) {d(2345)d(+1)d(+1)d(+1)}-{d(+1)d(+1)}"
+                            ]
+                        }
+                    ];
                     
                     elBtnPatterns.onclick = function() {
                         showPatterns();
                     };
                     elBtnCheck.onclick = function ( evt ) {
-                        if ( chuanrPhone.intact() && chuanrFirstName.intact() ) {
+                        var allFine = true;
+
+                        for( var l = creationInfo.length; l--; ) {
+                            if ( creationInfo[l].instance.intact() != true ) {
+                                allFine = false;
+                            }
+                        }
+
+                        if ( allFine ) {
                             elBtnCheck.className = 'validate';
                         }
                         else {
                             elBtnCheck.className = 'error';   
                             evt.preventDefault ? evt.preventDefault() : (evt.returnValue = true);
                         }
+
                     };
                     chkUnderline.onchange = function(){
                         createChuanr();
