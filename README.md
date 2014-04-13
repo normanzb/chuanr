@@ -143,15 +143,15 @@ Pattern function is useful for simplify the long pattern list by adding a bit fl
 * d(-): match digit which is equal to previous digit - 1, if previous digit is 0 then this pattern will never matchif there is no previou digit, consider unmatched.
 * d(-1): same as above
 * d(-n): the counterpart case of d(+n), you can figure it out.
-* D: match any non-digit
+* D: [WIP] match any non-digit
 * a: match alphabet
 * a(abcd): match alphabet witin the parentheses
-* A: match non alphabet
-* w: match alphanumeric characters plus underscore (A-Za-z0-9_)
-* w(abcd0-9): match any alphabet or number within the parentheses
-* W: match any non letter
-* s: match any whitespace ( "\t" or " " )
-* S: match any non-whitespace
+* A: [WIP] match non alphabet
+* w: [WIP] match alphanumeric characters plus underscore (A-Za-z0-9_)
+* w(abcd0-9): [WIP] match any alphabet or number within the parentheses
+* W: [WIP] match any non letter
+* s: [WIP] match any whitespace ( "\t" or " " )
+* S: [WIP] match any non-whitespace
 * x: shortcut to duplicate previous function
     * x(o) to make the match optional 
 * ?: alias of x(o)
