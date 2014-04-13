@@ -367,7 +367,8 @@
 
                             inst = new Chuanr({
                                 placeholder: {
-                                    empty: chkUnderline.checked ? '_' : ' '
+                                    empty: chkUnderline.checked ? '_' : ' ',
+                                    always: cur.config && cur.config.placeholder && cur.config.placeholder.always
                                 }
                             });
 
@@ -429,7 +430,12 @@
                                 "({dd}) {794d}-{dddd}",
                                 "({11}) {d(2345)ddd}-{dddd}",
                                 "-|({11}) {d(2345)d(+1)d(+1)d(+1)}-{d(+1)d(+1)}"
-                            ]
+                            ],
+                            'config': {
+                                placeholder: {
+                                    always: true
+                                }
+                            }
                         }
                     ];
                     

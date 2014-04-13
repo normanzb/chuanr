@@ -480,7 +480,7 @@ define([
 
         util.addListener(el, 'keydown', this._onKeyDown );
 
-        if ( this._el.value != "" ) {
+        if ( this._el.value != "" || this.config.placeholder.always === true ) {
             // not equal to empty spaces
             onInput.call(this);
         }
