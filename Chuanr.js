@@ -2178,6 +2178,7 @@ define('Chuanr',[
         };
         var format;
         var undid = false;    
+        var extracted;
 
         // == Batch Input ==
         input = this._el.value;
@@ -2187,34 +2188,36 @@ define('Chuanr',[
         // will will handle it later
         caret = caretUtil.get( this._el );
 
-        // 2. Initial Format
+        // 2. Extract The Raw Input
+        // Try to extract the raw data based on the format
         // that means the change is done by pasting, dragging ...etc
-        format = this.formatter.reset( input );
+        extracted = extraRawData.call( this, input, caret );
+        format = this.formatter.reset( extracted );
 
-        // 2.5 Batch Input Tricks
         if ( format.result.legitimate ) {
-            if ( 
-                this._isFormatted == false && 
-                (
-                    this._el.value != false ||
-                    this._el.value === "0"
-                ) &&
-                caret.begin == 0
-            ) {
-                // you must on ios 5, which sucks
-                caret.begin = trim.call( this._el.value ).length ;
-                caret.end = caret.begin;
-            }
-            // match immediately means user inputs raw numbers
-            caret.type = 2;
+            input = extracted;
         }
         else {
 
-            input = extraRawData.call( this, input, caret );
             format = this.formatter.reset( input );
-            
-            if ( 
-                format.result.legitimate == false && 
+
+            if ( format.result.legitimate ) {
+                if ( 
+                    this._isFormatted == false && 
+                    (
+                        this._el.value != false ||
+                        this._el.value === "0"
+                    ) &&
+                    caret.begin == 0
+                ) {
+                    // you must on ios 5, which sucks
+                    caret.begin = trim.call( this._el.value ).length ;
+                    caret.end = caret.begin;
+                }
+                // match immediately means user inputs raw numbers
+                caret.type = 2;
+            }
+            else if ( 
                 this.config.speculation.batchinput == true ) {
                 // get a matched format by trying different type of input
                 // also caret will be adjusted here
@@ -2340,7 +2343,7 @@ define('Chuanr',[
 
         util.addListener(el, 'keydown', this._onKeyDown );
 
-        if ( this._el.value != "" ) {
+        if ( this._el.value != "" || this.config.placeholder.always === true ) {
             // not equal to empty spaces
             onInput.call(this);
         }
