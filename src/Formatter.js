@@ -206,6 +206,11 @@ define([
 
         // try to find out best extraction
         for( var l = this.patterns.length; l--; ) {
+            
+            if ( util.hasBit( this.patterns[l].type , PatternConstant.TYPE_NEGATIVE ) ) {
+                continue;
+            }
+
             try{
                 extraction = this.patterns[l].extract( trim.call(formatted) );
             }
