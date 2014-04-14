@@ -315,6 +315,9 @@ define([
         if ( !isEmpty ) {
             this._el.value = result;
         }
+        else {
+            this._el.value = '';
+        }
     }
 
     function render( skipSetFocus ) {
@@ -351,7 +354,7 @@ define([
         if ( format && format.result.legitimate ) {
             input = extracted;
         }
-        else {
+        else if ( input != extracted ) {
 
             format = this.formatter.reset( input );
 
@@ -376,13 +379,16 @@ define([
                 // user did not define a formatting (positive) pattern
                 return;
             }
-            else if ( 
-                this.config.speculation.batchinput == true ) {
-                // get a matched format by trying different type of input
-                // also caret will be adjusted here
-                input = speculateBatchInput.call( this, input, format, caret );
-                format = this.formatter.reset( input );
-            }
+        }
+
+        if ( 
+            format && format.result.legitimate == false &&
+            this.config.speculation.batchinput == true 
+        ) {
+            // get a matched format by trying different type of input
+            // also caret will be adjusted here
+            input = speculateBatchInput.call( this, input, format, caret );
+            format = this.formatter.reset( input );
         }
 
         // revert if match failed
@@ -390,10 +396,12 @@ define([
             if ( undid == false ) {
                 undid = format;
             }
-            format = this.formatter.undo()
+            
             //>>excludeStart("release", pragmas.release);
-            console.log('Failed to format, undo.');
+            console.log('Failed to format, undoing...');
             //>>excludeEnd("release");
+
+            format = this.formatter.undo()
 
             if ( format == null ) {
                 //>>excludeStart("release", pragmas.release);
@@ -401,6 +409,10 @@ define([
                 //>>excludeEnd("release");
                 break;
             }
+
+            //>>excludeStart("release", pragmas.release);
+            console.log('undone, now format is', format);
+            //>>excludeEnd("release");
 
             caret.begin = tryExtractAndResetCaret.call( this, format.result.toString(), null ).length;
             caret.end = caret.begin;
