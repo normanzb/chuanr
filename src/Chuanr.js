@@ -116,7 +116,7 @@ define([
 
     function extraRawData( input, caret ){
         var prev, ret, prevInput, begin, end, isConstantDeletion = false,
-            prefix, postfix;
+            prefix, postfix, tmp;
 
         //>>excludeStart("release", pragmas.release);
         console.log('Not raw data, need some sophisicated logic to figure out');
@@ -187,9 +187,12 @@ define([
                 caret.type = 2;
             }
             else {
-                caret.begin = end + differ.insertion.text.length - differ.deletion.text.length;
-                caret.end = caret.begin;
-                caret.type = 2;
+                tmp = end + differ.insertion.text.length - differ.deletion.text.length;
+                if ( tmp >= 0 ) {
+                    caret.begin = tmp
+                    caret.end = tmp;
+                    caret.type = 2;
+                }
             }
         }
 
@@ -279,6 +282,15 @@ define([
 
     }
 
+    function onFocus() {
+        //>>excludeStart("release", pragmas.release);
+        console.hr();
+        console.log('focusing...');
+        //>>excludeEnd("release");
+
+        render.call(this);
+    }
+
     function onInput( ) {
         //>>excludeStart("release", pragmas.release);
         console.hr();
@@ -309,6 +321,7 @@ define([
         // the caret at the point could be with format or without
         // will will handle it later
         caret = caretUtil.get( this._el );
+        caret.type = 1;
 
         // 2. Extract The Raw Input
         // Try to extract the raw data based on the format
@@ -316,14 +329,14 @@ define([
         extracted = extraRawData.call( this, input, caret );
         format = this.formatter.reset( extracted );
 
-        if ( format.result.legitimate ) {
+        if ( format && format.result.legitimate ) {
             input = extracted;
         }
         else {
 
             format = this.formatter.reset( input );
 
-            if ( format.result.legitimate ) {
+            if ( format && format.result.legitimate ) {
                 if ( 
                     this._isFormatted == false && 
                     (
@@ -338,6 +351,11 @@ define([
                 }
                 // match immediately means user inputs raw numbers
                 caret.type = 2;
+            }
+            else if ( format == null ) {
+                // that probably means there is no pattern for formatting
+                // user did not define a formatting (positive) pattern
+                return;
             }
             else if ( 
                 this.config.speculation.batchinput == true ) {
@@ -381,7 +399,7 @@ define([
         // record the final format
         this._untouched = format;
         // update the element
-        this._el.value = format.result;
+        this._el.value = format.result == false && format.result !== '0' ? '' : format.result ;
         this.oninput.sync();
 
         // update the caret accordingly
@@ -397,7 +415,11 @@ define([
 
         }
         else if ( caret.type === 1 ) {
-            // do nothing?
+            // set it to first slot that need to be inputted
+            caret.begin = this.formatter
+                .index()
+                    .of('pattern')
+                    .by({ 'function': { index: format.input.length } });
         }
         //>>excludeStart("release", pragmas.release);
         console.log('Caret after format: ', caret);
@@ -448,6 +470,7 @@ define([
         this._isFormatted = false;
 
         this._onKeyDown = bind.call(onKeyDown, this);
+        this._onFocus = bind.call(onFocus, this);
 
         this.onPrevented = event();
         this.onResumed = event();
@@ -479,6 +502,7 @@ define([
         this.oninput.oninput = bind.call(onInput, this);
 
         util.addListener(el, 'keydown', this._onKeyDown );
+        util.addListener(el, 'focus', this._onFocus );
 
         if ( this._el.value != "" || this.config.placeholder.always === true ) {
             // not equal to empty spaces
@@ -490,6 +514,7 @@ define([
     p.dispose = function() {
         this.oninput.dispose();
         util.removeListener( this._el, 'keydown', this._onKeyDown );
+        util.removeListener( this._el, 'focus', this._onFocus );
     };
 
     /**
