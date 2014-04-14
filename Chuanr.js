@@ -464,6 +464,11 @@ define('Formatter',[
 
         // try to find out best extraction
         for( var l = this.patterns.length; l--; ) {
+            
+            if ( util.hasBit( this.patterns[l].type , PatternConstant.TYPE_NEGATIVE ) ) {
+                continue;
+            }
+
             try{
                 extraction = this.patterns[l].extract( trim.call(formatted) );
             }
@@ -1986,6 +1991,8 @@ define('Chuanr',[
         }
     };
 
+    var lockFocus = false;
+
     /* Private Methods */
     function tryExtractAndResetCaret( value, caret ) {
         // do a filtering before actual inputting
@@ -2035,7 +2042,7 @@ define('Chuanr',[
 
     function extraRawData( input, caret ){
         var prev, ret, prevInput, begin, end, isConstantDeletion = false,
-            prefix, postfix;
+            prefix, postfix, tmp;
 
         
         prev = this._untouched ? this._untouched.result + '' : '';
@@ -2097,9 +2104,12 @@ define('Chuanr',[
                 caret.type = 2;
             }
             else {
-                caret.begin = end + differ.insertion.text.length - differ.deletion.text.length;
-                caret.end = caret.begin;
-                caret.type = 2;
+                tmp = end + differ.insertion.text.length - differ.deletion.text.length;
+                if ( tmp >= 0 ) {
+                    caret.begin = tmp
+                    caret.end = tmp;
+                    caret.type = 2;
+                }
             }
         }
 
@@ -2160,9 +2170,39 @@ define('Chuanr',[
 
     }
 
+    function onFocus() {
+        if ( lockFocus == true ) {
+            return;
+        }
+
+        lockFocus = true;
+        
+        render.call(this);
+
+        setTimeout(function(){
+            lockFocus = false;
+        }, 1000);
+    }
+
     function onInput( ) {
         
         render.call(this);
+    }
+
+    function updateInput( result ){
+        var isEmpty = true;
+        result = result + '';
+
+        for(var l = result.length; l--; ) {
+            if ( result.charAt(l) != this.config.placeholder.empty ) {
+                isEmpty = false;
+                break;
+            }
+        }
+
+        if ( !isEmpty ) {
+            this._el.value = result;
+        }
     }
 
     function render( input ) {
@@ -2187,6 +2227,7 @@ define('Chuanr',[
         // the caret at the point could be with format or without
         // will will handle it later
         caret = caretUtil.get( this._el );
+        caret.type = 1;
 
         // 2. Extract The Raw Input
         // Try to extract the raw data based on the format
@@ -2194,14 +2235,14 @@ define('Chuanr',[
         extracted = extraRawData.call( this, input, caret );
         format = this.formatter.reset( extracted );
 
-        if ( format.result.legitimate ) {
+        if ( format && format.result.legitimate ) {
             input = extracted;
         }
         else {
 
             format = this.formatter.reset( input );
 
-            if ( format.result.legitimate ) {
+            if ( format && format.result.legitimate ) {
                 if ( 
                     this._isFormatted == false && 
                     (
@@ -2216,6 +2257,11 @@ define('Chuanr',[
                 }
                 // match immediately means user inputs raw numbers
                 caret.type = 2;
+            }
+            else if ( format == null ) {
+                // that probably means there is no pattern for formatting
+                // user did not define a formatting (positive) pattern
+                return;
             }
             else if ( 
                 this.config.speculation.batchinput == true ) {
@@ -2250,7 +2296,7 @@ define('Chuanr',[
         // record the final format
         this._untouched = format;
         // update the element
-        this._el.value = format.result;
+        updateInput.call( this, format.result );
         this.oninput.sync();
 
         // update the caret accordingly
@@ -2263,7 +2309,11 @@ define('Chuanr',[
 
         }
         else if ( caret.type === 1 ) {
-            // do nothing?
+            // set it to first slot that need to be inputted
+            caret.begin = this.formatter
+                .index()
+                    .of('pattern')
+                    .by({ 'function': { index: format.input.length } });
         }
         
         // set cursor
@@ -2311,6 +2361,7 @@ define('Chuanr',[
         this._isFormatted = false;
 
         this._onKeyDown = bind.call(onKeyDown, this);
+        this._onFocus = bind.call(onFocus, this);
 
         this.onPrevented = event();
         this.onResumed = event();
@@ -2342,6 +2393,7 @@ define('Chuanr',[
         this.oninput.oninput = bind.call(onInput, this);
 
         util.addListener(el, 'keydown', this._onKeyDown );
+        util.addListener(el, 'focus', this._onFocus );
 
         if ( this._el.value != "" || this.config.placeholder.always === true ) {
             // not equal to empty spaces
@@ -2353,6 +2405,7 @@ define('Chuanr',[
     p.dispose = function() {
         this.oninput.dispose();
         util.removeListener( this._el, 'keydown', this._onKeyDown );
+        util.removeListener( this._el, 'focus', this._onFocus );
     };
 
     /**
