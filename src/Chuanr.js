@@ -285,21 +285,12 @@ define([
     }
 
     function onFocus() {
-        if ( lockFocus == true ) {
-            return;
-        }
-
-        lockFocus = true;
         //>>excludeStart("release", pragmas.release);
         console.hr();
         console.log('focusing...');
         //>>excludeEnd("release");
 
-        render.call(this);
-
-        setTimeout(function(){
-            lockFocus = false;
-        }, 1000);
+        render.call(this, true);
     }
 
     function onInput( ) {
@@ -326,7 +317,7 @@ define([
         }
     }
 
-    function render( input ) {
+    function render( skipSetFocus ) {
         var me = this;
         var caret = {
             begin: 0,
@@ -340,13 +331,14 @@ define([
         var format;
         var undid = false;    
         var extracted;
+        var input;
 
         // == Batch Input ==
         input = this._el.value;
 
         // 1. Initial Caret
         // the caret at the point could be with format or without
-        // will will handle it later
+        // we will handle it later
         caret = caretUtil.get( this._el );
         caret.type = 1;
 
@@ -452,19 +444,25 @@ define([
         console.log('Caret after format: ', caret);
         //>>excludeEnd("release");
 
-        // set cursor
-        caretUtil.set( this._el, caret.begin );
+        if ( lockFocus != true && skipSetFocus !== true ) {
+            lockFocus = true;
 
-        // this is to prevent some iOS shits to reset the caret after we set it
-        // TODO: user setImmediate shim to make it faster?
-        setTimeout(function(){
-            if ( caretUtil.get( me._el) == caret.begin ) {
-                return;
-            }
+            // set cursor
+            caretUtil.set( this._el, caret.begin );
 
-            // oh shit, we failed
-            caretUtil.set( me._el, caret.begin );
-        });
+            // this is to prevent some iOS shits to reset the caret after we set it
+            // TODO: user setImmediate shim to make it faster?
+            setTimeout(function(){
+                if ( caretUtil.get( me._el) == caret.begin ) {
+                    return;
+                }
+
+                // oh shit, we failed
+                caretUtil.set( me._el, caret.begin );
+
+                lockFocus = false;
+            });   
+        }
 
         if ( format.result != 0 ) {
             this._isFormatted = true;
@@ -533,7 +531,7 @@ define([
 
         if ( this._el.value != "" || this.config.placeholder.always === true ) {
             // not equal to empty spaces
-            onInput.call(this);
+            onFocus.call(this);
         }
 
     };
