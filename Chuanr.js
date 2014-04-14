@@ -650,136 +650,7 @@ define( 'PatternFunction/alphabet',[],function () {
 
     return ret;
 });
-define('PatternFunction/../../lib/boe/src/boe/Object/../util',[],function(){
-    
-    
-    var global = (Function("return this"))();
-
-    var OBJECT_PROTO = global.Object.prototype;
-    var ARRAY_PROTO = global.Array.prototype;
-    var FUNCTION_PROTO = global.Function.prototype;
-    var FUNCTION = 'function';
-
-    var ret = {
-        mixinAsStatic: function(target, fn){
-            for(var key in fn){
-                if (!fn.hasOwnProperty(key)){
-                    continue;
-                }
-
-                target[key] = ret.bind.call(FUNCTION_PROTO.call, fn[key]);
-            }
-
-            return target;
-        },
-        type: function(obj){
-            var typ = OBJECT_PROTO.toString.call(obj);
-            var closingIndex = typ.indexOf(']');
-            return typ.substring(8, closingIndex);
-        },
-        mixin: function(target, source, map){
-
-            // in case only source specified
-            if (source == null){
-                source = target;
-                target= {};
-            }
-
-            for(var key in source){
-                if (!source.hasOwnProperty(key)){
-                    continue;
-                }
-
-                target[key] = ( typeof map == FUNCTION ? map( key, source[key] ) : source[key] );
-            }
-
-            return target;
-        },
-        bind: function(context) {
-            var slice = ARRAY_PROTO.slice;
-            var __method = this, args = slice.call(arguments);
-            args.shift();
-            return function wrapper() {
-                if (this instanceof wrapper){
-                    context = this;
-                }
-                return __method.apply(context, args.concat(slice.call(arguments)));
-            };
-        },
-        slice: function(arr) {
-            return ARRAY_PROTO.slice.call(arr);
-        },
-        g: global
-    };
-
-    return ret;
-});
-define('PatternFunction/../../lib/boe/src/boe/Object/clone',['../util'], function(util){
-
-    var FUNCTION = 'function';
-    var OBJECT = 'object';
-    var FUNCTION_PROTO = util.g.Function.prototype;
-
-    var objectCache = [];
-    var traverseMark = '__boeObjectClone_Traversed';
-
-    function boeObjectClone( deep ){
-        var ret,
-            obj = this;
-
-        if ( traverseMark in this ) {
-            // current object is already traversed
-            // no need to clone, return the clone directly
-            return this[traverseMark];
-        }
-
-        // push to stack
-        objectCache.push( this );
-
-        // clone starts
-        if (typeof this == FUNCTION) {
-            ret = window.eval("true?(" + FUNCTION_PROTO.toString.call(this) + "):false");
-        }
-        else if (util.type(this) == "Array") {
-            ret = [];
-        }
-        else {
-            ret = {};
-        }
-
-        this[traverseMark] = ret;
-
-        for( var key in this ) {
-
-            if ( this.hasOwnProperty(key) == false || key == traverseMark ) {
-                // if it is the traverseMark on the proto, skip it
-                continue;
-            }
-
-            var cur = this[key];
-
-            if ( deep && (typeof cur == OBJECT || typeof cur == FUNCTION) ) {
-                ret[key] = boeObjectClone.call( cur, deep );
-            }
-            else {
-                ret[key] = cur;
-            }
-        }
-
-        // clone ends
-
-        if ( objectCache.pop( ) != this ) {
-            throw "boe.Object.shadow: stack corrupted."
-        }
-
-        delete this[traverseMark];
-
-        return ret;
-    };
-
-    return boeObjectClone;
-});
-define( 'PatternFunction/duplicate',['../../lib/boe/src/boe/Object/clone', ], function (clone) {
+define( 'PatternFunction/duplicate',[],function () {
     var ret = function(input, param, context){
         var index = context.index >>> 0;
         var target = index;
@@ -819,7 +690,15 @@ define( 'PatternFunction/duplicate',['../../lib/boe/src/boe/Object/clone', ], fu
             throw new Error("No previous function");
         }
 
-        var newContext = clone.call( context );
+        var newContext = {};
+
+        for(var key in context) {
+            if ( !context.hasOwnProperty(key) ) {
+                continue;
+            }
+            newContext[key] = context[key];
+        }
+
         newContext.index = l;
 
         return prevFunc.call( this, input, prevItem.param, newContext );
