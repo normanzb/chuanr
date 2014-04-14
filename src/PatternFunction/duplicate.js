@@ -3,7 +3,7 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
     var define = require('amdefine')(module);
 }
 //>>excludeEnd("release");
-define( ['../../lib/boe/src/boe/Object/clone', ], function (clone) {
+define( function () {
     var ret = function(input, param, context){
         var index = context.index >>> 0;
         var target = index;
@@ -43,7 +43,15 @@ define( ['../../lib/boe/src/boe/Object/clone', ], function (clone) {
             throw new Error("No previous function");
         }
 
-        var newContext = clone.call( context );
+        var newContext = {};
+
+        for(var key in context) {
+            if ( !context.hasOwnProperty(key) ) {
+                continue;
+            }
+            newContext[key] = context[key];
+        }
+
         newContext.index = l;
 
         return prevFunc.call( this, input, prevItem.param, newContext );
