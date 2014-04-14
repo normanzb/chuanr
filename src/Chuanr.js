@@ -52,6 +52,8 @@ define([
         }
     };
 
+    var lockFocus = false;
+
     /* Private Methods */
     function tryExtractAndResetCaret( value, caret ) {
         // do a filtering before actual inputting
@@ -283,12 +285,21 @@ define([
     }
 
     function onFocus() {
+        if ( lockFocus == true ) {
+            return;
+        }
+
+        lockFocus = true;
         //>>excludeStart("release", pragmas.release);
         console.hr();
         console.log('focusing...');
         //>>excludeEnd("release");
 
         render.call(this);
+
+        setTimeout(function(){
+            lockFocus = false;
+        }, 1000);
     }
 
     function onInput( ) {
@@ -297,6 +308,22 @@ define([
         //>>excludeEnd("release");
 
         render.call(this);
+    }
+
+    function updateInput( result ){
+        var isEmpty = true;
+        result = result + '';
+
+        for(var l = result.length; l--; ) {
+            if ( result.charAt(l) != this.config.placeholder.empty ) {
+                isEmpty = false;
+                break;
+            }
+        }
+
+        if ( !isEmpty ) {
+            this._el.value = result;
+        }
     }
 
     function render( input ) {
@@ -399,7 +426,7 @@ define([
         // record the final format
         this._untouched = format;
         // update the element
-        this._el.value = format.result == false && format.result !== '0' ? '' : format.result ;
+        updateInput.call( this, format.result );
         this.oninput.sync();
 
         // update the caret accordingly
