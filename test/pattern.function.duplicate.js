@@ -107,7 +107,7 @@ describe('PatternFunction.duplicate', function(){
         var result = p.apply('344444444444');
 
         assert.deepEqual( result,  { 
-            result: '',
+            result: '344444444444',
             matched: true,
             legitimate: false,
             counts: { total: 12, matched: 12 },
