@@ -2205,6 +2205,9 @@ define('Chuanr',[
         if ( !isEmpty ) {
             this._el.value = result;
         }
+        else {
+            this._el.value = '';
+        }
     }
 
     function render( skipSetFocus ) {
@@ -2241,7 +2244,7 @@ define('Chuanr',[
         if ( format && format.result.legitimate ) {
             input = extracted;
         }
-        else {
+        else if ( input != extracted ) {
 
             format = this.formatter.reset( input );
 
@@ -2266,13 +2269,16 @@ define('Chuanr',[
                 // user did not define a formatting (positive) pattern
                 return;
             }
-            else if ( 
-                this.config.speculation.batchinput == true ) {
-                // get a matched format by trying different type of input
-                // also caret will be adjusted here
-                input = speculateBatchInput.call( this, input, format, caret );
-                format = this.formatter.reset( input );
-            }
+        }
+
+        if ( 
+            format && format.result.legitimate == false &&
+            this.config.speculation.batchinput == true 
+        ) {
+            // get a matched format by trying different type of input
+            // also caret will be adjusted here
+            input = speculateBatchInput.call( this, input, format, caret );
+            format = this.formatter.reset( input );
         }
 
         // revert if match failed
@@ -2280,12 +2286,15 @@ define('Chuanr',[
             if ( undid == false ) {
                 undid = format;
             }
-            format = this.formatter.undo()
             
+            
+            format = this.formatter.undo()
+
             if ( format == null ) {
                                 break;
             }
 
+            
             caret.begin = tryExtractAndResetCaret.call( this, format.result.toString(), null ).length;
             caret.end = caret.begin;
             caret.type = 2;
