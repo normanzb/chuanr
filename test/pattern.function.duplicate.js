@@ -75,7 +75,7 @@ describe('PatternFunction.duplicate', function(){
         } );
     });
 
-    it('return falsed match correctly has using the alias "?"', function(){
+    it('return falsed match correctly when "?" is used', function(){
         var p;
         p = Pattern.parse("-|{0d(=)d(=)d(=)d(=)}{????????????}");
 
@@ -96,6 +96,21 @@ describe('PatternFunction.duplicate', function(){
             matched: false,
             legitimate: true,
             counts: { total: 17, matched: 5 },
+            toString: result.toString
+        } );
+    });
+
+    it('return falsed match correctly when both "x" and "?" are used', function(){
+        var p;
+        p = Pattern.parse("_|{3d(2349)dd(=)xxxx????}");
+
+        var result = p.apply('344444444444');
+
+        assert.deepEqual( result,  { 
+            result: '',
+            matched: true,
+            legitimate: false,
+            counts: { total: 12, matched: 12 },
             toString: result.toString
         } );
     });

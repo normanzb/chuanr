@@ -19,3 +19,5 @@ Open index.html and then
 * Type 1270005566, it formats to (12) 7000-5566, backspace 5 times (mobile)
 * Type 12700055, it formats to "(12) 7000-55  ", between the last 2 white space, paste 2
 * Set pattern to '0{dddd}', type 1234, press backspace.
+* Set pattern to '0{dddd}', '-|{dd(=)xx}', type 1234, press backspace.
+* Set pattern to "{ddddddd?????}", "_|{3d(2349)dd(=)xxxx????}", type 344444444444, should be no exception and validation failed.
