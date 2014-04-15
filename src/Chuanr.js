@@ -45,7 +45,8 @@ define([
 
     var defaultSettings = {
         placeholder: {
-            empty: ' '
+            empty: ' ',
+            always: false
         },
         speculation: {
             batchinput: true
@@ -284,13 +285,13 @@ define([
 
     }
 
-    function onFocus() {
+    function onFocus( skipSetFocus ) {
         //>>excludeStart("release", pragmas.release);
         console.hr();
         console.log('focusing...');
         //>>excludeEnd("release");
 
-        render.call(this, true);
+        render.call( this, skipSetFocus );
     }
 
     function onInput( ) {
@@ -495,23 +496,26 @@ define([
 
     /* Public Methods */
     function Ctor( config ) {
-        this.patterns = [];
-        this.passives = [];
-        this.formatter = null;
-        this.oninput = null;
-        this.config = clone.call(defaultSettings, true);
-        boeUtil.mixin( this.config, config );
+        var me = this;
+        me.patterns = [];
+        me.passives = [];
+        me.formatter = null;
+        me.oninput = null;
+        me.config = clone.call(defaultSettings, true);
+        boeUtil.mixin( me.config, config, function( key, sourceValue ) {
+            return boeUtil.mixin( me.config[key] || {}, sourceValue );
+        } );
 
-        this._el = null;
-        this._untouched = null;
-        this._isFormatted = false;
+        me._el = null;
+        me._untouched = null;
+        me._isFormatted = false;
 
-        this._onKeyDown = bind.call(onKeyDown, this);
-        this._onFocus = bind.call(onFocus, this);
+        me._onKeyDown = bind.call(onKeyDown, me);
+        me._onFocus = bind.call(onFocus, me);
 
-        this.onPrevented = event();
-        this.onResumed = event();
-        emittable( this );
+        me.onPrevented = event();
+        me.onResumed = event();
+        emittable( me );
 
     }
 
@@ -543,7 +547,7 @@ define([
 
         if ( this._el.value != "" || this.config.placeholder.always === true ) {
             // not equal to empty spaces
-            onFocus.call(this);
+            onFocus.call(this, true);
         }
 
     };
