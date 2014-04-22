@@ -23,6 +23,15 @@ define( function () {
 
     var ret = function(input, param, context){
 
+        if ( param == '?' ) {
+            if ( input == '' || input == ' ') {
+                return true;
+            }
+            else {
+                param = '';
+            }
+        }
+
         if ( param == '=' ) {
             if ( noPrev(context) ) {
                 return false;

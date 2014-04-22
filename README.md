@@ -139,6 +139,7 @@ Pattern function is useful for simplify the long pattern list by adding a bit fl
 * d(0123): match any digit within the parentheses.
 * d(0-6): match any digit within the range which starts from 0 and ends with 6.
 * d(=): match any digit that is same as previous one, if there is no previou digit, consider unmatched.
+* d(?): match any digit or empty input (optional).
 * d(+): match digit which equal to previous digit + 1, if previous digit is 9 then this pattern will never match, if there is no previou digit, consider unmatched.
 * d(+n): match digit which is equal to previous digit + n. if previous digit + n > 9 then this pattern will never match, if there is no previou digit, consider unmatched.
 * d(-): match digit which is equal to previous digit - 1, if previous digit is 0 then this pattern will never matchif there is no previou digit, consider unmatched.
@@ -159,6 +160,7 @@ Pattern function is useful for simplify the long pattern list by adding a bit fl
 * n: never match, useful when you want to allow some input but not allow the specific input to be consider validate by when calling intact(). 
     * n(=) unmatch if equal to previous input
     * n(any char) unmatch if equal to specified input
+* *: match everything, including empty and whitespace.
 
 #Feeling Geeky
 

@@ -11,12 +11,13 @@ define([
     './PatternFunction/alphabet', 
     './PatternFunction/duplicate',
     './PatternFunction/never',
+    './PatternFunction/everything',
     '../lib/boe/src/boe/Object/clone', 
     '../lib/boe/src/boe/util', 
     './PatternIndexQuery', 
     './PatternConstant'
 ], function ( util,
-    pfDigit, pfAlphabet, pfDuplicate, pfNever, 
+    pfDigit, pfAlphabet, pfDuplicate, pfNever, pfEverything,
     boeClone, boeUtil, PatternIndexQuery, PatternConstant ) {
 
     var PLACE_HOLDER_FUNCTION_START = "{";
@@ -408,7 +409,8 @@ define([
         'n': pfNever,
         '?': function(input, param, context){
             return pfDuplicate.call(this, input, '?', context)
-        }
+        },
+        '*': pfEverything
     };
 
     for ( var i = 10; i--; ) {

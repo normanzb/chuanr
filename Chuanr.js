@@ -551,6 +551,10 @@ define( 'PatternFunction/digit',[],function () {
 
     var ret = function(input, param, context){
 
+        if ( param == '?' && input == '') {
+            return true;
+        }
+
         if ( param == '=' ) {
             if ( noPrev(context) ) {
                 return false;
@@ -610,6 +614,10 @@ define( 'PatternFunction/alphabet',[],function () {
     }
 
     var ret = function(input, param, context){
+
+        if ( param == '?' && input == '') {
+            return true;
+        }
 
         if ( param == '=' ) {
             if ( noPrev(context) ) {
@@ -722,6 +730,11 @@ define( 'PatternFunction/never',[],function duplicate() {
     };
 
     return ret;
+});
+define( 'PatternFunction/everything',[],function () {
+    return function(input, param, context){
+        return true;
+    };
 });
 define('../lib/boe/src/boe/Object/clone',['../util'], function(util){
 
@@ -885,12 +898,13 @@ define('Pattern',[
     './PatternFunction/alphabet', 
     './PatternFunction/duplicate',
     './PatternFunction/never',
+    './PatternFunction/everything',
     '../lib/boe/src/boe/Object/clone', 
     '../lib/boe/src/boe/util', 
     './PatternIndexQuery', 
     './PatternConstant'
 ], function ( util,
-    pfDigit, pfAlphabet, pfDuplicate, pfNever, 
+    pfDigit, pfAlphabet, pfDuplicate, pfNever, pfEverything,
     boeClone, boeUtil, PatternIndexQuery, PatternConstant ) {
 
     var PLACE_HOLDER_FUNCTION_START = "{";
@@ -1282,7 +1296,8 @@ define('Pattern',[
         'n': pfNever,
         '?': function(input, param, context){
             return pfDuplicate.call(this, input, '?', context)
-        }
+        },
+        '*': pfEverything
     };
 
     for ( var i = 10; i--; ) {

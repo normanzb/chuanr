@@ -457,6 +457,72 @@ describe('PatternFunction.digit', function(){
         
     });
 
+    /* (?) */
+
+    it('returns match when input is empty and the pattern is set to d(?) ', function(){
+        var p;
+
+        p = Pattern.parse("-{dd(?)}-");
+
+        var result = p.apply('2');
+        assert.deepEqual( result,  { 
+            result: '-2 -',
+            matched: true,
+            legitimate: true,
+            counts: { total: 1, matched: 1 },
+            toString: result.toString
+        } );
+        
+    });
+
+    it('returns matched when input is empty and the pattern is set to d(?) ', function(){
+        var p;
+
+        p = Pattern.parse("-{dd(?)}-");
+
+        var result = p.apply('2');
+        assert.deepEqual( result,  { 
+            result: '-2 -',
+            matched: true,
+            legitimate: true,
+            counts: { total: 1, matched: 1 },
+            toString: result.toString
+        } );
+        
+    });
+
+    it('returns matched when input is any number and the pattern is set to d(?) ', function(){
+        var p;
+
+        p = Pattern.parse("-{dd(?)}-");
+
+        var result = p.apply('23');
+        assert.deepEqual( result,  { 
+            result: '-23-',
+            matched: true,
+            legitimate: true,
+            counts: { total: 2, matched: 2 },
+            toString: result.toString
+        } );
+        
+    });
+
+    it('returns unmatched when input is any alphabet and the pattern is set to d(?) ', function(){
+        var p;
+
+        p = Pattern.parse("-{dd(?)}-");
+
+        var result = p.apply('2a');
+        assert.deepEqual( result,  { 
+            result: '-2 -',
+            matched: false,
+            legitimate: false,
+            counts: { total: 2, matched: 1 },
+            toString: result.toString
+        } );
+        
+    });
+
     /* Exceptions */
 
     it('throw exception if there is alpahbet in the parameter', function(){
