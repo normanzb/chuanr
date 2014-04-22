@@ -551,8 +551,13 @@ define( 'PatternFunction/digit',[],function () {
 
     var ret = function(input, param, context){
 
-        if ( param == '?' && input == '') {
-            return true;
+        if ( param == '?' ) {
+            if ( input == '' || input == ' ') {
+                return true;
+            }
+            else {
+                param = '';
+            }
         }
 
         if ( param == '=' ) {
@@ -615,8 +620,13 @@ define( 'PatternFunction/alphabet',[],function () {
 
     var ret = function(input, param, context){
 
-        if ( param == '?' && input == '') {
-            return true;
+        if ( param == '?' ) {
+            if ( input == '' || input == ' ') {
+                return true;
+            }
+            else {
+                param = '';
+            }
         }
 
         if ( param == '=' ) {
