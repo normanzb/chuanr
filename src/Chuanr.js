@@ -338,38 +338,43 @@ define([
         var input;
 
         // == Batch Input ==
-        input = this._el.value;
+        input = me._el.value;
 
         // 1. Initial Caret
         // the caret at the point could be with format or without
         // we will handle it later
-        caret = caretUtil.get( this._el );
+        if ( lockFocus ) {
+            caret = lockFocus;
+        }
+        else {
+            caret = caretUtil.get( me._el );
+        }
         caret.type = 1;
 
         // 2. Extract The Raw Input
         // Try to extract the raw data based on the format
         // that means the change is done by pasting, dragging ...etc
-        extracted = extraRawData.call( this, input, caret );
-        format = this.formatter.reset( extracted );
+        extracted = extraRawData.call( me, input, caret );
+        format = me.formatter.reset( extracted );
 
         if ( format && format.result.legitimate ) {
             input = extracted;
         }
         else if ( input != extracted ) {
 
-            format = this.formatter.reset( input );
+            format = me.formatter.reset( input );
 
             if ( format && format.result.legitimate ) {
                 if ( 
-                    this._isFormatted == false && 
+                    me._isFormatted == false && 
                     (
-                        this._el.value != false ||
-                        this._el.value === "0"
+                        me._el.value != false ||
+                        me._el.value === "0"
                     ) &&
                     caret.begin == 0
                 ) {
                     // you must on ios 5, which sucks
-                    caret.begin = trim.call( this._el.value ).length ;
+                    caret.begin = trim.call( me._el.value ).length ;
                     caret.end = caret.begin;
                 }
                 // match immediately means user inputs raw numbers
@@ -384,12 +389,12 @@ define([
 
         if ( 
             format && format.result.legitimate == false &&
-            this.config.speculation.batchinput == true 
+            me.config.speculation.batchinput == true 
         ) {
             // get a matched format by trying different type of input
             // also caret will be adjusted here
-            input = speculateBatchInput.call( this, input, format, caret );
-            format = this.formatter.reset( input );
+            input = speculateBatchInput.call( me, input, format, caret );
+            format = me.formatter.reset( input );
         }
 
         // revert if match failed
@@ -402,7 +407,7 @@ define([
             console.log('Failed to format, undoing...');
             //>>excludeEnd("release");
 
-            format = this.formatter.undo()
+            format = me.formatter.undo()
 
             if ( format == null ) {
                 //>>excludeStart("release", pragmas.release);
@@ -415,7 +420,7 @@ define([
             console.log('undone, now format is', format);
             //>>excludeEnd("release");
 
-            caret.begin = tryExtractAndResetCaret.call( this, format.result.toString(), null ).length;
+            caret.begin = tryExtractAndResetCaret.call( me, format.result.toString(), null ).length;
             caret.end = caret.begin;
             caret.type = 2;
         }
@@ -429,10 +434,10 @@ define([
         //>>excludeEnd("release");
 
         // record the final format
-        this._untouched = format;
+        me._untouched = format;
         // update the element
-        updateInput.call( this, format.result );
-        this.oninput.sync();
+        updateInput.call( me, format.result );
+        me.oninput.sync();
 
         // update the caret accordingly
         //>>excludeStart("release", pragmas.release);
@@ -440,7 +445,7 @@ define([
         //>>excludeEnd("release");
 
         if ( caret.type === 2 ) {
-            caret.begin = this.formatter
+            caret.begin = me.formatter
                 .index()
                     .of('pattern')
                     .by({ 'function': { index: caret.begin } });
@@ -448,7 +453,7 @@ define([
         }
         else if ( caret.type === 1 ) {
             // set it to first slot that need to be inputted
-            caret.begin = this.formatter
+            caret.begin = me.formatter
                 .index()
                     .of('pattern')
                     .by({ 'function': { index: format.input.length } });
@@ -457,39 +462,40 @@ define([
         console.log('Caret after format: ', caret);
         //>>excludeEnd("release");
 
-        if ( lockFocus != true && skipSetFocus !== true ) {
-            lockFocus = true;
+        if ( !lockFocus && skipSetFocus !== true ) {
+            lockFocus = caret;
 
             // set cursor
-            caretUtil.set( this._el, caret.begin );
+            caretUtil.set( me._el, caret.begin );
 
-            // this is to prevent some iOS shits to reset the caret after we set it
+            // this is to prevent some iOS shits ( <= 6.0 ) to reset the caret after we set it
+            // Caveat: check caretUtil.get( me._el ).begin != caret.begin doesnot work here
+            // ios always return the correct caret at this time, it will update the caret to 
+            // an incorrect one later... mobile safari sucks
             // TODO: user setImmediate shim to make it faster?
             setTimeout(function(){
-                if ( caretUtil.get( me._el) == caret.begin ) {
-                    return;
+                if ( caretUtil.get( me._el) != caret.begin ) {
+                    // oh shit, we failed
+                    caretUtil.set( me._el, caret.begin );
                 }
 
-                // oh shit, we failed
-                caretUtil.set( me._el, caret.begin );
-
                 lockFocus = false;
-            });   
+            });
         }
 
         if ( format.result != 0 ) {
-            this._isFormatted = true;
+            me._isFormatted = true;
         }
         else {
-            this._isFormatted = false;
+            me._isFormatted = false;
         }
 
         // fire event
         if ( undid ) {
-            this.onPrevented.invoke( undid );
+            me.onPrevented.invoke( undid );
         }
         else {
-            this.onResumed.invoke( format );
+            me.onResumed.invoke( format );
         }
 
     }

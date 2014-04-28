@@ -52,7 +52,7 @@ define(['../../lib/boe/src/boe/Function/bind'], function (bind) {
         var me = this;
         if ( me._el.value != me._old ) {
             me._old = me._el.value;
-            me.oninput();
+            me.oninput( evt );
         }
     }
 
