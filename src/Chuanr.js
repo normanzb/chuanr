@@ -303,7 +303,12 @@ define([
         }
 
         if ( !isEmpty ) {
-            this._el.value = result;
+            if ( this._el.value != result ) {
+                this._el.value = result;    
+            }
+            else {
+                return true;
+            }
         }
         else {
             this._el.value = '';
@@ -425,31 +430,33 @@ define([
         // record the final format
         me._untouched = format;
         // update the element
-        updateInput.call( me, format.result );
+        var skipCaret = updateInput.call( me, format.result );
         me.oninput.sync();
 
-        // update the caret accordingly
-        //>>excludeStart("release", pragmas.release);
-        console.log('Caret before format: ', caret );
-        //>>excludeEnd("release");
+        if ( skipCaret !== true ) {
+            // update the caret accordingly
+            //>>excludeStart("release", pragmas.release);
+            console.log('Caret before format: ', caret );
+            //>>excludeEnd("release");
 
-        if ( caret.type === 2 ) {
-            caret.begin = me.formatter
-                .index()
-                    .of('pattern')
-                    .by({ 'function': { index: caret.begin } });
+            if ( caret.type === 2 ) {
+                caret.begin = me.formatter
+                    .index()
+                        .of('pattern')
+                        .by({ 'function': { index: caret.begin } });
 
+            }
+            else if ( caret.type === 1 ) {
+                // set it to first slot that need to be inputted
+                caret.begin = me.formatter
+                    .index()
+                        .of('pattern')
+                        .by({ 'function': { index: format.input.length } });
+            }
+            //>>excludeStart("release", pragmas.release);
+            console.log('Caret after format: ', caret);
+            //>>excludeEnd("release");
         }
-        else if ( caret.type === 1 ) {
-            // set it to first slot that need to be inputted
-            caret.begin = me.formatter
-                .index()
-                    .of('pattern')
-                    .by({ 'function': { index: format.input.length } });
-        }
-        //>>excludeStart("release", pragmas.release);
-        console.log('Caret after format: ', caret);
-        //>>excludeEnd("release");
 
         if ( !lockFocus && skipSetFocus !== true ) {
             lockFocus = caret;
