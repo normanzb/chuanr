@@ -2205,7 +2205,12 @@ define('Chuanr',[
         }
 
         if ( !isEmpty ) {
-            this._el.value = result;
+            if ( this._el.value != result ) {
+                this._el.value = result;    
+            }
+            else {
+                return true;
+            }
         }
         else {
             this._el.value = '';
@@ -2315,26 +2320,28 @@ define('Chuanr',[
         // record the final format
         me._untouched = format;
         // update the element
-        updateInput.call( me, format.result );
+        var skipCaret = updateInput.call( me, format.result );
         me.oninput.sync();
 
-        // update the caret accordingly
-        
-        if ( caret.type === 2 ) {
-            caret.begin = me.formatter
-                .index()
-                    .of('pattern')
-                    .by({ 'function': { index: caret.begin } });
+        if ( skipCaret !== true ) {
+            // update the caret accordingly
+            
+            if ( caret.type === 2 ) {
+                caret.begin = me.formatter
+                    .index()
+                        .of('pattern')
+                        .by({ 'function': { index: caret.begin } });
 
-        }
-        else if ( caret.type === 1 ) {
-            // set it to first slot that need to be inputted
-            caret.begin = me.formatter
-                .index()
-                    .of('pattern')
-                    .by({ 'function': { index: format.input.length } });
-        }
-        
+            }
+            else if ( caret.type === 1 ) {
+                // set it to first slot that need to be inputted
+                caret.begin = me.formatter
+                    .index()
+                        .of('pattern')
+                        .by({ 'function': { index: format.input.length } });
+            }
+                    }
+
         if ( !lockFocus && skipSetFocus !== true ) {
             lockFocus = caret;
 
