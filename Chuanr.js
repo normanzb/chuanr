@@ -187,8 +187,9 @@ define('util',[],function(){
 
     util.isMovementKeyCode = function( k ) {
 
+        // 35 and 36 is Home and End
         if ( 
-            k >= 37 && k <= 40 || k == 9
+            k >= 35 && k <= 40 || k == 9
         ) {
             return true;
         }
@@ -743,7 +744,11 @@ define( 'PatternFunction/never',[],function duplicate() {
 });
 define( 'PatternFunction/everything',[],function () {
     return function(input, param, context){
-        return true;
+        if ( param == null || param == '' || param == false ) {
+            return true;    
+        }
+        
+        return new RegExp("^[" + param + "]$").test( input );
     };
 });
 define('../lib/boe/src/boe/Object/clone',['../util'], function(util){
