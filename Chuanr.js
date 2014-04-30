@@ -2340,27 +2340,27 @@ define('Chuanr',[
                         .of('pattern')
                         .by({ 'function': { index: format.input.length } });
             }
+            
+            if ( !lockFocus && skipSetFocus !== true ) {
+                lockFocus = caret;
+
+                // set cursor
+                caretUtil.set( me._el, caret.begin );
+
+                // this is to prevent some iOS shits ( <= 6.0 ) to reset the caret after we set it
+                // Caveat: check caretUtil.get( me._el ).begin != caret.begin doesnot work here
+                // ios always return the correct caret at this time, it will update the caret to 
+                // an incorrect one later... mobile safari sucks
+                // TODO: user setImmediate shim to make it faster?
+                setTimeout(function(){
+                    if ( caretUtil.get( me._el) != caret.begin ) {
+                        // oh shit, we failed
+                        caretUtil.set( me._el, caret.begin );
                     }
 
-        if ( !lockFocus && skipSetFocus !== true ) {
-            lockFocus = caret;
-
-            // set cursor
-            caretUtil.set( me._el, caret.begin );
-
-            // this is to prevent some iOS shits ( <= 6.0 ) to reset the caret after we set it
-            // Caveat: check caretUtil.get( me._el ).begin != caret.begin doesnot work here
-            // ios always return the correct caret at this time, it will update the caret to 
-            // an incorrect one later... mobile safari sucks
-            // TODO: user setImmediate shim to make it faster?
-            setTimeout(function(){
-                if ( caretUtil.get( me._el) != caret.begin ) {
-                    // oh shit, we failed
-                    caretUtil.set( me._el, caret.begin );
-                }
-
-                lockFocus = false;
-            });
+                    lockFocus = false;
+                });
+            }
         }
 
         if ( format.result != 0 ) {
