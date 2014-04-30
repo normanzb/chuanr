@@ -76,29 +76,6 @@ define(function(){
         return evt.ctrlKey || evt.altKey || evt.metaKey;
     };
 
-    //
-    // Return true if the input is in the range of acceptable keycode
-    // 
-    util.isAcceptableKeyCode = function(kc) {
-
-        if ( 
-            // 0-9
-            ( kc >= 48 && kc <= 57 ) || 
-            // a-z
-            ( kc >= 65 && kc <= 90 ) || 
-            // keypad 0-9
-            ( kc >= 96 && kc <= 105 ) ||
-            // semi-colon to single quote
-            ( kc >= 186 && kc <= 222 ) ||
-            util.isDelKey( kc ) ||
-            util.isBackSpaceKey( kc )
-        ) {
-            return true;
-        }
-
-        return false;
-    };
-
     util.isMovementKeyCode = function( k ) {
 
         // 35 and 36 is Home and End

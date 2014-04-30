@@ -272,17 +272,6 @@ define([
             return;
         }
 
-        if ( util.isAcceptableKeyCode( evt.keyCode ) == false || util.isModifier( evt ) ) {
-            if ( util.isMovementKeyCode( evt.keyCode ) == false && util.isModifier( evt ) == false ) {
-                //>>excludeStart("release", pragmas.release);
-                console.log('Key Down Prevented');
-                //>>excludeEnd("release");
-                util.preventDefault(evt);
-            }
-            
-            return;
-        }
-
     }
 
     function onFocus( skipSetFocus ) {
