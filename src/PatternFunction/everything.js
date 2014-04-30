@@ -5,6 +5,10 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
 //>>excludeEnd("release");
 define( function () {
     return function(input, param, context){
-        return true;
+        if ( param == null || param == '' || param == false ) {
+            return true;    
+        }
+        
+        return new RegExp("^[" + param + "]$").test( input );
     };
 });

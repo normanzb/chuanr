@@ -161,6 +161,7 @@ Pattern function is useful for simplify the long pattern list by adding a bit fl
     * n(=) unmatch if equal to previous input
     * n(any char) unmatch if equal to specified input
 * *: match everything, including empty and whitespace.
+* *(regexp): match the regexp. 
 
 #Feeling Geeky
 
