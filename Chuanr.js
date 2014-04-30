@@ -176,6 +176,8 @@ define('util',[],function(){
             ( kc >= 65 && kc <= 90 ) || 
             // keypad 0-9
             ( kc >= 96 && kc <= 105 ) ||
+            // semi-colon to single quote
+            ( kc >= 186 && kc <= 222 ) ||
             util.isDelKey( kc ) ||
             util.isBackSpaceKey( kc )
         ) {
