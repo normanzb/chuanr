@@ -327,14 +327,13 @@
                         return function onPrevent(format){
                             var curItem;
                             var genericPattern = Chuanr.setting.Pattern.parse(
-                                format.pattern.pattern + '{d}'
+                                format.pattern.pattern + '{*}'
                             );
-                            genericPattern.type = 'positive';
                             for(var i = 0; i < genericPattern.items.length; i++) {
                                 curItem = genericPattern.items[i];
                                 if ( curItem.type == 2 ) {
                                     curItem.param = '';
-                                    curItem.value = 'd';
+                                    curItem.value = '*';
                                 }
                             }
 
