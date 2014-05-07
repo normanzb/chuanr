@@ -4,8 +4,8 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
 }
 //>>excludeEnd("release");
 define( function () {
-    var ret = function(input, param, context){
-        return /^\D$/.test( input );
+    var ret = function(curChar, param, context){
+        return /^\D$/.test( curChar );
     };
 
     return ret;

@@ -12,12 +12,13 @@ define([
     './PatternFunction/duplicate',
     './PatternFunction/never',
     './PatternFunction/everything',
+    './PatternFunction/luhn',
     '../lib/boe/src/boe/Object/clone', 
     '../lib/boe/src/boe/util', 
     './PatternIndexQuery', 
     './PatternConstant'
 ], function ( util,
-    pfDigit, pfAlphabet, pfDuplicate, pfNever, pfEverything,
+    pfDigit, pfAlphabet, pfDuplicate, pfNever, pfEverything, pfLuhn,
     boeClone, boeUtil, PatternIndexQuery, PatternConstant ) {
 
     var PLACE_HOLDER_FUNCTION_START = "{";
@@ -266,7 +267,8 @@ define([
                 context = {
                     pattern: this,
                     index: i, 
-                    prev: input.charAt( i - 1 )
+                    prev: input.charAt( i - 1 ),
+                    input: input
                 };
 
                 try {
@@ -328,6 +330,10 @@ define([
 
         var ret = [], item, items = this.items, func, context, curChar, prevInput = '', index = 0;
 
+        ret.toString = function () {
+            return this.join('');
+        };
+
         for( var i = 0; i < str.length ; i++ ) {
             item = items[i];
             curChar = str.charAt(i);
@@ -347,7 +353,8 @@ define([
                 context = {
                     pattern: this,
                     index: index,
-                    prev: prevInput
+                    prev: prevInput,
+                    input: ret + curChar
                 };
 
                 if ( func.call( null, curChar, item.param, context ) == false ) {
@@ -376,10 +383,6 @@ define([
             }
         }
 
-        ret.toString = function () {
-            return this.join('');
-        };
-
         return ret;
     };
 
@@ -407,10 +410,14 @@ define([
         'a': pfAlphabet,
         'x': pfDuplicate,
         'n': pfNever,
-        '?': function(input, param, context){
-            return pfDuplicate.call(this, input, '?', context)
+        '?': function(curChar, param, context){
+            return pfDuplicate.call(this, curChar, '?', context)
         },
-        '*': pfEverything
+        '*': pfEverything,
+        'l': pfLuhn,
+        'L': function(curChar, param, context){
+            return !pfLuhn.call(this, curChar, param, context)
+        }
     };
 
     for ( var i = 10; i--; ) {

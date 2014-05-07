@@ -4,18 +4,18 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
 }
 //>>excludeEnd("release");
 define( function duplicate() {
-    var ret = function(input, param, context){
+    var ret = function(curChar, param, context){
         if ( param == '' || param == null || 
-            input === '' || 
-            input === context.pattern.config.placeholder.empty ){
+            curChar === '' || 
+            curChar === context.pattern.config.placeholder.empty ){
             return false;
         }
 
         if ( param == '=' ) {
-            return !(context.prev === input);
+            return !(context.prev === curChar);
         }
 
-        return !(input === param);
+        return !(curChar === param);
     };
 
     return ret;

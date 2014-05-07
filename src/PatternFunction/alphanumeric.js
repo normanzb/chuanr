@@ -5,7 +5,7 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
 //>>excludeEnd("release");
 
 define(['./alphabet', './digit'], function (alphabet, digit) {
-    var ret = function(input, param, context){
+    var ret = function(curChar, param, context){
         var result = false;
 
         try {

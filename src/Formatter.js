@@ -8,14 +8,16 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
 define([
     './PatternConstant', 
     './util',
-    '../lib/boe/src/boe/String/trim'
+    '../lib/boe/src/boe/String/trimLeft',
+    '../lib/boe/src/boe/String/trimRight'
     //>>excludeStart("release", pragmas.release);
     , './shim/console'
     //>>excludeEnd("release");
 ], function (
     PatternConstant,
     util,
-    trim
+    boeTrimLeft,
+    boeTrimRight
     //>>excludeStart("release", pragmas.release);
     ,console
     //>>excludeEnd("release");
@@ -190,7 +192,8 @@ define([
      */
     p.extract = function( formatted ) {
         var ret = null,
-            extraction;
+            extraction,
+            curPattern;
 
         if ( this._current && this._current.pattern ) {
             try{
@@ -206,13 +209,15 @@ define([
 
         // try to find out best extraction
         for( var l = this.patterns.length; l--; ) {
+
+            curPattern = this.patterns[l];
             
-            if ( util.hasBit( this.patterns[l].type , PatternConstant.TYPE_NEGATIVE ) ) {
+            if ( util.hasBit( curPattern.type , PatternConstant.TYPE_NEGATIVE ) ) {
                 continue;
             }
 
             try{
-                extraction = this.patterns[l].extract( trim.call(formatted) );
+                extraction = curPattern.extract( trimLeft.call(trimRight.call(formatted, curPattern.config.placeholder.empty), curPattern.config.placeholder.empty) );
             }
             catch(ex) {
                 continue;
@@ -220,7 +225,7 @@ define([
 
             if ( ret == null || extraction.length > ret.length ) {
                 ret = extraction;
-                ret.pattern = this.patterns[l];
+                ret.pattern = curPattern;
             }
         }
 

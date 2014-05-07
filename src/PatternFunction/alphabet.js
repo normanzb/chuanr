@@ -22,10 +22,10 @@ define( function () {
         return false;
     }
 
-    var ret = function(input, param, context){
+    var ret = function(curChar, param, context){
 
         if ( param == '?' ) {
-            if ( input == '' || input == ' ') {
+            if ( curChar == '' || curChar == ' ') {
                 return true;
             }
             else {
@@ -38,7 +38,7 @@ define( function () {
                 return false;
             }
             else {
-                return input == context.prev;
+                return curChar == context.prev;
             }
         }
 
@@ -55,7 +55,7 @@ define( function () {
                     throw new Error( EX_NOT_CORRECT_RANGE );
                 }
 
-                return input.charCodeAt(0) == ( context.prev * 1 + ( param >> 0 ) ).charCodeAt(0);
+                return curChar.charCodeAt(0) == ( context.prev * 1 + ( param >> 0 ) ).charCodeAt(0);
             }
         }
 
@@ -67,7 +67,7 @@ define( function () {
             throw new Error( EX_NOT_CORRECT_PARAM );
         }
         
-        return new RegExp("^[" + param + "]$").test( input );
+        return new RegExp("^[" + param + "]$").test( curChar );
     };
 
     return ret;

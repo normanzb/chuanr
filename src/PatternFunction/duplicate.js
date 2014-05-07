@@ -4,7 +4,7 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
 }
 //>>excludeEnd("release");
 define( function () {
-    var ret = function(input, param, context){
+    var ret = function(curChar, param, context){
         var index = context.index >>> 0;
         var target = index;
         var items = context.pattern.items;
@@ -13,7 +13,7 @@ define( function () {
         var matches = [];
         var curFunc;
 
-        if ( param == '?' && input == '') {
+        if ( param == '?' && curChar == '') {
             return true;
         }
 
@@ -54,7 +54,7 @@ define( function () {
 
         newContext.index = l;
 
-        return prevFunc.call( this, input, prevItem.param, newContext );
+        return prevFunc.call( this, curChar, prevItem.param, newContext );
     };
 
     return ret;

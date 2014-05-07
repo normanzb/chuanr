@@ -256,6 +256,10 @@
                 <input id="phone" name="phone" type="text" placeholder="Phone Number" /> 
                 <div class="phone tip"></div>
             </div>
+            <div class="field">
+                <input id="creditcard" name="creditcard" type="text" placeholder="Credit card" /> 
+                <div class="creditcard tip"></div>
+            </div>
             <button id="btn-check">Check Integrity and Submit</button>
         </form>
     </section>
@@ -384,6 +388,7 @@
                     var elInput = document.getElementById('phone');
                     var elFirstName = document.getElementById('firstname');
                     var elLastName = document.getElementById('lastname');
+                    var elCreditcard = document.getElementById('creditcard');
                     var elMessageBox = document.getElementById('message-box');
                     var elBtnPatterns = document.getElementById('btn-patterns');
                     var elBtnCheck = document.getElementById('btn-check');
@@ -437,6 +442,61 @@
                                     always: true
                                 }
                             }
+                        },
+                        {
+                            'el': elCreditcard,
+                            'patterns': [
+                                // AMEX
+                                "{34ddd}-{ddddd}-{ddddl}",
+                                "{37ddd}-{ddddd}-{ddddl}",
+                                // DINERS CLUB - CARTE BLANCHE
+                                "{30d(0-5)dd}-{ddddd}-{dddl}",
+                                // DINERS CLUB - INTERNATIONAL
+                                "{36ddd}-{ddddd}-{dddl}",
+                                // DINERS CLUB - USA & CANADA
+                                "{54dd}-{dddd}-{dddd}-{dddl}",
+                                // DISCOVER
+                                "{64d(4-9)d}-{dddd}-{dddd}-{dddl}",
+                                "{65dd}-{dddd}-{dddd}-{dddl}",
+                                "{6011}-{dddd}-{dddd}-{dddl}",
+                                "{622d(1-9)}-{dddd}-{dddd}-{dddl}",
+                                // INSTAPAYMENT
+                                "{63d(7-9)d}-{dddd}-{dddd}-{dddl}",
+                                // JCB
+                                "{35d(2-8)d}-{dddd}-{dddd}-{dddl}",
+                                // LASER
+                                "{6304}-{dddd}-{dddd}-{dddd???}",
+                                "{6706}-{dddd}-{dddd}-{dddd???}",
+                                "{6771}-{dddd}-{dddd}-{dddd???}",
+                                "{6709}-{dddd}-{dddd}-{dddd???}",
+                                // MAESTRO
+                                "{5018}-{dddd}-{dddd}-{dddd???}",
+                                "{5020}-{dddd}-{dddd}-{dddd???}",
+                                "{5038}-{dddd}-{dddd}-{dddd???}",
+                                "{5893}-{dddd}-{dddd}-{dddd???}",
+                                "{6304}-{dddd}-{dddd}-{dddd???}",
+                                "{6759}-{dddd}-{dddd}-{dddd???}",
+                                "{6761}-{dddd}-{dddd}-{dddd???}",
+                                "{6762}-{dddd}-{dddd}-{dddd???}",
+                                "{6763}-{dddd}-{dddd}-{dddd???}",
+                                // MASTERCARD
+                                "{5d(1-5)dd}-{dddd}-{dddd}-{dddl}",
+                                "{5d(1-5)dd}-{dddd}-{dddd}-{ddddl}",
+                                "{5d(1-5)dd}-{dddd}-{dddd}-{dddddl}",
+                                "{5d(1-5)dd}-{dddd}-{dddd}-{ddddddl}",
+                                // VISA
+                                "{4ddd}-{dddd}-{dddd}-{l}",
+                                "{4ddd}-{dddd}-{dddd}-{dl}",
+                                "{4ddd}-{dddd}-{dddd}-{ddl}",
+                                "{4ddd}-{dddd}-{dddd}-{dddl}",
+                                // Visa Electron
+                                "{4026}-{dddd}-{dddd}-{dddl}",
+                                "{4175}-{00dd}-{dddd}-{dddl}",
+                                "{4508}-{dddd}-{dddd}-{dddl}",
+                                "{4844}-{dddd}-{dddd}-{dddl}",
+                                "{4913}-{dddd}-{dddd}-{dddl}",
+                                "{4917}-{dddd}-{dddd}-{dddl}",
+                            ]
                         }
                     ];
                     
