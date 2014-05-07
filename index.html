@@ -288,7 +288,7 @@
 
                             text = cur.instance.patterns.toString().replace(/,/g, ',\n');;
 
-                            curTip.style.opacity = '1';
+                            curTip.style.display = 'block';
                             if ( 'innerText' in curTip ) {
                                 curTip.innerText = text;
                             }
@@ -300,9 +300,9 @@
                     }
                     function hidePatterns(){
                         var tips = document.getElementsByClassName('tip');
-                        tips[0].style.opacity = '0';
-                        tips[1].style.opacity = '0';
-                        tips[2].style.opacity = '0';
+                        for(var l = tips.length; l--;){
+                            tips[l].style.display = 'none';
+                        }
                     }
 
                     function scheduleErrorClear(elInput){
