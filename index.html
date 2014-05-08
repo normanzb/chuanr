@@ -92,6 +92,13 @@
         background-color: #8BC53F;
         border-color: #8BC53F;
     }
+    input.success,
+    button.success
+    {
+        border: 1px solid #8BC53F;
+
+        background-color: #8BC53F;
+    }
     input.error,
     button.error
     {
@@ -311,7 +318,7 @@
                             schHandle = null;
                         }
                         schHandle = setTimeout(function(){
-                            elInput.className = '';
+                            elInput.className = elInput.className.replace('error','');
                         }, 1000);
                     }
 
@@ -378,6 +385,17 @@
                             inst.roast( cur.el, cur.patterns );
                             inst.on('prevented', getOnPrevent(cur.el));
                             inst.on('resumed', getOnResume(cur.el));
+
+                            if ( cur.el.onblur == null ) {
+                                !function(el, inst){
+                                    el.onblur = function() {
+                                        if ( inst.intact() ) {
+                                            el.className += ' success';
+                                        }
+                                    };    
+                                }(cur.el, inst);
+                                
+                            }
 
                             cur.instance = inst;
                         }
