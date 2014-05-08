@@ -252,16 +252,46 @@ define('../lib/boe/src/boe/util',[],function(){
     return ret;
 });
 /*
- * Trim specified chars at the start and the end of current string.
+ * Trim specified chars at the start of current string.
  * @member String.prototype
  * @return {String} trimed string
- * @es5
  */
-define('../lib/boe/src/boe/String/trim',['../util'], function (util) {
-    var STRING_PROTO = util.g.String.prototype;
-    return STRING_PROTO.trim || function() {
-        var trimChar = '\\s';
-        var re = new RegExp('(^' + trimChar + '*)|(' + trimChar + '*$)', 'g');
+define('../lib/boe/src/boe/String/trimLeft',['../util'], function (util) {
+    return function( trimChar ) {
+        var hex;
+        if ( util.type(trimChar) == 'String' ) {
+            hex = trimChar.charCodeAt(0).toString(16);
+            trimChar = hex.length <= 2 ? '\\x' + hex : '\\u' + hex;
+        }
+        else if ( trimChar instanceof RegExp ) {
+            // leave it as is
+        }
+        else {
+            trimChar = '\\s';
+        }
+        var re = new RegExp('(^' + trimChar + '*)', 'g');
+        return this.replace(re, "");
+    };
+});
+/*
+ * Trim specified chars at the end of current string.
+ * @member String.prototype
+ * @return {String} trimed string
+ */
+define('../lib/boe/src/boe/String/trimRight',['../util'], function (util) {
+    return function( trimChar ) {
+        var hex;
+        if ( util.type(trimChar) == 'String' ) {
+            hex = trimChar.charCodeAt(0).toString(16);
+            trimChar = hex.length <= 2 ? '\\x' + hex : '\\u' + hex;
+        }
+        else if ( trimChar instanceof RegExp ) {
+            // leave it as is
+        }
+        else {
+            trimChar = '\\s';
+        }
+        var re = new RegExp('(' + trimChar + '*$)', 'g');
         return this.replace(re, "");
     };
 });
@@ -270,11 +300,13 @@ define('../lib/boe/src/boe/String/trim',['../util'], function (util) {
 define('Formatter',[
     './PatternConstant', 
     './util',
-    '../lib/boe/src/boe/String/trim'
+    '../lib/boe/src/boe/String/trimLeft',
+    '../lib/boe/src/boe/String/trimRight'
     ], function (
     PatternConstant,
     util,
-    trim
+    boeTrimLeft,
+    boeTrimRight
         ) {
 
     var EX_NO_PATTERN = 'No pattern specified';
@@ -431,7 +463,8 @@ define('Formatter',[
      */
     p.extract = function( formatted ) {
         var ret = null,
-            extraction;
+            extraction,
+            curPattern;
 
         if ( this._current && this._current.pattern ) {
             try{
@@ -444,13 +477,15 @@ define('Formatter',[
 
         // try to find out best extraction
         for( var l = this.patterns.length; l--; ) {
+
+            curPattern = this.patterns[l];
             
-            if ( util.hasBit( this.patterns[l].type , PatternConstant.TYPE_NEGATIVE ) ) {
+            if ( util.hasBit( curPattern.type , PatternConstant.TYPE_NEGATIVE ) ) {
                 continue;
             }
 
             try{
-                extraction = this.patterns[l].extract( trim.call(formatted) );
+                extraction = curPattern.extract( trimLeft.call(trimRight.call(formatted, curPattern.config.placeholder.empty), curPattern.config.placeholder.empty) );
             }
             catch(ex) {
                 continue;
@@ -458,7 +493,7 @@ define('Formatter',[
 
             if ( ret == null || extraction.length > ret.length ) {
                 ret = extraction;
-                ret.pattern = this.patterns[l];
+                ret.pattern = curPattern;
             }
         }
 
@@ -529,10 +564,10 @@ define( 'PatternFunction/digit',[],function () {
         return false;
     }
 
-    var ret = function(input, param, context){
+    var ret = function(curChar, param, context){
 
         if ( param == '?' ) {
-            if ( input == '' || input == ' ') {
+            if ( curChar == '' || curChar === context.pattern.config.placeholder.empty ) {
                 return true;
             }
             else {
@@ -545,7 +580,7 @@ define( 'PatternFunction/digit',[],function () {
                 return false;
             }
             else {
-                return input == context.prev;
+                return curChar == context.prev;
             }
         }
 
@@ -562,7 +597,7 @@ define( 'PatternFunction/digit',[],function () {
                     throw new Error( EX_NOT_CORRECT_RANGE );
                 }
 
-                return input == ( context.prev * 1 + ( param >> 0 ) );
+                return curChar == ( context.prev * 1 + ( param >> 0 ) );
             }
         }
 
@@ -574,7 +609,7 @@ define( 'PatternFunction/digit',[],function () {
             throw new Error( EX_NOT_CORRECT_PARAM );
         }
         
-        return new RegExp("^[" + param + "]$").test( input );
+        return new RegExp("^[" + param + "]$").test( curChar );
     };
 
     return ret;
@@ -598,10 +633,10 @@ define( 'PatternFunction/alphabet',[],function () {
         return false;
     }
 
-    var ret = function(input, param, context){
+    var ret = function(curChar, param, context){
 
         if ( param == '?' ) {
-            if ( input == '' || input == ' ') {
+            if ( curChar == '' || curChar == ' ') {
                 return true;
             }
             else {
@@ -614,7 +649,7 @@ define( 'PatternFunction/alphabet',[],function () {
                 return false;
             }
             else {
-                return input == context.prev;
+                return curChar == context.prev;
             }
         }
 
@@ -631,7 +666,7 @@ define( 'PatternFunction/alphabet',[],function () {
                     throw new Error( EX_NOT_CORRECT_RANGE );
                 }
 
-                return input.charCodeAt(0) == ( context.prev * 1 + ( param >> 0 ) ).charCodeAt(0);
+                return curChar.charCodeAt(0) == ( context.prev * 1 + ( param >> 0 ) ).charCodeAt(0);
             }
         }
 
@@ -643,13 +678,13 @@ define( 'PatternFunction/alphabet',[],function () {
             throw new Error( EX_NOT_CORRECT_PARAM );
         }
         
-        return new RegExp("^[" + param + "]$").test( input );
+        return new RegExp("^[" + param + "]$").test( curChar );
     };
 
     return ret;
 });
 define( 'PatternFunction/duplicate',[],function () {
-    var ret = function(input, param, context){
+    var ret = function(curChar, param, context){
         var index = context.index >>> 0;
         var target = index;
         var items = context.pattern.items;
@@ -658,7 +693,7 @@ define( 'PatternFunction/duplicate',[],function () {
         var matches = [];
         var curFunc;
 
-        if ( param == '?' && input == '') {
+        if ( param == '?' && curChar == '') {
             return true;
         }
 
@@ -699,37 +734,73 @@ define( 'PatternFunction/duplicate',[],function () {
 
         newContext.index = l;
 
-        return prevFunc.call( this, input, prevItem.param, newContext );
+        return prevFunc.call( this, curChar, prevItem.param, newContext );
     };
 
     return ret;
 });
 define( 'PatternFunction/never',[],function duplicate() {
-    var ret = function(input, param, context){
+    var ret = function(curChar, param, context){
         if ( param == '' || param == null || 
-            input === '' || 
-            input === context.pattern.config.placeholder.empty ){
+            curChar === '' || 
+            curChar === context.pattern.config.placeholder.empty ){
             return false;
         }
 
         if ( param == '=' ) {
-            return !(context.prev === input);
+            return !(context.prev === curChar);
         }
 
-        return !(input === param);
+        return !(curChar === param);
     };
 
     return ret;
 });
 define( 'PatternFunction/everything',[],function () {
-    return function(input, param, context){
+    return function(curChar, param, context){
         if ( param == null || param == '' || param == false ) {
             return true;    
         }
         
-        return new RegExp("^[" + param + "]$").test( input );
+        return new RegExp("^[" + param + "]$").test( curChar );
     };
 });
+define( 'PatternFunction/luhn',['./digit'], function ( digit ) {
+    return function( curChar, param, context ){
+        var input = context.input;
+
+        if ( digit( curChar, "", context ) == false ) {
+            return false;
+        }
+
+        // Apply the Luhn algorithm
+        var sum = 0;
+        var alt = false;
+        var num = 0;
+
+        // Walk backwards through the number string
+        for (var i = input.length - 1; i >= 0; i--) {
+
+            // Get the numeric value for the current index
+            num = input.charAt(i) >> 0;
+
+            if (alt) {
+                num *= 2;
+                if (num > 9) {
+                    num -= 9;
+                }
+            }
+
+            sum += num;
+            alt = !alt;
+        }
+
+        // Mod 10
+        return (sum % 10 === 0);
+
+    };
+});
+    
 define('../lib/boe/src/boe/Object/clone',['../util'], function(util){
 
     var FUNCTION = 'function';
@@ -893,12 +964,13 @@ define('Pattern',[
     './PatternFunction/duplicate',
     './PatternFunction/never',
     './PatternFunction/everything',
+    './PatternFunction/luhn',
     '../lib/boe/src/boe/Object/clone', 
     '../lib/boe/src/boe/util', 
     './PatternIndexQuery', 
     './PatternConstant'
 ], function ( util,
-    pfDigit, pfAlphabet, pfDuplicate, pfNever, pfEverything,
+    pfDigit, pfAlphabet, pfDuplicate, pfNever, pfEverything, pfLuhn,
     boeClone, boeUtil, PatternIndexQuery, PatternConstant ) {
 
     var PLACE_HOLDER_FUNCTION_START = "{";
@@ -1147,7 +1219,8 @@ define('Pattern',[
                 context = {
                     pattern: this,
                     index: i, 
-                    prev: input.charAt( i - 1 )
+                    prev: input.charAt( i - 1 ),
+                    input: input
                 };
 
                 try {
@@ -1209,6 +1282,10 @@ define('Pattern',[
 
         var ret = [], item, items = this.items, func, context, curChar, prevInput = '', index = 0;
 
+        ret.toString = function () {
+            return this.join('');
+        };
+
         for( var i = 0; i < str.length ; i++ ) {
             item = items[i];
             curChar = str.charAt(i);
@@ -1228,7 +1305,8 @@ define('Pattern',[
                 context = {
                     pattern: this,
                     index: index,
-                    prev: prevInput
+                    prev: prevInput,
+                    input: ret + curChar
                 };
 
                 if ( func.call( null, curChar, item.param, context ) == false ) {
@@ -1257,10 +1335,6 @@ define('Pattern',[
             }
         }
 
-        ret.toString = function () {
-            return this.join('');
-        };
-
         return ret;
     };
 
@@ -1288,10 +1362,14 @@ define('Pattern',[
         'a': pfAlphabet,
         'x': pfDuplicate,
         'n': pfNever,
-        '?': function(input, param, context){
-            return pfDuplicate.call(this, input, '?', context)
+        '?': function(curChar, param, context){
+            return pfDuplicate.call(this, curChar, '?', context)
         },
-        '*': pfEverything
+        '*': pfEverything,
+        'l': pfLuhn,
+        'L': function(curChar, param, context){
+            return !pfLuhn.call(this, curChar, param, context)
+        }
     };
 
     for ( var i = 10; i--; ) {
@@ -1460,6 +1538,20 @@ define('../lib/boe/src/boe/Function/bind',['../util'], function (util) {
     var FUNCTION_PROTO = util.g.Function.prototype;
 
     return FUNCTION_PROTO.bind || util.bind;
+});
+/*
+ * Trim specified chars at the start and the end of current string.
+ * @member String.prototype
+ * @return {String} trimed string
+ * @es5
+ */
+define('../lib/boe/src/boe/String/trim',['../util', './trimLeft', './trimRight'], function (util, trimLeft, trimRight) {
+    var STRING_PROTO = util.g.String.prototype;
+    return STRING_PROTO.trim || function() {
+        var ret = trimLeft.call( this );
+        ret = trimRight.call( ret );
+        return ret;
+    };
 });
 define('../lib/cogs/src/cogs/noop',[],function(){
     return function(){};
@@ -2183,14 +2275,14 @@ define('Chuanr',[
 
     }
 
-    function onFocus( skipSetFocus ) {
+    function onInput( focusMode ) {
         
-        render.call( this, skipSetFocus );
-    }
+        if ( focusMode == null ) {
+            focusMode = 1;
+        }
 
-    function onInput( ) {
         
-        render.call(this);
+        render.call( this, focusMode );
     }
 
     function updateInput( result ){
@@ -2217,7 +2309,12 @@ define('Chuanr',[
         }
     }
 
-    function render( skipSetFocus ) {
+    /*
+     * @caretMode - 0: skip setting caret
+     *              1: automatically setting according to changes on the result
+     *              2: compulsory to set it
+     */
+    function render( caretMode ) {
         var me = this;
         var caret = {
             begin: 0,
@@ -2323,7 +2420,10 @@ define('Chuanr',[
         var skipCaret = updateInput.call( me, format.result );
         me.oninput.sync();
 
-        if ( skipCaret !== true ) {
+        if ( 
+            ( caretMode == 1 && lockFocus != null && skipCaret !== true ) || 
+            caretMode == 2 
+        ) {
             // update the caret accordingly
             
             if ( caret.type === 2 ) {
@@ -2341,26 +2441,24 @@ define('Chuanr',[
                         .by({ 'function': { index: format.input.length } });
             }
             
-            if ( !lockFocus && skipSetFocus !== true ) {
-                lockFocus = caret;
+            lockFocus = caret;
 
-                // set cursor
-                caretUtil.set( me._el, caret.begin );
+            // set cursor
+            caretUtil.set( me._el, caret.begin );
 
-                // this is to prevent some iOS shits ( <= 6.0 ) to reset the caret after we set it
-                // Caveat: check caretUtil.get( me._el ).begin != caret.begin doesnot work here
-                // ios always return the correct caret at this time, it will update the caret to 
-                // an incorrect one later... mobile safari sucks
-                // TODO: user setImmediate shim to make it faster?
-                setTimeout(function(){
-                    if ( caretUtil.get( me._el) != caret.begin ) {
-                        // oh shit, we failed
-                        caretUtil.set( me._el, caret.begin );
-                    }
+            // this is to prevent some iOS shits ( <= 6.0 ) to reset the caret after we set it
+            // Caveat: check caretUtil.get( me._el ).begin != caret.begin doesnot work here
+            // ios always return the correct caret at this time, it will update the caret to 
+            // an incorrect one later... mobile safari sucks
+            // TODO: user setImmediate shim to make it faster?
+            setTimeout(function(){
+                if ( caretUtil.get( me._el) != caret.begin ) {
+                    // oh shit, we failed
+                    caretUtil.set( me._el, caret.begin );
+                }
 
-                    lockFocus = false;
-                });
-            }
+                lockFocus = false;
+            });
         }
 
         if ( format.result != 0 ) {
@@ -2396,8 +2494,8 @@ define('Chuanr',[
         me._untouched = null;
         me._isFormatted = false;
 
-        me._onKeyDown = bind.call(onKeyDown, me);
-        me._onFocus = bind.call(onFocus, me);
+        me._onKeyDown = bind.call( onKeyDown, me );
+        me._onFocus = bind.call( onInput, me, 2 );
 
         me.onPrevented = event();
         me.onResumed = event();
@@ -2426,14 +2524,14 @@ define('Chuanr',[
         
         this.oninput = new InputObserver();
         this.oninput.observe(el);
-        this.oninput.oninput = bind.call(onInput, this);
+        this.oninput.oninput = bind.call( onInput, this, 1 );
 
         util.addListener(el, 'keydown', this._onKeyDown );
         util.addListener(el, 'focus', this._onFocus );
 
         if ( this._el.value != "" || this.config.placeholder.always === true ) {
             // not equal to empty spaces
-            onFocus.call(this, true);
+            onInput.call( this, 0 );
         }
 
     };
