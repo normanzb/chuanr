@@ -274,21 +274,20 @@ define([
 
     }
 
-    function onFocus( skipSetFocus ) {
-        //>>excludeStart("release", pragmas.release);
-        console.hr();
-        console.log('focusing...');
-        //>>excludeEnd("release");
-
-        render.call( this, skipSetFocus );
-    }
-
-    function onInput( ) {
+    function onInput( focusMode ) {
         //>>excludeStart("release", pragmas.release);
         console.hr();
         //>>excludeEnd("release");
 
-        render.call(this);
+        if ( focusMode == null ) {
+            focusMode = 1;
+        }
+
+        //>>excludeStart("release", pragmas.release);
+        console.log('FocusMode: ' + focusMode);
+        //>>excludeEnd("release");
+
+        render.call( this, focusMode );
     }
 
     function updateInput( result ){
@@ -315,7 +314,12 @@ define([
         }
     }
 
-    function render( skipSetFocus ) {
+    /*
+     * @caretMode - 0: skip setting caret
+     *              1: automatically setting according to changes on the result
+     *              2: compulsory to set it
+     */
+    function render( caretMode ) {
         var me = this;
         var caret = {
             begin: 0,
@@ -433,7 +437,10 @@ define([
         var skipCaret = updateInput.call( me, format.result );
         me.oninput.sync();
 
-        if ( skipCaret !== true ) {
+        if ( 
+            ( caretMode == 1 && lockFocus != null && skipCaret !== true ) || 
+            caretMode == 2 
+        ) {
             // update the caret accordingly
             //>>excludeStart("release", pragmas.release);
             console.log('Caret before format: ', caret );
@@ -457,26 +464,24 @@ define([
             console.log('Caret after format: ', caret);
             //>>excludeEnd("release");
 
-            if ( !lockFocus && skipSetFocus !== true ) {
-                lockFocus = caret;
+            lockFocus = caret;
 
-                // set cursor
-                caretUtil.set( me._el, caret.begin );
+            // set cursor
+            caretUtil.set( me._el, caret.begin );
 
-                // this is to prevent some iOS shits ( <= 6.0 ) to reset the caret after we set it
-                // Caveat: check caretUtil.get( me._el ).begin != caret.begin doesnot work here
-                // ios always return the correct caret at this time, it will update the caret to 
-                // an incorrect one later... mobile safari sucks
-                // TODO: user setImmediate shim to make it faster?
-                setTimeout(function(){
-                    if ( caretUtil.get( me._el) != caret.begin ) {
-                        // oh shit, we failed
-                        caretUtil.set( me._el, caret.begin );
-                    }
+            // this is to prevent some iOS shits ( <= 6.0 ) to reset the caret after we set it
+            // Caveat: check caretUtil.get( me._el ).begin != caret.begin doesnot work here
+            // ios always return the correct caret at this time, it will update the caret to 
+            // an incorrect one later... mobile safari sucks
+            // TODO: user setImmediate shim to make it faster?
+            setTimeout(function(){
+                if ( caretUtil.get( me._el) != caret.begin ) {
+                    // oh shit, we failed
+                    caretUtil.set( me._el, caret.begin );
+                }
 
-                    lockFocus = false;
-                });
-            }
+                lockFocus = false;
+            });
         }
 
         if ( format.result != 0 ) {
@@ -512,8 +517,8 @@ define([
         me._untouched = null;
         me._isFormatted = false;
 
-        me._onKeyDown = bind.call(onKeyDown, me);
-        me._onFocus = bind.call(onFocus, me);
+        me._onKeyDown = bind.call( onKeyDown, me );
+        me._onFocus = bind.call( onInput, me, 2 );
 
         me.onPrevented = event();
         me.onResumed = event();
@@ -542,14 +547,14 @@ define([
         
         this.oninput = new InputObserver();
         this.oninput.observe(el);
-        this.oninput.oninput = bind.call(onInput, this);
+        this.oninput.oninput = bind.call( onInput, this, 1 );
 
         util.addListener(el, 'keydown', this._onKeyDown );
         util.addListener(el, 'focus', this._onFocus );
 
         if ( this._el.value != "" || this.config.placeholder.always === true ) {
             // not equal to empty spaces
-            onFocus.call(this, true);
+            onInput.call( this, 0 );
         }
 
     };
