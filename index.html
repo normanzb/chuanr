@@ -386,16 +386,16 @@
                             inst.on('prevented', getOnPrevent(cur.el));
                             inst.on('resumed', getOnResume(cur.el));
 
-                            if ( cur.el.onblur == null ) {
-                                !function(el, inst){
-                                    el.onblur = function() {
-                                        if ( inst.intact() ) {
-                                            el.className += ' success';
-                                        }
-                                    };    
-                                }(cur.el, inst);
-                                
-                            }
+                            !function(el, inst){
+                                el.onblur = function() {
+                                    if ( inst.intact() ) {
+                                        el.className += ' success';
+                                    }
+                                };
+                                el.onfocus = function() {
+                                    el.className = el.className.replace(' success', '');
+                                };
+                            }(cur.el, inst);
 
                             cur.instance = inst;
                         }
