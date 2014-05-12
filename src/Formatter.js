@@ -217,7 +217,7 @@ define([
             }
 
             try{
-                extraction = curPattern.extract( trimLeft.call(trimRight.call(formatted, curPattern.config.placeholder.empty), curPattern.config.placeholder.empty) );
+                extraction = curPattern.extract( boeTrimLeft.call( boeTrimRight.call(formatted, curPattern.config.placeholder.empty), curPattern.config.placeholder.empty) );
             }
             catch(ex) {
                 continue;

@@ -139,6 +139,7 @@ define([
         extraction = this.formatter.extract( prev );
 
         if ( extraction == null ) {
+            ret = this.formatter.extract( input );
             return ret;
         }
 
