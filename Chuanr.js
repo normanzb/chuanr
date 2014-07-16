@@ -2046,9 +2046,9 @@ define('shim/oninput',['../../lib/boe/src/boe/Function/bind'], function (bind) {
         var me = this;
         var el = me._el;
         if ( el.attachEvent ) {
-            el.attachEvent('onpropertychange', me._onchange);
-            el.attachEvent('onfocus', me._onfocus);
-            el.attachEvent('onblur', me._onblur);
+            el.detachEvent('onpropertychange', me._onchange);
+            el.detachEvent('onfocus', me._onfocus);
+            el.detachEvent('onblur', me._onblur);
         }
         else {
             el.removeEventListener(INPUT, me._onchange);
@@ -2532,7 +2532,7 @@ define('Chuanr',[
 
         if ( this._el.value != "" || this.config.placeholder.always === true ) {
             // not equal to empty spaces
-            onInput.call( this, 0 );
+            onInput.call( this, document.activeElement === el ? 1 : 0 );
         }
 
     };
