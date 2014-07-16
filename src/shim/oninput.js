@@ -122,9 +122,9 @@ define(['../../lib/boe/src/boe/Function/bind'], function (bind) {
         var me = this;
         var el = me._el;
         if ( el.attachEvent ) {
-            el.attachEvent('onpropertychange', me._onchange);
-            el.attachEvent('onfocus', me._onfocus);
-            el.attachEvent('onblur', me._onblur);
+            el.detachEvent('onpropertychange', me._onchange);
+            el.detachEvent('onfocus', me._onfocus);
+            el.detachEvent('onblur', me._onblur);
         }
         else {
             el.removeEventListener(INPUT, me._onchange);
