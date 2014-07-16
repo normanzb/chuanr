@@ -555,7 +555,7 @@ define([
 
         if ( this._el.value != "" || this.config.placeholder.always === true ) {
             // not equal to empty spaces
-            onInput.call( this, 0 );
+            onInput.call( this, document.activeElement === el ? 1 : 0 );
         }
 
     };
