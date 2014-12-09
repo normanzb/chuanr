@@ -85,6 +85,10 @@ define(['../../lib/boe/src/boe/util'], function (boeUtil) {
         };
     };
 
+    if ( window.console == null ) {
+        window.console = {};
+    }
+
     var ret = window.console;
 
     for( var key in shim ) {
