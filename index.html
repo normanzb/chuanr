@@ -125,6 +125,7 @@
     }
     input + .tip
     {
+        display: none;
         position: absolute;
 
         margin: 4px 0 0 0;
@@ -137,6 +138,7 @@
         box-sizing: border-box;
         
         background-color: #8BC53F;
+        transition: all .5s;
     }
     .field
     {
@@ -154,6 +156,7 @@
     }
     section.info
     {
+        display: none;
         opacity: 0;
         background-color: #D9534F;
     }
@@ -234,6 +237,47 @@
 </head>
 <body>
     <script type="text/javascript" src="./res/require.js"></script>
+    <script type="text/javascript">
+        // shims
+        (function(){
+            var section = document.createElement('section');
+            
+            // The two functions below seem to be the most complete(cross browser) solution.
+            // document.all is equavallent to getElementsByTagName of IE 5
+            if( document.all && !document.getElementsByTagName ){
+                document.getElementsByTagName = function( nodeName )
+                {
+                    if( nodeName == '*' ) return document.all;
+                    var result = [], rightName = new RegExp( nodeName, 'i' ), i;
+                    for( i=0; i<document.all.length; i++ )
+                      if( rightName.test( document.all[i].nodeName ) )
+                    result.push( document.all[i] );
+                    return result;
+                };
+            } // end if
+             
+            // This if statement is my addition, the original code does not have it, it overrides the default function anyway
+            if( typeof document.getElementsByClassName !== "function"){ 
+                document.getElementsByClassName = function( className, nodeName )
+                {
+                  var result = [], tag = nodeName||'*', node, seek, i;
+                  if( document.evaluate ){
+                    seek = '//'+ tag +'[@class="'+ className +'"]';
+                    seek = document.evaluate( seek, document, null, 0, null );
+                    while( (node = seek.iterateNext()) )
+                      result.push( node );
+                  }else{
+                    var rightClass = new RegExp( '(^| )'+ className +'( |$)' );
+                    seek = document.getElementsByTagName( tag );
+                    for( i=0; i<seek.length; i++ )
+                      if( rightClass.test( (node = seek[i]).className ) )
+                    result.push( seek[i] );
+                  }
+                  return result;
+                };
+            } // end if
+        })();
+    </script>
     <h1>CHUANR</h1>
     <section>
         <div class='wizard'>
@@ -271,7 +315,7 @@
             <button id="btn-check">Check Integrity and Submit</button>
         </form>
     </section>
-    <section class='info'>
+    <section class="info">
         <div class="inner">
             <pre id="message-box" class="message">no error</pre>
         </div>
@@ -284,22 +328,24 @@
 
                     function showPatterns(){
                         var tips = document.getElementsByClassName('tip');
-                        var cur, text, curTip;
 
-                        for( var l = creationInfo.length; l--; ) {
-                            cur = creationInfo[l];
-                            curTip = tips[l];
+                        for( var l = creationInfo.length; l--; ) (function(){
+                            var cur = creationInfo[l];
+                            var curTip = tips[l];
 
                             if ( curTip == null ) {
-                                continue;
+                                return;
                             }
 
-                            text = cur.instance.patterns.toString().replace(/,/g, ',\n');;
+                            var text = cur.instance.patterns.toString().replace(/,/g, ',\n');;
 
                             curTip.style.display = 'block';
-                            if ( 'opacity' in curTip.style ) {
-                                curTip.style.opacity = '1';    
-                            }
+
+                            setTimeout(function(){
+                                if ( 'opacity' in curTip.style ) {
+                                    curTip.style.opacity = '1';    
+                                }
+                            }, 0);
                             
                             if ( 'innerText' in curTip ) {
                                 curTip.innerText = text;
@@ -308,7 +354,7 @@
                                 curTip.textContent = text;
                             }
 
-                        }
+                        }());
                     }
                     function hidePatterns(){
                         var tips = document.getElementsByClassName('tip');
