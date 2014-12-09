@@ -1,0 +1,261 @@
+html
+{
+    color: #FFF;
+    font-family: Noto Sans, Arial;
+    background:#3C454F;
+}
+h1
+{
+    margin: 2em auto;
+
+    font-family: Noto Sans, Arial;
+    color: #FFF;
+    text-align: center;
+}
+body > section,
+body > hr
+{
+    max-width: 1200px;
+}
+section
+{
+    margin: 3.5em auto;
+    width: 80%;
+
+    text-align: center;
+    transition: all .5s;
+    zoom: 1;
+}
+section:before
+{
+    display: table;
+    content: ' '
+}
+section:after
+{
+    display: table;
+    content: ' '
+}
+section > .inner
+{
+    margin: 1em;
+}
+section > .inner > .column
+{
+    width: 152px;
+    float: left;
+    font-size: 12px;
+}
+section:empty
+{
+    display: none;
+}
+span
+{
+    line-height: 1.8em;
+}
+span.highlight
+{
+    display: inline-block;
+    
+    border-radius: .7em;
+    padding: 0 .6em;
+
+    background-color: #8BC53F;
+    cursor: pointer;
+}
+.message span.highlight
+{
+    padding: 0 .1em;
+}
+button
+{
+    cursor: pointer;
+}
+input, 
+button,
+textarea
+{
+    outline: none;
+    border: 1px solid #428BCA;
+    padding: 1em;
+
+    color: #FFF;
+    font-weight: bolder;
+    font-family: Courier , Courier New;
+    background: #428BCA;
+    transition: all .6s;
+    box-sizing: border-box;
+}
+input + button.validate
+{
+    background-color: #8BC53F;
+    border-color: #8BC53F;
+}
+input.success,
+button.success
+{
+    border: 1px solid #8BC53F;
+
+    background-color: #8BC53F;
+}
+input.error,
+button.error
+{
+    border: 1px solid #D9534F;
+
+    background-color: #D9534F;
+}
+input.small,
+input[type=checkbox] 
+{
+    padding: 5px;
+    height: 5px;
+}
+input[type=checkbox] 
+{
+    -webkit-appearance: none;
+    width: 5px;
+
+    cursor: pointer;
+}
+input[type=checkbox]:checked
+{
+    background-color: #125B9A;
+}
+input + .tip
+{
+    display: none;
+    float: left;
+
+    margin: 4px 0 0 0;
+    padding: 5px;
+    width: 100%;
+    height: 0;
+
+    opacity: 0;
+    font-size: 9px;
+    text-align: left;
+    box-sizing: border-box;
+    
+    background-color: #8BC53F;
+    transition: all .5s;
+    overflow: hidden;
+}
+.field
+{
+    position: relative;
+    display: inline-block;
+    margin: 2px 0;
+}
+.field > input,
+.field > button
+{
+    display: block;
+    width: 100%;
+}
+section > * 
+{
+    vertical-align: middle;
+}
+section.patterns
+{
+    opacity: 0;
+    background-color: #8BC53F;
+}
+section.info
+{
+    display: none;
+    opacity: 0;
+    background-color: #D9534F;
+}
+fieldset
+{
+    border: 1px solid #fff;
+    text-align: left;
+
+    padding: 1em;
+}
+fieldset > legend 
+{
+    background-color: #428BCA;
+    padding: .3em 1em;
+}
+fieldset > * 
+{
+    vertical-align: middle;;
+}
+
+textarea#patterns
+{
+    width: 100%;
+    height: 200px;
+}
+
+
+hr.hrz
+{
+    margin: 4em auto;
+    border-top: 1px dotted #FFF;
+    border-bottom: none;
+    width: 80%;
+}
+#message-box
+{
+    font-family: Courier , Courier New;
+}
+
+
+@-webkit-keyframes shake {
+  0%, 100% {
+    -webkit-transform: translateX(0);
+    transform: translateX(0);
+  }
+
+  10%, 30%, 50%, 70%, 90% {
+    -webkit-transform: translateX(-10px);
+    transform: translateX(-10px);
+  }
+
+  20%, 40%, 60%, 80% {
+    -webkit-transform: translateX(10px);
+    transform: translateX(10px);
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    -webkit-transform: translateX(0);
+    -ms-transform: translateX(0);
+    transform: translateX(0);
+  }
+
+  10%, 30%, 50%, 70%, 90% {
+    -webkit-transform: translateX(-10px);
+    -ms-transform: translateX(-10px);
+    transform: translateX(-10px);
+  }
+
+  20%, 40%, 60%, 80% {
+    -webkit-transform: translateX(10px);
+    -ms-transform: translateX(10px);
+    transform: translateX(10px);
+  }
+}
+
+.shake {
+  -webkit-animation-name: shake;
+  animation-name: shake;
+}
+
+.animated {
+  -webkit-animation-duration: .6s;
+  animation-duration: .6s;
+  -webkit-animation-fill-mode: both;
+  animation-fill-mode: both;
+}
+
+.animated.hinge {
+  -webkit-animation-duration: 2s;
+  animation-duration: 2s;
+}
