@@ -126,7 +126,7 @@
     input + .tip
     {
         display: none;
-        position: absolute;
+        float: left;
 
         margin: 4px 0 0 0;
         padding: 5px;
@@ -144,6 +144,14 @@
     {
         position: relative;
         display: inline-block;
+    }
+    .field > input,
+    .field > button
+    {
+        display: block;
+        width: 100%;
+
+        box-sizing: border-box;
     }
     section > * 
     {
@@ -237,47 +245,7 @@
 </head>
 <body>
     <script type="text/javascript" src="./res/require.js"></script>
-    <script type="text/javascript">
-        // shims
-        (function(){
-            var section = document.createElement('section');
-            
-            // The two functions below seem to be the most complete(cross browser) solution.
-            // document.all is equavallent to getElementsByTagName of IE 5
-            if( document.all && !document.getElementsByTagName ){
-                document.getElementsByTagName = function( nodeName )
-                {
-                    if( nodeName == '*' ) return document.all;
-                    var result = [], rightName = new RegExp( nodeName, 'i' ), i;
-                    for( i=0; i<document.all.length; i++ )
-                      if( rightName.test( document.all[i].nodeName ) )
-                    result.push( document.all[i] );
-                    return result;
-                };
-            } // end if
-             
-            // This if statement is my addition, the original code does not have it, it overrides the default function anyway
-            if( typeof document.getElementsByClassName !== "function"){ 
-                document.getElementsByClassName = function( className, nodeName )
-                {
-                  var result = [], tag = nodeName||'*', node, seek, i;
-                  if( document.evaluate ){
-                    seek = '//'+ tag +'[@class="'+ className +'"]';
-                    seek = document.evaluate( seek, document, null, 0, null );
-                    while( (node = seek.iterateNext()) )
-                      result.push( node );
-                  }else{
-                    var rightClass = new RegExp( '(^| )'+ className +'( |$)' );
-                    seek = document.getElementsByTagName( tag );
-                    for( i=0; i<seek.length; i++ )
-                      if( rightClass.test( (node = seek[i]).className ) )
-                    result.push( seek[i] );
-                  }
-                  return result;
-                };
-            } // end if
-        })();
-    </script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.2/html5shiv.min.js"></script>
     <h1>CHUANR</h1>
     <section>
         <div class='wizard'>
@@ -312,7 +280,9 @@
                 <input id="creditcard" name="creditcard" type="text" placeholder="Credit card" /> 
                 <div class="creditcard tip"></div>
             </div>
-            <button id="btn-check">Check Integrity and Submit</button>
+            <div class="field">
+                <button id="btn-check">Check Integrity and Submit</button>
+            </div>
         </form>
     </section>
     <section class="info">
@@ -321,13 +291,23 @@
         </div>
     </section>
     <script type="text/javascript">
-        require(['./res/ready'], function(domready){
-            domready(function () {
+        require({
+            paths: {
+                '$': './res/jquery'
+            },
+            shim: {
+                '$': {
+                    exports: 'jQuery'
+                }
+            }
+        }, ['$'], function($){
+
+            $(function () {
                 var isDebug = location.hash.indexOf('debug') > 0;
                 require([ (isDebug ? './src/Chuanr': './Chuanr')], function( Chuanr ){
 
                     function showPatterns(){
-                        var tips = document.getElementsByClassName('tip');
+                        var tips = $('.tip');
 
                         for( var l = creationInfo.length; l--; ) (function(){
                             var cur = creationInfo[l];
@@ -571,7 +551,7 @@
                     elBtnPatterns.onclick = function() {
                         showPatterns();
                     };
-                    elBtnCheck.onclick = function ( evt ) {
+                    $(elForm).on('submit', function ( evt ) {
                         var allFine = true;
 
                         for( var l = creationInfo.length; l--; ) {
@@ -588,7 +568,7 @@
                             evt.preventDefault ? evt.preventDefault() : (evt.returnValue = true);
                         }
 
-                    };
+                    });
                     chkUnderline.onchange = function(){
                         createChuanr();
                     };
