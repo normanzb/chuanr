@@ -70,15 +70,13 @@ define(['require', '$'], function (require, $) {
         function getOnResume(elInput){
             return function(){
                 // settimeout to workaround ie bug
-                setTimeout(function(){
-                    elInput.className = '';
-                    $elMessageBox
+                elInput.className = '';
+                $elMessageBox
+                    .parent()
                         .parent()
-                            .parent()
-                                .css({
-                                    opacity: '0'
-                                });
-                }, 250);
+                            .css({
+                                opacity: '0'
+                            });
             };
         }
 
