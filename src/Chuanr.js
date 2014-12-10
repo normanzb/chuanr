@@ -288,7 +288,7 @@ define([
         console.log('FocusMode: ' + focusMode);
         //>>excludeEnd("release");
 
-        render.call( this, focusMode );
+        tryRender.call( this, focusMode );
     }
 
     function updateInput( result ){
@@ -327,6 +327,17 @@ define([
         }
 
         return false;
+    }
+
+    function tryRender(){
+        var me = this;
+        var ret;
+
+        me.oninput.neglect();
+        ret = render.apply(me, arguments);
+        me.oninput.observe(me._el);
+
+        return ret;
     }
 
     /*
