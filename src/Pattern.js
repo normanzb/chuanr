@@ -29,7 +29,7 @@ define([
 
     var TYPE_POSITIVE = PatternConstant.TYPE_POSITIVE;
     var TYPE_NEGATIVE = PatternConstant.TYPE_NEGATIVE;
-    var TYPE_PARTIAL = PatternConstant.TYPE_PARTIAL;
+    var TYPE_REGEXP = PatternConstant.TYPE_REGEXP;
     var TYPE_PASSIVE = PatternConstant.TYPE_PASSIVE;
 
     var MODE_CONSTANT = PatternConstant.MODE_CONSTANT;
@@ -102,7 +102,7 @@ define([
                 }
                 else if ( curChar == '~' ) {
                     me.type |= TYPE_NEGATIVE;
-                    me.type |= TYPE_PARTIAL;
+                    me.type |= TYPE_REGEXP;
                 }
                 else if ( curChar == '_' ) {
                     me.type |= TYPE_NEGATIVE;
