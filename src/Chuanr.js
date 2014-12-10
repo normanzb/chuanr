@@ -607,11 +607,9 @@ define([
      * Return true if user input at least fulfill one of the pattern
      */
     p.intact = function(){
-        if ( this._untouched == null || this._untouched == "" ) {
-            return false;
-        }
-
-        return this.formatter.isIntact( this._untouched.input );
+        // use this._el.value as backup because otherwise when there is no positive pattern present,
+        // untouch will always be null
+        return this.formatter.isIntact( this._untouched && this._untouched.input || this._el.value );
     };
 
     // expose ioc setting
