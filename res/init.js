@@ -10,6 +10,7 @@ require({
 }, 
 ['$', './res/loader'], 
 function($, loader){
+    'use strict';
 
     $(function(){
         loader.load();

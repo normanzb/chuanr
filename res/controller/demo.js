@@ -1,4 +1,6 @@
-define(['require'], function (require) {
+define(['require', '$'], function (require, $) {
+
+    'use strict';
 
     function init( options ){
         var Chuanr = options.Chuanr;
@@ -6,8 +8,9 @@ define(['require'], function (require) {
 
         function showPatterns(){
             var tips = $('.tip');
+            var l;
 
-            for( var l = creationInfo.length; l--; ) (function(){
+            function loop(){
                 var cur = creationInfo[l];
                 var curTip = tips[l];
 
@@ -15,7 +18,7 @@ define(['require'], function (require) {
                     return;
                 }
 
-                var text = cur.instance.patterns.toString().replace(/,/g, ',\n');;
+                var text = cur.instance.patterns.toString().replace(/,/g, ',\n');
 
                 curTip.style.display = 'block';
                 curTip.style.height = 'auto';
@@ -40,11 +43,15 @@ define(['require'], function (require) {
                     }
                 }, 0);
 
-            }());
+            }
+
+            for( l = creationInfo.length; l--; ) {
+                loop();
+            }
         }
         
         function hidePatterns(){
-            var tips = document.getElementsByClassName('tip');
+            var tips = $('.tip');
             for(var l = tips.length; l--;){
                 tips[l].style.display = 'none';
             }
@@ -62,19 +69,28 @@ define(['require'], function (require) {
 
         function getOnResume(elInput){
             return function(){
-                elInput.className = '';
-                // elMessageBox.innerText = '';
-                elMessageBox.parentNode.parentNode.style.opacity = '0';
-            }
+                // settimeout to workaround ie bug
+                setTimeout(function(){
+                    elInput.className = '';
+                    $elMessageBox
+                        .parent()
+                            .parent()
+                                .css({
+                                    opacity: '0'
+                                });
+                }, 250);
+            };
         }
 
         function getOnPrevent(elInput) {
             return function onPrevent(format){
                 var curItem;
+                var i;
                 var genericPattern = Chuanr.setting.Pattern.parse(
                     format.pattern.pattern + '{*}'
                 );
-                for(var i = 0; i < genericPattern.items.length; i++) {
+
+                for(i = 0; i < genericPattern.items.length; i++) {
                     curItem = genericPattern.items[i];
                     if ( curItem.type == 2 ) {
                         curItem.param = '';
@@ -86,24 +102,43 @@ define(['require'], function (require) {
 
                 var input = format.input.replace(/[\(\){}\-\ ]/g, '');
 
-                for(var i = 0; i < input.length; i++){
+                for(i = 0; i < input.length; i++){
                     genericFormatter.input(input.charAt(i));    
                 }
 
                 var output = genericFormatter.output();
                 var msg = '"' + ( output.result + '' ).replace(/(\d)(\W*)$/,'<span class="highlight">$1</span>$2')  + '" is not an valid input for current field!';
-                window.console && window.console.error('Prevented!! ' + msg);
-                elMessageBox.innerHTML = msg;
-                elMessageBox.parentNode.parentNode.style.opacity = '1';
+                if ( window.console ) {
+                    window.console.error('Prevented!! ' + msg);
+                } 
+
+                $elMessageBox
+                    .text(msg)
+                    .parent()
+                        .parent()
+                            .css({
+                                opacity: '1'
+                            });
 
                 elInput.className = 'error shake animated';
                 scheduleErrorClear(elInput);
                 hidePatterns();
-            }
-        };
+            };
+        }
 
         function createChuanr() {
             var cur, inst;
+
+            function bind(el, inst){
+                el.onblur = function() {
+                    if ( inst.intact() ) {
+                        el.className += ' success';
+                    }
+                };
+                el.onfocus = function() {
+                    el.className = el.className.replace(' success', '');
+                };
+            }
 
             for( var l = creationInfo.length; l--; ) {
                 cur = creationInfo[l];
@@ -124,16 +159,7 @@ define(['require'], function (require) {
                 inst.on('prevented', getOnPrevent(cur.el));
                 inst.on('resumed', getOnResume(cur.el));
 
-                !function(el, inst){
-                    el.onblur = function() {
-                        if ( inst.intact() ) {
-                            el.className += ' success';
-                        }
-                    };
-                    el.onfocus = function() {
-                        el.className = el.className.replace(' success', '');
-                    };
-                }(cur.el, inst);
+                bind(cur.el, inst);
 
                 cur.instance = inst;
             }
@@ -144,14 +170,14 @@ define(['require'], function (require) {
         var elFirstName = document.getElementById('firstname');
         var elLastName = document.getElementById('lastname');
         var elCreditcard = document.getElementById('creditcard');
-        var elMessageBox = document.getElementById('message-box');
+        var $elMessageBox = $('#message-box');
         var elBtnPatterns = document.getElementById('btn-patterns');
         var elBtnCheck = document.getElementById('btn-check');
         var chkUnderline = document.getElementById('chk-placeholder');
         var elForm = document.getElementById('form');
         var namePatterns = [];
 
-        !function( pttns ){
+        (function( pttns ){
             for(var i = 3; i < 20; i++ ) {
                 var sPttn = '{';
                 for(var j = 0; j < i ; j++ ) {
@@ -160,7 +186,7 @@ define(['require'], function (require) {
                 sPttn +='}';
                 pttns.push(sPttn);
             }
-        }(namePatterns);
+        })(namePatterns);
             
         var creationInfo = [
             {
@@ -174,23 +200,23 @@ define(['require'], function (require) {
             {
                 'el': elInput,
                 'patterns': [
-                    "({11}) {99ddd}-{dddd}",
-                    "({11}) {98d}-{ddd}-{ddd}",
-                    "({11}) {97d(01234569)dd}-{dddd}",
-                    "({11}) {96ddd}-{dddd}",
-                    "({11}) {95ddd}-{dddd}",
-                    "({dd}) {700d}-{dddd}",
-                    "({dd}) {7010}-{dddd}",
-                    "({dd}) {77dd}-{dddd}",
-                    "({dd}) {78dd}-{dddd}",
-                    "({dd}) {790d(124)}-{dddd}",
-                    "({dd}) {791d(2-9)}-{dddd}",
-                    "({dd}) {792d(03489)}-{dddd}",
-                    "({dd}) {793d(012456789)}-{dddd}",
-                    "({dd}) {794d}-{dddd}",
-                    "({11}) {d(2345)ddd}-{dddd}",
-                    "-|({11}) {d(2345)d(+1)d(+1)d(+1)}-{d(+1)d(+1)}",
-                    "_|{1199dd(+)d(+)d(?)d(?)d(?)d(?)}"
+                    '({11}) {99ddd}-{dddd}',
+                    '({11}) {98d}-{ddd}-{ddd}',
+                    '({11}) {97d(01234569)dd}-{dddd}',
+                    '({11}) {96ddd}-{dddd}',
+                    '({11}) {95ddd}-{dddd}',
+                    '({dd}) {700d}-{dddd}',
+                    '({dd}) {7010}-{dddd}',
+                    '({dd}) {77dd}-{dddd}',
+                    '({dd}) {78dd}-{dddd}',
+                    '({dd}) {790d(124)}-{dddd}',
+                    '({dd}) {791d(2-9)}-{dddd}',
+                    '({dd}) {792d(03489)}-{dddd}',
+                    '({dd}) {793d(012456789)}-{dddd}',
+                    '({dd}) {794d}-{dddd}',
+                    '({11}) {d(2345)ddd}-{dddd}',
+                    '-|({11}) {d(2345)d(+1)d(+1)d(+1)}-{d(+1)d(+1)}',
+                    '_|{1199dd(+)d(+)d(?)d(?)d(?)d(?)}'
                 ],
                 'config': {
                     placeholder: {
@@ -202,55 +228,55 @@ define(['require'], function (require) {
                 'el': elCreditcard,
                 'patterns': [
                     // AMEX
-                    "{34ddd}-{ddddd}-{ddddl}",
-                    "{37ddd}-{ddddd}-{ddddl}",
+                    '{34ddd}-{ddddd}-{ddddl}',
+                    '{37ddd}-{ddddd}-{ddddl}',
                     // DINERS CLUB - CARTE BLANCHE
-                    "{30d(0-5)dd}-{ddddd}-{dddl}",
+                    '{30d(0-5)dd}-{ddddd}-{dddl}',
                     // DINERS CLUB - INTERNATIONAL
-                    "{36ddd}-{ddddd}-{dddl}",
+                    '{36ddd}-{ddddd}-{dddl}',
                     // DINERS CLUB - USA & CANADA
-                    "{54dd}-{dddd}-{dddd}-{dddl}",
+                    '{54dd}-{dddd}-{dddd}-{dddl}',
                     // DISCOVER
-                    "{64d(4-9)d}-{dddd}-{dddd}-{dddl}",
-                    "{65dd}-{dddd}-{dddd}-{dddl}",
-                    "{6011}-{dddd}-{dddd}-{dddl}",
-                    "{622d(1-9)}-{dddd}-{dddd}-{dddl}",
+                    '{64d(4-9)d}-{dddd}-{dddd}-{dddl}',
+                    '{65dd}-{dddd}-{dddd}-{dddl}',
+                    '{6011}-{dddd}-{dddd}-{dddl}',
+                    '{622d(1-9)}-{dddd}-{dddd}-{dddl}',
                     // INSTAPAYMENT
-                    "{63d(7-9)d}-{dddd}-{dddd}-{dddl}",
+                    '{63d(7-9)d}-{dddd}-{dddd}-{dddl}',
                     // JCB
-                    "{35d(2-8)d}-{dddd}-{dddd}-{dddl}",
+                    '{35d(2-8)d}-{dddd}-{dddd}-{dddl}',
                     // LASER
-                    "{6304}-{dddd}-{dddd}-{dddd???}",
-                    "{6706}-{dddd}-{dddd}-{dddd???}",
-                    "{6771}-{dddd}-{dddd}-{dddd???}",
-                    "{6709}-{dddd}-{dddd}-{dddd???}",
+                    '{6304}-{dddd}-{dddd}-{dddd???}',
+                    '{6706}-{dddd}-{dddd}-{dddd???}',
+                    '{6771}-{dddd}-{dddd}-{dddd???}',
+                    '{6709}-{dddd}-{dddd}-{dddd???}',
                     // MAESTRO
-                    "{5018}-{dddd}-{dddd}-{dddd???}",
-                    "{5020}-{dddd}-{dddd}-{dddd???}",
-                    "{5038}-{dddd}-{dddd}-{dddd???}",
-                    "{5893}-{dddd}-{dddd}-{dddd???}",
-                    "{6304}-{dddd}-{dddd}-{dddd???}",
-                    "{6759}-{dddd}-{dddd}-{dddd???}",
-                    "{6761}-{dddd}-{dddd}-{dddd???}",
-                    "{6762}-{dddd}-{dddd}-{dddd???}",
-                    "{6763}-{dddd}-{dddd}-{dddd???}",
+                    '{5018}-{dddd}-{dddd}-{dddd???}',
+                    '{5020}-{dddd}-{dddd}-{dddd???}',
+                    '{5038}-{dddd}-{dddd}-{dddd???}',
+                    '{5893}-{dddd}-{dddd}-{dddd???}',
+                    '{6304}-{dddd}-{dddd}-{dddd???}',
+                    '{6759}-{dddd}-{dddd}-{dddd???}',
+                    '{6761}-{dddd}-{dddd}-{dddd???}',
+                    '{6762}-{dddd}-{dddd}-{dddd???}',
+                    '{6763}-{dddd}-{dddd}-{dddd???}',
                     // MASTERCARD
-                    "{5d(1-5)dd}-{dddd}-{dddd}-{dddl}",
-                    "{5d(1-5)dd}-{dddd}-{dddd}-{ddddl}",
-                    "{5d(1-5)dd}-{dddd}-{dddd}-{dddddl}",
-                    "{5d(1-5)dd}-{dddd}-{dddd}-{ddddddl}",
+                    '{5d(1-5)dd}-{dddd}-{dddd}-{dddl}',
+                    '{5d(1-5)dd}-{dddd}-{dddd}-{ddddl}',
+                    '{5d(1-5)dd}-{dddd}-{dddd}-{dddddl}',
+                    '{5d(1-5)dd}-{dddd}-{dddd}-{ddddddl}',
                     // VISA
-                    "{4ddd}-{dddd}-{dddd}-{l}",
-                    "{4ddd}-{dddd}-{dddd}-{dl}",
-                    "{4ddd}-{dddd}-{dddd}-{ddl}",
-                    "{4ddd}-{dddd}-{dddd}-{dddl}",
+                    '{4ddd}-{dddd}-{dddd}-{l}',
+                    '{4ddd}-{dddd}-{dddd}-{dl}',
+                    '{4ddd}-{dddd}-{dddd}-{ddl}',
+                    '{4ddd}-{dddd}-{dddd}-{dddl}',
                     // Visa Electron
-                    "{4026}-{dddd}-{dddd}-{dddl}",
-                    "{4175}-{00dd}-{dddd}-{dddl}",
-                    "{4508}-{dddd}-{dddd}-{dddl}",
-                    "{4844}-{dddd}-{dddd}-{dddl}",
-                    "{4913}-{dddd}-{dddd}-{dddl}",
-                    "{4917}-{dddd}-{dddd}-{dddl}",
+                    '{4026}-{dddd}-{dddd}-{dddl}',
+                    '{4175}-{00dd}-{dddd}-{dddl}',
+                    '{4508}-{dddd}-{dddd}-{dddl}',
+                    '{4844}-{dddd}-{dddd}-{dddl}',
+                    '{4913}-{dddd}-{dddd}-{dddl}',
+                    '{4917}-{dddd}-{dddd}-{dddl}',
                 ]
             }
         ];
@@ -262,7 +288,7 @@ define(['require'], function (require) {
             var allFine = true;
 
             for( var l = creationInfo.length; l--; ) {
-                if ( creationInfo[l].instance.intact() != true ) {
+                if ( creationInfo[l].instance.intact() !== true ) {
                     allFine = false;
                 }
             }
@@ -272,7 +298,7 @@ define(['require'], function (require) {
             }
             else {
                 elBtnCheck.className = 'error';   
-                evt.preventDefault ? evt.preventDefault() : (evt.returnValue = true);
+                evt.preventDefault();
             }
 
         });
@@ -281,41 +307,42 @@ define(['require'], function (require) {
         };
         createChuanr();
 
-
-        isDebug && require(['../../src/util', '../../src/shim/oninput', '../../src/shim/console'], 
-            function( util, InputObserver, console ){
-            // for testing
-            var oninput = new InputObserver;
-            oninput.observe(elInput);
-            oninput.oninput = function(){
-                console.log('xoninput "' + elInput.value + '"');
-            };
-            util.addListener(elInput, 'keydown', function(evt){
-                console.log('onkeydown: keyCode', evt.keyCode);
-            });
-            util.addListener(elInput, 'keypress', function(evt){
-                console.log('onkeypress: charCode', evt.charCode || evt.keyCode);
-            });
-            util.addListener(elInput, 'input', function(evt){
-                console.log('oninput "' + elInput.value + '"');
-            });
-            util.addListener(elInput, 'propertychange', function(evt){
-                console.log('onpropertychange', evt.propertyName);
-            });
-            util.addListener(elInput, 'keyup', function(evt){
-                console.log('onkeyup "' + evt.keyCode + '"');
-            });
-            var MutationObserver = window.MutationObserver || window.webkitMutationObserver;
-            if ( MutationObserver ) {
-                var observer = new MutationObserver(function(mutations){
-                    mutations.forEach(function(mutation){
-                        console.log('Mutation: ' , mutation);
+        if ( isDebug ) {
+            require(['../../src/util', '../../src/shim/oninput', '../../src/shim/console'], 
+                function( util, InputObserver, console ){
+                // for testing
+                var oninput = new InputObserver();
+                oninput.observe(elInput);
+                oninput.oninput = function(){
+                    console.log('xoninput "' + elInput.value + '"');
+                };
+                util.addListener(elInput, 'keydown', function(evt){
+                    console.log('onkeydown: keyCode', evt.keyCode);
+                });
+                util.addListener(elInput, 'keypress', function(evt){
+                    console.log('onkeypress: charCode', evt.charCode || evt.keyCode);
+                });
+                util.addListener(elInput, 'input', function(){
+                    console.log('oninput "' + elInput.value + '"');
+                });
+                util.addListener(elInput, 'propertychange', function(evt){
+                    console.log('onpropertychange', evt.propertyName);
+                });
+                util.addListener(elInput, 'keyup', function(evt){
+                    console.log('onkeyup "' + evt.keyCode + '"');
+                });
+                var MutationObserver = window.MutationObserver || window.webkitMutationObserver;
+                if ( MutationObserver ) {
+                    var observer = new MutationObserver(function(mutations){
+                        mutations.forEach(function(mutation){
+                            console.log('Mutation: ' , mutation);
+                        });
                     });
-                })
-                observer.observe(elInput, { attributes: true, childList: true, characterData: true, subtree: true, attributeOldValue: true });
-                // observer.disconnect();
-            }
-        });
+                    observer.observe(elInput, { attributes: true, childList: true, characterData: true, subtree: true, attributeOldValue: true });
+                    // observer.disconnect();
+                }
+            });
+        }
     }
 
     return {

@@ -1,4 +1,12 @@
-define(['require', '$', './controller/demo'], function (require, $, demoController) {
+define([
+    'require', 
+    '$', 
+    './controller/demo', 
+    './controller/playground'
+], 
+function (require, $, demoController, playgroundController) {
+    'use strict';
+
     return {
         load: function(){
             $(function () {
@@ -7,9 +15,13 @@ define(['require', '$', './controller/demo'], function (require, $, demoControll
                     demoController.init({
                         isDebug: isDebug,
                         Chuanr: Chuanr
-                    })
+                    });
+                    playgroundController.init({
+                        isDebug: isDebug,
+                        Chuanr: Chuanr
+                    });
                 });
             });
         }
-    } 
+    };
 });
