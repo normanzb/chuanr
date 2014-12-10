@@ -4,8 +4,11 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
 }
 //>>excludeEnd("release");
 define(['../../lib/boe/src/boe/Function/bind'], function (bind) {
+    'use strict';
+
     var INPUT = 'input';
     var CHANGE = 'change';
+    var PROPERTYNAME = 'propertyName';
 
     /* Feature Detection */
 
@@ -17,21 +20,21 @@ define(['../../lib/boe/src/boe/Function/bind'], function (bind) {
         */
         function checkEvent(el) {
             // First check, for if Firefox fixes its issue with el.oninput = function
-            el.setAttribute("oninput", "return");
-            if (typeof el.oninput == "function"){
+            el.setAttribute('oninput', 'return');
+            if (typeof el.oninput == 'function'){
                 return true;
             }
 
             // Second check, because Firefox doesn't map oninput attribute to oninput property
             try {
-                var e  = document.createEvent("KeyboardEvent"),
+                var e  = document.createEvent('KeyboardEvent'),
                     ok = false,
                     tester = function(e) {
                         ok = true;
                         e.preventDefault();
                         e.stopPropagation();
                     }
-                e.initKeyEvent("keypress", true, true, window, false, false, false, false, 0, "e".charCodeAt(0));
+                e.initKeyEvent('keypress', true, true, window, false, false, false, false, 0, 'e'.charCodeAt(0));
                 document.body.appendChild(el);
                 el.addEventListener(INPUT, tester, false);
                 el.focus();
@@ -43,13 +46,18 @@ define(['../../lib/boe/src/boe/Function/bind'], function (bind) {
         }
 
         var testee = document.createElement(INPUT);
-        return "oninput" in testee || checkEvent(testee);
+        return 'oninput' in testee || checkEvent(testee);
     }();
 
     /* Private */
 
     function onchange( evt ){
         var me = this;
+        if ( PROPERTYNAME in window.event ) {
+            if ( window.event[PROPERTYNAME] !== 'value') {
+                return;
+            }
+        }
         if ( me._el.value != me._old ) {
             me._old = me._el.value;
             me.oninput( evt );
@@ -92,7 +100,7 @@ define(['../../lib/boe/src/boe/Function/bind'], function (bind) {
 
     p.observe = function(el){
         if ( el == null || el.tagName.toLowerCase() != INPUT ) {
-            throw "Target input element must be specified.";
+            throw 'Target input element must be specified.';
         }
 
         var me = this;
@@ -114,11 +122,11 @@ define(['../../lib/boe/src/boe/Function/bind'], function (bind) {
             el.addEventListener(CHANGE, me._onchange, false);
         }
         else {
-            throw "Something wrong, should never goes to here.";
+            throw 'Something wrong, should never goes to here.';
         }
     };
 
-    p.dispose = function (){
+    p.neglect = function (){
         var me = this;
         var el = me._el;
         if ( el.attachEvent ) {
@@ -131,6 +139,12 @@ define(['../../lib/boe/src/boe/Function/bind'], function (bind) {
             el.removeEventListener(CHANGE, me._onchange);
         }
 
+    };
+
+    p.dispose = function() {
+        var me = this;
+        me.neglect();
+        me._el = null;
     };
 
     return Observer;
