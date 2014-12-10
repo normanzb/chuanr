@@ -533,6 +533,7 @@ define([
      * Bind Chuanr with specific input elment
      */
     p.roast = function (el, patterns) {
+        var current;
 
         if ( el == null || el.tagName.toUpperCase() != 'INPUT' ) {
             throw "Target input element must be specified.";
@@ -541,7 +542,12 @@ define([
         this._el = el;
 
         for( var i = 0 ; i < patterns.length; i++ ) {
-            this.patterns.push( ioc.Pattern.parse( patterns[ i ], this.config ) );
+            current = patterns[i];
+            // filter out empty string
+            if ( current == null || current == false ) {
+                continue;    
+            }
+            this.patterns.push( ioc.Pattern.parse( current, this.config ) );
         }
 
         this.formatter = new ioc.Formatter(this.patterns);
