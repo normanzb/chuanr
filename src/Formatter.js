@@ -248,7 +248,8 @@ define([
     };
 
     p.isIntact = function( input ){
-        var pttn;
+        var pttn, hasPositive = false;
+
         // check against passive
         for( var l = this.patterns.length; l--; ) {
             pttn = this.patterns[l];
@@ -267,13 +268,14 @@ define([
             if ( !util.hasBit( pttn.type, PatternConstant.TYPE_POSITIVE ) ) {
                 continue;
             }
+            hasPositive = true;
             result = pttn.apply( input, true );
             if ( result.legitimate == true ) {
                 return true;
             }
         }
 
-        return false;
+        return hasPositive ? false : true ;
     }
 
     return Ctor;
