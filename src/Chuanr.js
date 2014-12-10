@@ -315,6 +315,20 @@ define([
         }
     }
 
+    function canRender() {
+        var me = this;
+        var pattern;
+
+        for(var i = 0; i < me.patterns.length; i++) {
+            pattern = me.patterns[i];
+            if ( util.hasBit( pattern.type , PatternConstant.TYPE_POSITIVE ) ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /*
      * @caretMode - 0: skip setting caret
      *              1: automatically setting according to changes on the result
@@ -335,6 +349,12 @@ define([
         var undid = false;    
         var extracted;
         var input;
+
+        // Safe check, make sure at least on positive pattern
+        if ( canRender.call(me) == false ) {
+            console.log('Cannot render, exiting...');
+            return;
+        }
 
         // == Batch Input ==
         input = me._el.value;
