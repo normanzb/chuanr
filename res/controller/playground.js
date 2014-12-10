@@ -6,20 +6,27 @@ define(['$'], function($){
     var $txtPatterns;
     var $btnCheck;
     var Chuanr;
+    var inst;
 
     function createChuanr(){
         var patterns = '';
-        var inst;
-        var newPatterns = $txtPatterns.text();
+        var newPatterns;
+
+        if ( inst ) {
+            inst.dispose();
+            $inpTest.val('');
+        }
+
+        newPatterns = $txtPatterns.val();
 
         if ( newPatterns === patterns ) {
             return;
         }
 
-        patterns = newPatterns.split(',');
+        patterns = newPatterns.split('\n');
 
         for(var l = patterns.length; l--; ) {
-            if ( patterns[l] == false ) {
+            if ( patterns[l] === false ) {
                 patterns.splice(l, 1);
             }
         }
@@ -31,6 +38,17 @@ define(['$'], function($){
 
     function handleSubmit(evt){
         evt.preventDefault();
+
+        if ( inst == null ) {
+            return;
+        }
+
+        if ( inst.intact() ) {
+            $btnCheck.removeClass('error');
+        }
+        else {
+            $btnCheck.addClass('error');
+        }
     }
 
     function init(options) {
@@ -39,6 +57,7 @@ define(['$'], function($){
         $form = $('form.playground');
         $inpTest = $form.find('input.test');
         $txtPatterns = $('textarea.patterns');
+        $btnCheck = $form.find('button');
 
         $form.on('submit', handleSubmit);
         $txtPatterns.on('blur', createChuanr);
