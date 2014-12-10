@@ -275,7 +275,7 @@ define([
             }
         }
 
-        return hasPositive ? false : true ;
+        return !hasPositive ;
     }
 
     return Ctor;
