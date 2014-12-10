@@ -474,7 +474,7 @@ define([
             // Caveat: check caretUtil.get( me._el ).begin != caret.begin doesnot work here
             // ios always return the correct caret at this time, it will update the caret to 
             // an incorrect one later... mobile safari sucks
-            // TODO: user setImmediate shim to make it faster?
+            // TODO: use setImmediate shim to make it faster?
             setTimeout(function(){
                 if ( caretUtil.get( me._el) != caret.begin ) {
                     // oh shit, we failed
