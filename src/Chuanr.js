@@ -275,20 +275,20 @@ define([
 
     }
 
-    function onInput( focusMode ) {
+    function onInput( caretMode ) {
         //>>excludeStart("release", pragmas.release);
         console.hr();
         //>>excludeEnd("release");
 
-        if ( focusMode == null ) {
-            focusMode = 1;
+        if ( caretMode == null ) {
+            caretMode = 1;
         }
 
         //>>excludeStart("release", pragmas.release);
-        console.log('FocusMode: ' + focusMode);
+        console.log('caretMode: ' + caretMode);
         //>>excludeEnd("release");
 
-        tryRender.call( this, focusMode );
+        tryRender.call( this, caretMode );
     }
 
     function updateInput( result ){
@@ -361,7 +361,7 @@ define([
         var extracted;
         var input;
 
-        // Safe check, make sure at least on positive pattern
+        // Safe check, make sure at least one positive pattern
         if ( canRender.call(me) == false ) {
             console.log('Cannot render, exiting...');
             return;
