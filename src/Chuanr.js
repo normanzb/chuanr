@@ -315,20 +315,6 @@ define([
         }
     }
 
-    function canRender() {
-        var me = this;
-        var pattern;
-
-        for(var i = 0; i < me.patterns.length; i++) {
-            pattern = me.patterns[i];
-            if ( util.hasBit( pattern.type , PatternConstant.TYPE_POSITIVE ) ) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     function tryRender(){
         var me = this;
         var ret;
@@ -360,12 +346,6 @@ define([
         var undid = false;    
         var extracted;
         var input;
-
-        // Safe check, make sure at least one positive pattern
-        if ( canRender.call(me) == false ) {
-            console.log('Cannot render, exiting...');
-            return;
-        }
 
         // == Batch Input ==
         input = me._el.value;
@@ -410,11 +390,13 @@ define([
                 // match immediately means user inputs raw numbers
                 caret.type = 2;
             }
-            else if ( format == null ) {
-                // that probably means there is no pattern for formatting
-                // user did not define a formatting (positive) pattern
-                return;
-            }
+        }
+
+        if ( format == null ) {
+            // that probably means there is neither no pattern for formatting
+            // ( user did not define a formatting (positive) pattern )
+            // or no negative pattern matched
+            return;
         }
 
         if ( 
@@ -441,8 +423,9 @@ define([
 
             if ( format == null ) {
                 //>>excludeStart("release", pragmas.release);
-                console.log('Tried to undo, but failed.');
+                console.log('Tried to undo, but failed, so we revert to the value before change.');
                 //>>excludeEnd("release");
+                updateInput.call( me, me._untouched || '' );
                 break;
             }
 
@@ -455,8 +438,10 @@ define([
             caret.type = 2;
         }
 
+        // same reason as the same check before, but this time it must at least matched negative 
+        // pattern once
         if ( format == null ) {
-            throw 'Boom, "format" is null, this should never happen.';
+            return;
         }
 
         //>>excludeStart("release", pragmas.release);

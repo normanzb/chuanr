@@ -54,6 +54,9 @@ define([
 
             if ( resultObject = pattern.apply( cache ) ) {
                 if ( resultObject.matched ) {
+                    //>>excludeStart("release", pragmas.release);
+                    console.log('  ', 'Pattern matched');
+                    //>>excludeEnd("release");
                     bestMatchPattern = pattern;
                     bestMatchResultObject = resultObject;
                     skip = true;
@@ -61,12 +64,14 @@ define([
                 }
             }
         }
-
+        
         //>>excludeStart("release", pragmas.release);
-        console.log('Start Formating: "' + cache + '"');
+        if ( skip === false ) {
+            console.log('Start Formating: "' + cache + '"');
+        }
         //>>excludeEnd("release");
 
-        for( var i = 0; i < this.patterns.length && skip == false; i++ ) {
+        for( var i = 0; i < this.patterns.length && skip === false; i++ ) {
             pattern = this.patterns[ i ];
             if ( 
                 util.hasBit( pattern.type, PatternConstant.TYPE_NEGATIVE )
@@ -90,7 +95,7 @@ define([
             }
         }
 
-        if ( bestMatchPattern != null && bestMatchResultObject ) {
+        if ( bestMatchPattern && bestMatchResultObject ) {
             //>>excludeStart("release", pragmas.release);
             console.log( 'Best Matching Pattern: ', bestMatchPattern.toString(), bestMatchResultObject)
             //>>excludeEnd("release");
