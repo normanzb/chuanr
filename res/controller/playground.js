@@ -44,10 +44,14 @@ define(['$'], function($){
         }
 
         if ( inst.intact() ) {
-            $btnCheck.removeClass('error');
+            $btnCheck
+                .removeClass('error')
+                .addClass('success');
         }
         else {
-            $btnCheck.addClass('error');
+            $btnCheck
+                .addClass('error')
+                .removeClass('success');
         }
     }
 
