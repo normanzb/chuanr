@@ -53,11 +53,17 @@ define(['../../lib/boe/src/boe/Function/bind'], function (bind) {
 
     function onchange( evt ){
         var me = this;
-        if ( PROPERTYNAME in window.event ) {
+        
+        if ( 
+            PROPERTYNAME in window.event && 
+            window.event[PROPERTYNAME] != null && 
+            window.event[PROPERTYNAME] !== ''
+        ) {
             if ( window.event[PROPERTYNAME] !== 'value') {
                 return;
             }
         }
+        
         if ( me._el.value != me._old ) {
             me._old = me._el.value;
             me.oninput( evt );
@@ -114,6 +120,9 @@ define(['../../lib/boe/src/boe/Function/bind'], function (bind) {
             el.attachEvent('onpropertychange', me._onchange);
             el.attachEvent('onfocus', me._onfocus);
             el.attachEvent('onblur', me._onblur);
+            // binding onkeypress to avoid https://gist.github.com/normanzb/137a8b9d0cf317a1be58
+            el.attachEvent('onkeypress', me._onchange);
+            el.attachEvent('onkeyup', me._onchange);
         }
         else if ( hasOnInput ) {
             el.addEventListener(INPUT, me._onchange, false);
@@ -129,10 +138,13 @@ define(['../../lib/boe/src/boe/Function/bind'], function (bind) {
     p.neglect = function (){
         var me = this;
         var el = me._el;
+
         if ( el.attachEvent ) {
             el.detachEvent('onpropertychange', me._onchange);
             el.detachEvent('onfocus', me._onfocus);
             el.detachEvent('onblur', me._onblur);
+            el.detachEvent('onkeypress', me._onchange);
+            el.detachEvent('onkeyup', me._onchange);
         }
         else {
             el.removeEventListener(INPUT, me._onchange);
