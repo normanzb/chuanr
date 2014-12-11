@@ -329,6 +329,16 @@ define([
         return ret;
     }
 
+    function createFakeFormat(input){
+        var me = this;
+        me._untouched = {
+            result: input,
+            toString: function() {
+                return this.result;
+            }
+        };
+    }
+
     /*
      * @caretMode - 0: skip setting caret
      *              1: automatically setting according to changes on the result
@@ -399,6 +409,11 @@ define([
             // that probably means there is neither no pattern for formatting
             // ( user did not define a formatting (positive) pattern )
             // or no negative pattern matched
+            createFakeFormat.call(me, input);
+
+            //>>excludeStart("release", pragmas.release);
+            console.log('Exiting with previous format set to ', me._untouched);
+            //>>excludeEnd("release");
             return;
         }
 
@@ -426,14 +441,14 @@ define([
 
             if ( format == null ) {
                 //>>excludeStart("release", pragmas.release);
-                console.log('Tried to undo, but failed, so we revert to the value before change.');
+                console.log('Tried to undo, but failed, so we revert to the value before change: ' + (me._untouched || '') );
                 //>>excludeEnd("release");
-                updateInput.call( me, me._untouched || '' );
+                updateInput.call( me, me._untouched && me._untouched.result || '' );
                 break;
             }
 
             //>>excludeStart("release", pragmas.release);
-            console.log('undone, now format is', format);
+            console.log('undone, now format is', format + '');
             //>>excludeEnd("release");
 
             caret.begin = tryExtractAndResetCaret.call( me, format.result.toString(), null ).length;
@@ -444,6 +459,11 @@ define([
         // same reason as the same check before, but this time it must at least matched negative 
         // pattern once
         if ( format == null ) {
+            createFakeFormat.call(me, me._untouched.result || '');
+
+            //>>excludeStart("release", pragmas.release);
+            console.log('Exiting with previous format set to ', me._untouched);
+            //>>excludeEnd("release");
             return;
         }
 
