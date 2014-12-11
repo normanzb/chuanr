@@ -2303,6 +2303,7 @@ define('Chuanr',[
     }
 
     function updateInput( result ){
+        var me = this;
         var isEmpty = true;
         result = result + '';
 
@@ -2324,6 +2325,8 @@ define('Chuanr',[
         else {
             this._el.value = '';
         }
+
+        me.oninput.sync();
     }
 
     function tryRender(){
@@ -2451,7 +2454,6 @@ define('Chuanr',[
         me._untouched = format;
         // update the element
         var skipCaret = updateInput.call( me, format.result );
-        me.oninput.sync();
 
         if ( 
             ( caretMode == 1 && lockFocus != null && skipCaret !== true ) || 
