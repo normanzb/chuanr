@@ -87,7 +87,7 @@ define('PatternConstant',[],function(){
         MODE_PARAMETER : 4,
         TYPE_POSITIVE : 0,
         TYPE_NEGATIVE : 1,
-        TYPE_PARTIAL : 2,
+        TYPE_REGEXP : 2,
         TYPE_PASSIVE : 4
     };
 });
@@ -334,16 +334,16 @@ define('Formatter',[
             
             if ( resultObject = pattern.apply( cache ) ) {
                 if ( resultObject.matched ) {
-                    bestMatchPattern = pattern;
+                                        bestMatchPattern = pattern;
                     bestMatchResultObject = resultObject;
                     skip = true;
                     break;
                 }
             }
         }
-
         
-        for( var i = 0; i < this.patterns.length && skip == false; i++ ) {
+        
+        for( var i = 0; i < this.patterns.length && skip === false; i++ ) {
             pattern = this.patterns[ i ];
             if ( 
                 util.hasBit( pattern.type, PatternConstant.TYPE_NEGATIVE )
@@ -364,7 +364,7 @@ define('Formatter',[
             }
         }
 
-        if ( bestMatchPattern != null && bestMatchResultObject ) {
+        if ( bestMatchPattern && bestMatchResultObject ) {
             
             this._current = { 
                 pattern: bestMatchPattern,
@@ -516,7 +516,8 @@ define('Formatter',[
     };
 
     p.isIntact = function( input ){
-        var pttn;
+        var pttn, hasPositive = false;
+
         // check against passive
         for( var l = this.patterns.length; l--; ) {
             pttn = this.patterns[l];
@@ -535,13 +536,14 @@ define('Formatter',[
             if ( !util.hasBit( pttn.type, PatternConstant.TYPE_POSITIVE ) ) {
                 continue;
             }
+            hasPositive = true;
             result = pttn.apply( input, true );
             if ( result.legitimate == true ) {
                 return true;
             }
         }
 
-        return false;
+        return !hasPositive ;
     }
 
     return Ctor;
@@ -981,7 +983,7 @@ define('Pattern',[
 
     var TYPE_POSITIVE = PatternConstant.TYPE_POSITIVE;
     var TYPE_NEGATIVE = PatternConstant.TYPE_NEGATIVE;
-    var TYPE_PARTIAL = PatternConstant.TYPE_PARTIAL;
+    var TYPE_REGEXP = PatternConstant.TYPE_REGEXP;
     var TYPE_PASSIVE = PatternConstant.TYPE_PASSIVE;
 
     var MODE_CONSTANT = PatternConstant.MODE_CONSTANT;
@@ -1054,7 +1056,7 @@ define('Pattern',[
                 }
                 else if ( curChar == '~' ) {
                     me.type |= TYPE_NEGATIVE;
-                    me.type |= TYPE_PARTIAL;
+                    me.type |= TYPE_REGEXP;
                 }
                 else if ( curChar == '_' ) {
                     me.type |= TYPE_NEGATIVE;
@@ -1854,7 +1856,7 @@ define('../lib/cogs/src/cogs/emittable',['./event'], function (event) {
 
     return emittable;
 });
-define('shim/../../lib/boe/src/boe/Function/../util',[],function(){
+define('shim/../../lib/boe/src/boe/util',[],function(){
     
     
     var global = (Function("return this"))();
@@ -1928,8 +1930,11 @@ define('shim/../../lib/boe/src/boe/Function/bind',['../util'], function (util) {
     return FUNCTION_PROTO.bind || util.bind;
 });
 define('shim/oninput',['../../lib/boe/src/boe/Function/bind'], function (bind) {
+    
+
     var INPUT = 'input';
     var CHANGE = 'change';
+    var PROPERTYNAME = 'propertyName';
 
     /* Feature Detection */
 
@@ -1941,21 +1946,21 @@ define('shim/oninput',['../../lib/boe/src/boe/Function/bind'], function (bind) {
         */
         function checkEvent(el) {
             // First check, for if Firefox fixes its issue with el.oninput = function
-            el.setAttribute("oninput", "return");
-            if (typeof el.oninput == "function"){
+            el.setAttribute('oninput', 'return');
+            if (typeof el.oninput == 'function'){
                 return true;
             }
 
             // Second check, because Firefox doesn't map oninput attribute to oninput property
             try {
-                var e  = document.createEvent("KeyboardEvent"),
+                var e  = document.createEvent('KeyboardEvent'),
                     ok = false,
                     tester = function(e) {
                         ok = true;
                         e.preventDefault();
                         e.stopPropagation();
                     }
-                e.initKeyEvent("keypress", true, true, window, false, false, false, false, 0, "e".charCodeAt(0));
+                e.initKeyEvent('keypress', true, true, window, false, false, false, false, 0, 'e'.charCodeAt(0));
                 document.body.appendChild(el);
                 el.addEventListener(INPUT, tester, false);
                 el.focus();
@@ -1967,13 +1972,18 @@ define('shim/oninput',['../../lib/boe/src/boe/Function/bind'], function (bind) {
         }
 
         var testee = document.createElement(INPUT);
-        return "oninput" in testee || checkEvent(testee);
+        return 'oninput' in testee || checkEvent(testee);
     }();
 
     /* Private */
 
     function onchange( evt ){
         var me = this;
+        if ( PROPERTYNAME in window.event ) {
+            if ( window.event[PROPERTYNAME] !== 'value') {
+                return;
+            }
+        }
         if ( me._el.value != me._old ) {
             me._old = me._el.value;
             me.oninput( evt );
@@ -2016,7 +2026,7 @@ define('shim/oninput',['../../lib/boe/src/boe/Function/bind'], function (bind) {
 
     p.observe = function(el){
         if ( el == null || el.tagName.toLowerCase() != INPUT ) {
-            throw "Target input element must be specified.";
+            throw 'Target input element must be specified.';
         }
 
         var me = this;
@@ -2038,11 +2048,11 @@ define('shim/oninput',['../../lib/boe/src/boe/Function/bind'], function (bind) {
             el.addEventListener(CHANGE, me._onchange, false);
         }
         else {
-            throw "Something wrong, should never goes to here.";
+            throw 'Something wrong, should never goes to here.';
         }
     };
 
-    p.dispose = function (){
+    p.neglect = function (){
         var me = this;
         var el = me._el;
         if ( el.attachEvent ) {
@@ -2055,6 +2065,12 @@ define('shim/oninput',['../../lib/boe/src/boe/Function/bind'], function (bind) {
             el.removeEventListener(CHANGE, me._onchange);
         }
 
+    };
+
+    p.dispose = function() {
+        var me = this;
+        me.neglect();
+        me._el = null;
     };
 
     return Observer;
@@ -2276,14 +2292,14 @@ define('Chuanr',[
 
     }
 
-    function onInput( focusMode ) {
+    function onInput( caretMode ) {
         
-        if ( focusMode == null ) {
-            focusMode = 1;
+        if ( caretMode == null ) {
+            caretMode = 1;
         }
 
         
-        render.call( this, focusMode );
+        tryRender.call( this, caretMode );
     }
 
     function updateInput( result ){
@@ -2308,6 +2324,17 @@ define('Chuanr',[
         else {
             this._el.value = '';
         }
+    }
+
+    function tryRender(){
+        var me = this;
+        var ret;
+
+        me.oninput.neglect();
+        ret = render.apply(me, arguments);
+        me.oninput.observe(me._el);
+
+        return ret;
     }
 
     /*
@@ -2374,11 +2401,13 @@ define('Chuanr',[
                 // match immediately means user inputs raw numbers
                 caret.type = 2;
             }
-            else if ( format == null ) {
-                // that probably means there is no pattern for formatting
-                // user did not define a formatting (positive) pattern
-                return;
-            }
+        }
+
+        if ( format == null ) {
+            // that probably means there is neither no pattern for formatting
+            // ( user did not define a formatting (positive) pattern )
+            // or no negative pattern matched
+            return;
         }
 
         if ( 
@@ -2401,7 +2430,8 @@ define('Chuanr',[
             format = me.formatter.undo()
 
             if ( format == null ) {
-                                break;
+                                updateInput.call( me, me._untouched || '' );
+                break;
             }
 
             
@@ -2410,8 +2440,10 @@ define('Chuanr',[
             caret.type = 2;
         }
 
+        // same reason as the same check before, but this time it must at least matched negative 
+        // pattern once
         if ( format == null ) {
-            throw 'Boom, "format" is null, this should never happen.';
+            return;
         }
 
         
@@ -2451,7 +2483,7 @@ define('Chuanr',[
             // Caveat: check caretUtil.get( me._el ).begin != caret.begin doesnot work here
             // ios always return the correct caret at this time, it will update the caret to 
             // an incorrect one later... mobile safari sucks
-            // TODO: user setImmediate shim to make it faster?
+            // TODO: use setImmediate shim to make it faster?
             setTimeout(function(){
                 if ( caretUtil.get( me._el) != caret.begin ) {
                     // oh shit, we failed
@@ -2510,6 +2542,7 @@ define('Chuanr',[
      * Bind Chuanr with specific input elment
      */
     p.roast = function (el, patterns) {
+        var current;
 
         if ( el == null || el.tagName.toUpperCase() != 'INPUT' ) {
             throw "Target input element must be specified.";
@@ -2518,7 +2551,12 @@ define('Chuanr',[
         this._el = el;
 
         for( var i = 0 ; i < patterns.length; i++ ) {
-            this.patterns.push( ioc.Pattern.parse( patterns[ i ], this.config ) );
+            current = patterns[i];
+            // filter out empty string
+            if ( current == null || current == false ) {
+                continue;    
+            }
+            this.patterns.push( ioc.Pattern.parse( current, this.config ) );
         }
 
         this.formatter = new ioc.Formatter(this.patterns);
@@ -2547,11 +2585,9 @@ define('Chuanr',[
      * Return true if user input at least fulfill one of the pattern
      */
     p.intact = function(){
-        if ( this._untouched == null || this._untouched == "" ) {
-            return false;
-        }
-
-        return this.formatter.isIntact( this._untouched.input );
+        // use this._el.value as backup because otherwise when there is no positive pattern present,
+        // untouch will always be null
+        return this.formatter.isIntact( this._untouched && this._untouched.input || this._el.value );
     };
 
     // expose ioc setting
