@@ -2,9 +2,10 @@ define([
     'require', 
     '$', 
     './controller/demo', 
-    './controller/playground'
+    './controller/playground',
+    './controller/link',
 ], 
-function (require, $, demoController, playgroundController) {
+function (require, $, demoController, playgroundController, linkController) {
     'use strict';
 
     return {
@@ -20,6 +21,10 @@ function (require, $, demoController, playgroundController) {
                         isDebug: isDebug,
                         Chuanr: Chuanr
                     });
+                    linkController.init({
+                        isDebug: isDebug,
+                        Chuanr: Chuanr
+                    })
                 });
             });
         }
