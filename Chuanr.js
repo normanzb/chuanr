@@ -1856,7 +1856,7 @@ define('../lib/cogs/src/cogs/emittable',['./event'], function (event) {
 
     return emittable;
 });
-define('shim/../../lib/boe/src/boe/util',[],function(){
+define('shim/../../lib/boe/src/boe/Function/../util',[],function(){
     
     
     var global = (Function("return this"))();
@@ -2470,7 +2470,7 @@ define('Chuanr',[
         // same reason as the same check before, but this time it must at least matched negative 
         // pattern once
         if ( format == null ) {
-            createFakeFormat.call(me, me._untouched.result || '');
+            createFakeFormat.call(me, me._untouched && me._untouched.result || '');
 
                         return;
         }
