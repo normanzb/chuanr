@@ -459,7 +459,7 @@ define([
         // same reason as the same check before, but this time it must at least matched negative 
         // pattern once
         if ( format == null ) {
-            createFakeFormat.call(me, me._untouched.result || '');
+            createFakeFormat.call(me, me._untouched && me._untouched.result || '');
 
             //>>excludeStart("release", pragmas.release);
             console.log('Exiting with previous format set to ', me._untouched);
