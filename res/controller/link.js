@@ -5,7 +5,6 @@ define(['$'], function ($) {
         $('html')
             .on('click', '#link-to-github', function(evt){
                 evt.preventDefault();
-                debugger;
                 var pathname = window.location.pathname;
                 var username = (/(.*)?\.github\..*?$/).exec(window.location.hostname);
                 if ( username == null || username.length <= 1 ) {
