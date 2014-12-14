@@ -19,7 +19,7 @@ define([
     '../lib/boe/src/boe/util', 
     '../lib/cogs/src/cogs/emittable',
     '../lib/cogs/src/cogs/event',
-    './shim/oninput'
+    '../lib/xinput/XInput'
     //>>excludeStart("release", pragmas.release);
     , './shim/console'
     //>>excludeEnd("release");

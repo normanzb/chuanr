@@ -2,8 +2,9 @@
   "name": "chuanr",
   "version": "0.3.0",
   "devDependencies": {
-    "boe": "~1.1.13",
+    "boe": "~1.2.0",
     "cogs": "~1.0.1",
-    "amdshim": "~0.0.3"
+    "amdshim": "~0.0.3",
+    "xinput": "~0.0.2"
   }
 }
