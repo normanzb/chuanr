@@ -187,10 +187,31 @@ define('util',[],function(){
 
     return util;
 });
-define('../lib/boe/src/boe/util',[],function(){
+define('../lib/boe/src/boe/global',[],function () {
+    return (Function("return this"))();
+});
+/*
+ * Function.bind
+ */
+define('../lib/boe/src/boe/Function/bind',['../global'], function (global) {
+    // simply alias it
+    var FUNCTION_PROTO = global.Function.prototype;
+    var ARRAY_PROTO = global.Array.prototype;
+
+    return FUNCTION_PROTO.bind || function(context) {
+        var slice = ARRAY_PROTO.slice;
+        var __method = this, args = slice.call(arguments);
+        args.shift();
+        return function wrapper() {
+            if (this instanceof wrapper){
+                context = this;
+            }
+            return __method.apply(context, args.concat(slice.call(arguments)));
+        };
+    };
+});
+define('../lib/boe/src/boe/util',['./global', './Function/bind'], function(global, bind){
     
-    
-    var global = (Function("return this"))();
 
     var OBJECT_PROTO = global.Object.prototype;
     var ARRAY_PROTO = global.Array.prototype;
@@ -204,7 +225,7 @@ define('../lib/boe/src/boe/util',[],function(){
                     continue;
                 }
 
-                target[key] = ret.bind.call(FUNCTION_PROTO.call, fn[key]);
+                target[key] = bind.call(FUNCTION_PROTO.call, fn[key]);
             }
 
             return target;
@@ -231,17 +252,6 @@ define('../lib/boe/src/boe/util',[],function(){
             }
 
             return target;
-        },
-        bind: function(context) {
-            var slice = ARRAY_PROTO.slice;
-            var __method = this, args = slice.call(arguments);
-            args.shift();
-            return function wrapper() {
-                if (this instanceof wrapper){
-                    context = this;
-                }
-                return __method.apply(context, args.concat(slice.call(arguments)));
-            };
         },
         slice: function(arr) {
             return ARRAY_PROTO.slice.call(arr);
@@ -803,11 +813,11 @@ define( 'PatternFunction/luhn',['./digit'], function ( digit ) {
     };
 });
     
-define('../lib/boe/src/boe/Object/clone',['../util'], function(util){
+define('../lib/boe/src/boe/Object/clone',['../util', '../global'], function(util, global){
 
     var FUNCTION = 'function';
     var OBJECT = 'object';
-    var FUNCTION_PROTO = util.g.Function.prototype;
+    var FUNCTION_PROTO = global.Function.prototype;
 
     var objectCache = [];
     var traverseMark = '__boeObjectClone_Traversed';
@@ -1604,22 +1614,13 @@ define('differ',[],function () {
     return differ;
 });
 /*
- * Function.bind
- */
-define('../lib/boe/src/boe/Function/bind',['../util'], function (util) {
-    // simply alias it
-    var FUNCTION_PROTO = util.g.Function.prototype;
-
-    return FUNCTION_PROTO.bind || util.bind;
-});
-/*
  * Trim specified chars at the start and the end of current string.
  * @member String.prototype
  * @return {String} trimed string
  * @es5
  */
-define('../lib/boe/src/boe/String/trim',['../util', './trimLeft', './trimRight'], function (util, trimLeft, trimRight) {
-    var STRING_PROTO = util.g.String.prototype;
+define('../lib/boe/src/boe/String/trim',['../global', './trimLeft', './trimRight'], function (global, trimLeft, trimRight) {
+    var STRING_PROTO = global.String.prototype;
     return STRING_PROTO.trim || function() {
         var ret = trimLeft.call( this );
         ret = trimRight.call( ret );
@@ -1927,89 +1928,49 @@ define('../lib/cogs/src/cogs/emittable',['./event'], function (event) {
 
     return emittable;
 });
-define('shim/../../lib/boe/src/boe/Function/../util',[],function(){
-    
-    
-    var global = (Function("return this"))();
+(function (root, factory) {
+  if (typeof define === 'function' && define.amd) {
+    // AMD. Register as an anonymous module.
+    define('../lib/xinput/XInput',[], function () {
+      return (root.returnExportsGlobal = factory());
+    });
+  } else if (typeof exports === 'object') {
+    // Node. Does not work with strict CommonJS, but
+    // only CommonJS-like enviroments that support module.exports,
+    // like Node.
+    module.exports = factory();
+  } else {
+    root['XInput'] = factory();
+  }
+}(this, function () {
 
-    var OBJECT_PROTO = global.Object.prototype;
-    var ARRAY_PROTO = global.Array.prototype;
-    var FUNCTION_PROTO = global.Function.prototype;
-    var FUNCTION = 'function';
-
-    var ret = {
-        mixinAsStatic: function(target, fn){
-            for(var key in fn){
-                if (!fn.hasOwnProperty(key)){
-                    continue;
-                }
-
-                target[key] = ret.bind.call(FUNCTION_PROTO.call, fn[key]);
-            }
-
-            return target;
-        },
-        type: function(obj){
-            var typ = OBJECT_PROTO.toString.call(obj);
-            var closingIndex = typ.indexOf(']');
-            return typ.substring(8, closingIndex);
-        },
-        mixin: function(target, source, map){
-
-            // in case only source specified
-            if (source == null){
-                source = target;
-                target= {};
-            }
-
-            for(var key in source){
-                if (!source.hasOwnProperty(key)){
-                    continue;
-                }
-
-                target[key] = ( typeof map == FUNCTION ? map( key, source[key] ) : source[key] );
-            }
-
-            return target;
-        },
-        bind: function(context) {
-            var slice = ARRAY_PROTO.slice;
-            var __method = this, args = slice.call(arguments);
-            args.shift();
-            return function wrapper() {
-                if (this instanceof wrapper){
-                    context = this;
-                }
-                return __method.apply(context, args.concat(slice.call(arguments)));
-            };
-        },
-        slice: function(arr) {
-            return ARRAY_PROTO.slice.call(arr);
-        },
-        g: global
-    };
-
-    return ret;
-});
+var libBoeSrcBoeGlobal = Function('return this')();
 /*
  * Function.bind
  */
-define('shim/../../lib/boe/src/boe/Function/bind',['../util'], function (util) {
+var libBoeSrcBoeFunctionBind = function (global) {
     // simply alias it
-    var FUNCTION_PROTO = util.g.Function.prototype;
-
-    return FUNCTION_PROTO.bind || util.bind;
-});
-define('shim/oninput',['../../lib/boe/src/boe/Function/bind'], function (bind) {
+    var FUNCTION_PROTO = global.Function.prototype;
+    var ARRAY_PROTO = global.Array.prototype;
+    return FUNCTION_PROTO.bind || function (context) {
+        var slice = ARRAY_PROTO.slice;
+        var __method = this, args = slice.call(arguments);
+        args.shift();
+        return function wrapper() {
+            if (this instanceof wrapper) {
+                context = this;
+            }
+            return __method.apply(context, args.concat(slice.call(arguments)));
+        };
+    };
+}(libBoeSrcBoeGlobal);
+var XInput = function (bind) {
     
-
     var INPUT = 'input';
     var CHANGE = 'change';
     var PROPERTYNAME = 'propertyName';
-
     /* Feature Detection */
-
-    var hasOnInput = function(){
+    var hasOnInput = function () {
         /*
             The following function tests an element for oninput support in Firefox.
             Many thanks to:
@@ -2018,19 +1979,16 @@ define('shim/oninput',['../../lib/boe/src/boe/Function/bind'], function (bind) {
         function checkEvent(el) {
             // First check, for if Firefox fixes its issue with el.oninput = function
             el.setAttribute('oninput', 'return');
-            if (typeof el.oninput == 'function'){
+            if (typeof el.oninput == 'function') {
                 return true;
             }
-
             // Second check, because Firefox doesn't map oninput attribute to oninput property
             try {
-                var e  = document.createEvent('KeyboardEvent'),
-                    ok = false,
-                    tester = function(e) {
+                var e = document.createEvent('KeyboardEvent'), ok = false, tester = function (e) {
                         ok = true;
                         e.preventDefault();
                         e.stopPropagation();
-                    }
+                    };
                 e.initKeyEvent('keypress', true, true, window, false, false, false, false, 0, 'e'.charCodeAt(0));
                 document.body.appendChild(el);
                 el.addEventListener(INPUT, tester, false);
@@ -2039,80 +1997,62 @@ define('shim/oninput',['../../lib/boe/src/boe/Function/bind'], function (bind) {
                 el.removeEventListener(INPUT, tester, false);
                 document.body.removeChild(el);
                 return ok;
-            } catch(e) {}
+            } catch (ex) {
+            }
         }
-
         var testee = document.createElement(INPUT);
         return 'oninput' in testee || checkEvent(testee);
     }();
-
     /* Private */
-
-    function onchange( evt ){
+    function onchange(evt) {
         var me = this;
-        
-        if ( 
-            PROPERTYNAME in window.event && 
-            window.event[PROPERTYNAME] != null && 
-            window.event[PROPERTYNAME] !== ''
-        ) {
-            if ( window.event[PROPERTYNAME] !== 'value') {
+        if (PROPERTYNAME in window.event && window.event[PROPERTYNAME] != null && window.event[PROPERTYNAME] !== '') {
+            if (window.event[PROPERTYNAME] !== 'value') {
                 return;
             }
         }
-        
-        if ( me._el.value != me._old ) {
+        if (me._el.value != me._old) {
             me._old = me._el.value;
-            me.oninput( evt );
+            me.oninput(evt);
         }
     }
-
-    function onfocus () {
+    function onfocus() {
         document.attachEvent('onselectionchange', this._onchange);
     }
-
     function onblur() {
         document.detachEvent('onselectionchange', this._onchange);
     }
-
-    function oninput(){
+    function oninput() {
         this.oninput();
     }
-
     /* Public */
-    
-    function Observer(){
+    function Observer() {
         this._old = '';
         this._el = null;
         this._onchange = bind.call(onchange, this);
         this._onfocus = bind.call(onfocus, this);
         this._onblur = bind.call(onblur, this);
         this._oninput = bind.call(oninput, this);
-        this.oninput = function(){};
+        this.oninput = function () {
+        };
     }
-
     var p = Observer.prototype;
-
     p.trigger = function () {
         return this._onchange();
     };
-
     p.sync = function () {
         this._old = this._el.value;
     };
-
-    p.observe = function(el){
-        if ( el == null || el.tagName.toLowerCase() != INPUT ) {
+    p.observe = function (el) {
+        if (el == null || el.tagName.toLowerCase() != INPUT) {
             throw 'Target input element must be specified.';
         }
-
         var me = this;
         me._el = el;
-
         // higher priority to use prooperty change
         // because IE9 oninput is not implemented correctly
         // when you do backspace it doesn't fire oninput
-        if ( el.attachEvent ) {
+        if (el.attachEvent) {
             me._old = el.value;
             el.attachEvent('onpropertychange', me._onchange);
             el.attachEvent('onfocus', me._onfocus);
@@ -2120,45 +2060,41 @@ define('shim/oninput',['../../lib/boe/src/boe/Function/bind'], function (bind) {
             // binding onkeypress to avoid https://gist.github.com/normanzb/137a8b9d0cf317a1be58
             el.attachEvent('onkeypress', me._onchange);
             el.attachEvent('onkeyup', me._onchange);
-        }
-        else if ( hasOnInput ) {
+        } else if (hasOnInput) {
             el.addEventListener(INPUT, me._onchange, false);
             // monitor onchange event as well just in case chrome browser bugs:
             // https://code.google.com/p/chromium/issues/detail?id=353691
             el.addEventListener(CHANGE, me._onchange, false);
-        }
-        else {
+        } else {
             throw 'Something wrong, should never goes to here.';
         }
     };
-
-    p.neglect = function (){
+    p.neglect = function () {
         var me = this;
         var el = me._el;
-
-        if ( el.attachEvent ) {
+        if (el.attachEvent) {
             el.detachEvent('onpropertychange', me._onchange);
             el.detachEvent('onfocus', me._onfocus);
             el.detachEvent('onblur', me._onblur);
             el.detachEvent('onkeypress', me._onchange);
             el.detachEvent('onkeyup', me._onchange);
-        }
-        else {
+        } else {
             el.removeEventListener(INPUT, me._onchange);
             el.removeEventListener(CHANGE, me._onchange);
         }
-
     };
-
-    p.dispose = function() {
+    p.dispose = function () {
         var me = this;
         me.neglect();
         me._el = null;
     };
-
     return Observer;
+}(libBoeSrcBoeFunctionBind);
 
-});
+return XInput;
+
+}));
+
 
 
 define('Chuanr',[
@@ -2175,7 +2111,7 @@ define('Chuanr',[
     '../lib/boe/src/boe/util', 
     '../lib/cogs/src/cogs/emittable',
     '../lib/cogs/src/cogs/event',
-    './shim/oninput'
+    '../lib/xinput/XInput'
         ], 
     function ( 
         Formatter, 
