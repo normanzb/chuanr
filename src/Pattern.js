@@ -112,39 +112,35 @@ define([
             else if ( i <= 1 && curChar == PLACE_HOLDER_TYPE_SEPARATOR ) {
                 // skip it
             }
-            else if ( mode == MODE_CONSTANT && 
-                curChar == PLACE_HOLDER_FUNCTION_START ) {
-
+            else if ( 
+                mode == MODE_CONSTANT && 
+                curChar == PLACE_HOLDER_FUNCTION_START 
+            ) {
                 stack.push( { 'char': curChar, mode: mode } );
-
                 mode = MODE_FUNCTION;
-
             }
-            else if ( mode == MODE_FUNCTION && 
+            else if ( 
+                mode == MODE_FUNCTION && 
                 curChar == PLACE_HOLDER_FUNCTION_END && 
-                stack[ stack.length - 1 ]['char'] == PLACE_HOLDER_FUNCTION_START ) {
-                
+                stack[ stack.length - 1 ]['char'] == PLACE_HOLDER_FUNCTION_START 
+            ) {                
                 tmp = stack.pop();
-
                 mode = tmp.mode;
-
             }
-            else if ( mode == MODE_FUNCTION && 
-                curChar == PLACE_HOLDER_CALL_START ) {
-
+            else if ( 
+                mode == MODE_FUNCTION && 
+                curChar == PLACE_HOLDER_CALL_START 
+            ) {
                 stack.push( { 'char': curChar, mode: mode } )
-
                 mode = MODE_PARAMETER;
-
             }
-            else if ( mode == MODE_PARAMETER && 
+            else if ( 
+                mode == MODE_PARAMETER && 
                 curChar == PLACE_HOLDER_CALL_END && 
-                stack[ stack.length - 1 ]['char'] == PLACE_HOLDER_CALL_START ) {
-
+                stack[ stack.length - 1 ]['char'] == PLACE_HOLDER_CALL_START 
+            ) {
                 tmp = stack.pop();
-
                 mode = tmp.mode;
-
             }
             else {
 
