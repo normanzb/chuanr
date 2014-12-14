@@ -20,12 +20,13 @@ define([
 ], function ( util,
     pfDigit, pfAlphabet, pfDuplicate, pfNever, pfEverything, pfLuhn,
     boeClone, boeUtil, PatternIndexQuery, PatternConstant ) {
-
-    var PLACE_HOLDER_FUNCTION_START = "{";
-    var PLACE_HOLDER_FUNCTION_END = "}";
-    var PLACE_HOLDER_CALL_START = "(";
-    var PLACE_HOLDER_CALL_END = ")";
-    var PLACE_HOLDER_TYPE_SEPARATOR = "|";
+    'use strict';
+    var TEXT_CHAR = 'char';
+    var PLACE_HOLDER_FUNCTION_START = '{';
+    var PLACE_HOLDER_FUNCTION_END = '}';
+    var PLACE_HOLDER_CALL_START = '(';
+    var PLACE_HOLDER_CALL_END = ')';
+    var PLACE_HOLDER_TYPE_SEPARATOR = '|';
 
     var TYPE_POSITIVE = PatternConstant.TYPE_POSITIVE;
     var TYPE_NEGATIVE = PatternConstant.TYPE_NEGATIVE;
@@ -90,19 +91,21 @@ define([
         var mode = MODE_CONSTANT;
         var tmp;
         var stack = [];
+        var isRegex = false;
 
         for( var i = 0 ; i < str.length ; i++ ) {
 
             curChar = str.charAt( i );
 
             // Check for special chars
-            if ( i == 0 && str.charAt( i + 1 ) == PLACE_HOLDER_TYPE_SEPARATOR ) {
+            if ( i === 0 && str.charAt( i + 1 ) == PLACE_HOLDER_TYPE_SEPARATOR ) {
                 if ( curChar == '-' ) {
                     me.type |= TYPE_NEGATIVE;
                 }
                 else if ( curChar == '~' ) {
                     me.type |= TYPE_NEGATIVE;
                     me.type |= TYPE_REGEXP;
+                    isRegex = true;
                 }
                 else if ( curChar == '_' ) {
                     me.type |= TYPE_NEGATIVE;
@@ -116,13 +119,13 @@ define([
                 mode == MODE_CONSTANT && 
                 curChar == PLACE_HOLDER_FUNCTION_START 
             ) {
-                stack.push( { 'char': curChar, mode: mode } );
+                stack.push( { 'char': curChar, 'mode': mode } );
                 mode = MODE_FUNCTION;
             }
             else if ( 
                 mode == MODE_FUNCTION && 
                 curChar == PLACE_HOLDER_FUNCTION_END && 
-                stack[ stack.length - 1 ]['char'] == PLACE_HOLDER_FUNCTION_START 
+                stack[ stack.length - 1 ][TEXT_CHAR] == PLACE_HOLDER_FUNCTION_START 
             ) {                
                 tmp = stack.pop();
                 mode = tmp.mode;
@@ -131,13 +134,13 @@ define([
                 mode == MODE_FUNCTION && 
                 curChar == PLACE_HOLDER_CALL_START 
             ) {
-                stack.push( { 'char': curChar, mode: mode } )
+                stack.push( { 'char': curChar, 'mode': mode } );
                 mode = MODE_PARAMETER;
             }
             else if ( 
                 mode == MODE_PARAMETER && 
                 curChar == PLACE_HOLDER_CALL_END && 
-                stack[ stack.length - 1 ]['char'] == PLACE_HOLDER_CALL_START 
+                stack[ stack.length - 1 ][TEXT_CHAR] == PLACE_HOLDER_CALL_START 
             ) {
                 tmp = stack.pop();
                 mode = tmp.mode;
@@ -168,7 +171,7 @@ define([
                     var prev = me.items[ me.items.length - 1 ];
 
                     if ( prev.type != MODE_FUNCTION ) {
-                        throw new Error( getSyntaxError("Expect a function pattern", i - 1) );
+                        throw new Error( getSyntaxError('Expect a function pattern', i - 1) );
                     }
 
                     prev.param += curChar;
@@ -180,10 +183,10 @@ define([
         }
 
         if ( stack.length > 0 ) {
-            throw new Error( getSyntaxError("Expect a '" + getOpposite( stack[ stack.length - 1 ]['char'] ) + "'", i - 1) );
+            throw new Error( getSyntaxError('Expect a \'' + getOpposite( stack[ stack.length - 1 ][TEXT_CHAR] ) + '\'', i - 1) );
         }
 
-    };
+    }
 
     function getShorthandDigit(deadDigit){
         return function(input) {
@@ -353,7 +356,7 @@ define([
                     input: ret + curChar
                 };
 
-                if ( func.call( null, curChar, item.param, context ) == false ) {
+                if ( func.call( null, curChar, item.param, context ) === false ) {
                     throw EX_NOT_FORMATTED;
                 }
 
@@ -407,12 +410,12 @@ define([
         'x': pfDuplicate,
         'n': pfNever,
         '?': function(curChar, param, context){
-            return pfDuplicate.call(this, curChar, '?', context)
+            return pfDuplicate.call(this, curChar, '?', context);
         },
         '*': pfEverything,
         'l': pfLuhn,
         'L': function(curChar, param, context){
-            return !pfLuhn.call(this, curChar, param, context)
+            return !pfLuhn.call(this, curChar, param, context);
         }
     };
 
