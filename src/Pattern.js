@@ -27,6 +27,7 @@ define([
     var PLACE_HOLDER_CALL_START = '(';
     var PLACE_HOLDER_CALL_END = ')';
     var PLACE_HOLDER_TYPE_SEPARATOR = '|';
+    var PLACE_HOLDER_REGEXP_SEPARATOR = '/';
 
     var TYPE_POSITIVE = PatternConstant.TYPE_POSITIVE;
     var TYPE_NEGATIVE = PatternConstant.TYPE_NEGATIVE;
@@ -91,7 +92,6 @@ define([
         var mode = MODE_CONSTANT;
         var tmp;
         var stack = [];
-        var isRegex = false;
 
         for( var i = 0 ; i < str.length ; i++ ) {
 
@@ -105,7 +105,7 @@ define([
                 else if ( curChar == '~' ) {
                     me.type |= TYPE_NEGATIVE;
                     me.type |= TYPE_REGEXP;
-                    isRegex = true;
+                    return parseRegexPattern.call( me, str.substr(2, str.length - 2) );
                 }
                 else if ( curChar == '_' ) {
                     me.type |= TYPE_NEGATIVE;
@@ -188,6 +188,42 @@ define([
 
     }
 
+    function parseRegexPattern( input ) {
+        var isRegexSwitches = false;
+        var strRegex = '';
+        var strRegexSwitches = '';
+        var curChar;
+
+        for( var i = 0 ; i < input.length ; i++ ) {
+            curChar = input.charAt( i );
+
+            if ( isRegexSwitches ) {
+                strRegexSwitches += curChar;
+            }
+            else {
+                if ( 
+                    curChar === PLACE_HOLDER_REGEXP_SEPARATOR
+                ) {
+                    isRegexSwitches = true;
+                }
+                else if ( curChar === '\\' ) {
+                    if ( input.charAt( i + 1 ) === PLACE_HOLDER_REGEXP_SEPARATOR ) {
+                        strRegex += PLACE_HOLDER_REGEXP_SEPARATOR;
+                    }
+                    else {
+                        strRegex += curChar + input.charAt( i + 1 );
+                    }
+                    i++;
+                }
+                else {
+                    strRegex += curChar;
+                }
+            }
+        }
+
+        this.regExp = new RegExp(strRegex, strRegexSwitches);
+    }
+
     function getShorthandDigit(deadDigit){
         return function(input) {
             return pfDigit(input, deadDigit+"");       
@@ -205,6 +241,7 @@ define([
         this.pattern = pattern;
         this.type = TYPE_POSITIVE;
         this._query = null;
+        this.regExp = null;
         parse.call(this, pattern);
 
     }
