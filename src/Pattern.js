@@ -16,10 +16,11 @@ define([
     '../lib/boe/src/boe/Object/clone', 
     '../lib/boe/src/boe/util', 
     './PatternIndexQuery', 
-    './PatternConstant'
+    './PatternConstant',
+    './PatternApplicationResult'
 ], function ( util,
     pfDigit, pfAlphabet, pfDuplicate, pfNever, pfEverything, pfLuhn,
-    boeClone, boeUtil, PatternIndexQuery, PatternConstant ) {
+    boeClone, boeUtil, PatternIndexQuery, PatternConstant, PatternApplicationResult ) {
     'use strict';
     var TEXT_CHAR = 'char';
     var PLACE_HOLDER_FUNCTION_START = '{';
@@ -259,6 +260,21 @@ define([
             matchedCount = 0;
 
         input = string.toString();
+
+        if ( util.hasBit( this.type , TYPE_NEGATIVE ) ) {
+            // compulsory set it if current pattern is negative one
+            isFullyMatch = true;
+
+            // handle regexp negative pattern
+            if ( util.hasBit( this.type , TYPE_REGEXP ) ) {
+                matched = this.regExp.test(string);
+                return new PatternApplicationResult({
+                    matched: matched,
+                    legitimate: !matched
+                });
+            }
+        }
+
         items = boeClone.call( this.items, true );
 
         // extract matches
@@ -268,11 +284,6 @@ define([
             if ( item.type == MODE_FUNCTION ) {
                 matches.push( item );
             }
-        }
-
-        if ( util.hasBit( this.type , TYPE_NEGATIVE ) ) {
-            // compulsory set it if current pattern is negative one
-            isFullyMatch = true;
         }
 
         if ( isFullyMatch ) {
@@ -338,20 +349,20 @@ define([
             }
         }
 
-        return { 
+        return new PatternApplicationResult({ 
             // the actual string after applied the pattern
             result: result, 
-            // indicate if application is successful
+            // indicate if matched
             matched: matched, 
+            // indicate if application is successful
             legitimate: util.hasBit( this.type, TYPE_POSITIVE ) ? matched : !matched ,
             counts: { 
                 // the number of total match, successful application means a full match
                 total: len, 
                 // the actual number of matched.
                 matched: matchedCount 
-            },
-            toString: resultToString
-        };
+            }
+        });
         
     };
 

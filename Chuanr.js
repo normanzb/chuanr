@@ -959,6 +959,30 @@ define('PatternIndexQuery',['./PatternConstant'], function ( PatternConstant ) {
 });
 /* Pattern */
 
+define('PatternApplicationResult',[],function(){
+    
+
+    function Ctor(options) {
+        // the actual string after applied the pattern
+        this.result = options.result || '';
+        this.matched = options.matched || false;
+        this.legitimate = ( typeof options.legitimate === 'boolean' ? 
+                options.legitimate : options.matched
+            ) || false;
+        this.counts = {
+            total: options.counts && options.counts.total || 0,
+            matched: options.counts && options.counts.matched || 0
+        };
+    }
+
+    Ctor.prototype.toString = function resultToString() {
+        return this.result;
+    };
+
+    return Ctor;
+});
+/* Pattern */
+
 define('Pattern',[
     './util',
     './PatternFunction/digit', 
@@ -970,16 +994,19 @@ define('Pattern',[
     '../lib/boe/src/boe/Object/clone', 
     '../lib/boe/src/boe/util', 
     './PatternIndexQuery', 
-    './PatternConstant'
+    './PatternConstant',
+    './PatternApplicationResult'
 ], function ( util,
     pfDigit, pfAlphabet, pfDuplicate, pfNever, pfEverything, pfLuhn,
-    boeClone, boeUtil, PatternIndexQuery, PatternConstant ) {
-
-    var PLACE_HOLDER_FUNCTION_START = "{";
-    var PLACE_HOLDER_FUNCTION_END = "}";
-    var PLACE_HOLDER_CALL_START = "(";
-    var PLACE_HOLDER_CALL_END = ")";
-    var PLACE_HOLDER_TYPE_SEPARATOR = "|";
+    boeClone, boeUtil, PatternIndexQuery, PatternConstant, PatternApplicationResult ) {
+    
+    var TEXT_CHAR = 'char';
+    var PLACE_HOLDER_FUNCTION_START = '{';
+    var PLACE_HOLDER_FUNCTION_END = '}';
+    var PLACE_HOLDER_CALL_START = '(';
+    var PLACE_HOLDER_CALL_END = ')';
+    var PLACE_HOLDER_TYPE_SEPARATOR = '|';
+    var PLACE_HOLDER_REGEXP_SEPARATOR = '/';
 
     var TYPE_POSITIVE = PatternConstant.TYPE_POSITIVE;
     var TYPE_NEGATIVE = PatternConstant.TYPE_NEGATIVE;
@@ -1050,13 +1077,14 @@ define('Pattern',[
             curChar = str.charAt( i );
 
             // Check for special chars
-            if ( i == 0 && str.charAt( i + 1 ) == PLACE_HOLDER_TYPE_SEPARATOR ) {
+            if ( i === 0 && str.charAt( i + 1 ) == PLACE_HOLDER_TYPE_SEPARATOR ) {
                 if ( curChar == '-' ) {
                     me.type |= TYPE_NEGATIVE;
                 }
                 else if ( curChar == '~' ) {
                     me.type |= TYPE_NEGATIVE;
                     me.type |= TYPE_REGEXP;
+                    return parseRegexPattern.call( me, str.substr(2, str.length - 2) );
                 }
                 else if ( curChar == '_' ) {
                     me.type |= TYPE_NEGATIVE;
@@ -1066,39 +1094,35 @@ define('Pattern',[
             else if ( i <= 1 && curChar == PLACE_HOLDER_TYPE_SEPARATOR ) {
                 // skip it
             }
-            else if ( mode == MODE_CONSTANT && 
-                curChar == PLACE_HOLDER_FUNCTION_START ) {
-
-                stack.push( { 'char': curChar, mode: mode } );
-
+            else if ( 
+                mode == MODE_CONSTANT && 
+                curChar == PLACE_HOLDER_FUNCTION_START 
+            ) {
+                stack.push( { 'char': curChar, 'mode': mode } );
                 mode = MODE_FUNCTION;
-
             }
-            else if ( mode == MODE_FUNCTION && 
+            else if ( 
+                mode == MODE_FUNCTION && 
                 curChar == PLACE_HOLDER_FUNCTION_END && 
-                stack[ stack.length - 1 ]['char'] == PLACE_HOLDER_FUNCTION_START ) {
-                
+                stack[ stack.length - 1 ][TEXT_CHAR] == PLACE_HOLDER_FUNCTION_START 
+            ) {                
                 tmp = stack.pop();
-
                 mode = tmp.mode;
-
             }
-            else if ( mode == MODE_FUNCTION && 
-                curChar == PLACE_HOLDER_CALL_START ) {
-
-                stack.push( { 'char': curChar, mode: mode } )
-
+            else if ( 
+                mode == MODE_FUNCTION && 
+                curChar == PLACE_HOLDER_CALL_START 
+            ) {
+                stack.push( { 'char': curChar, 'mode': mode } );
                 mode = MODE_PARAMETER;
-
             }
-            else if ( mode == MODE_PARAMETER && 
+            else if ( 
+                mode == MODE_PARAMETER && 
                 curChar == PLACE_HOLDER_CALL_END && 
-                stack[ stack.length - 1 ]['char'] == PLACE_HOLDER_CALL_START ) {
-
+                stack[ stack.length - 1 ][TEXT_CHAR] == PLACE_HOLDER_CALL_START 
+            ) {
                 tmp = stack.pop();
-
                 mode = tmp.mode;
-
             }
             else {
 
@@ -1126,7 +1150,7 @@ define('Pattern',[
                     var prev = me.items[ me.items.length - 1 ];
 
                     if ( prev.type != MODE_FUNCTION ) {
-                        throw new Error( getSyntaxError("Expect a function pattern", i - 1) );
+                        throw new Error( getSyntaxError('Expect a function pattern', i - 1) );
                     }
 
                     prev.param += curChar;
@@ -1138,10 +1162,46 @@ define('Pattern',[
         }
 
         if ( stack.length > 0 ) {
-            throw new Error( getSyntaxError("Expect a '" + getOpposite( stack[ stack.length - 1 ]['char'] ) + "'", i - 1) );
+            throw new Error( getSyntaxError('Expect a \'' + getOpposite( stack[ stack.length - 1 ][TEXT_CHAR] ) + '\'', i - 1) );
         }
 
-    };
+    }
+
+    function parseRegexPattern( input ) {
+        var isRegexSwitches = false;
+        var strRegex = '';
+        var strRegexSwitches = '';
+        var curChar;
+
+        for( var i = 0 ; i < input.length ; i++ ) {
+            curChar = input.charAt( i );
+
+            if ( isRegexSwitches ) {
+                strRegexSwitches += curChar;
+            }
+            else {
+                if ( 
+                    curChar === PLACE_HOLDER_REGEXP_SEPARATOR
+                ) {
+                    isRegexSwitches = true;
+                }
+                else if ( curChar === '\\' ) {
+                    if ( input.charAt( i + 1 ) === PLACE_HOLDER_REGEXP_SEPARATOR ) {
+                        strRegex += PLACE_HOLDER_REGEXP_SEPARATOR;
+                    }
+                    else {
+                        strRegex += curChar + input.charAt( i + 1 );
+                    }
+                    i++;
+                }
+                else {
+                    strRegex += curChar;
+                }
+            }
+        }
+
+        this.regExp = new RegExp(strRegex, strRegexSwitches);
+    }
 
     function getShorthandDigit(deadDigit){
         return function(input) {
@@ -1160,6 +1220,7 @@ define('Pattern',[
         this.pattern = pattern;
         this.type = TYPE_POSITIVE;
         this._query = null;
+        this.regExp = null;
         parse.call(this, pattern);
 
     }
@@ -1177,6 +1238,21 @@ define('Pattern',[
             matchedCount = 0;
 
         input = string.toString();
+
+        if ( util.hasBit( this.type , TYPE_NEGATIVE ) ) {
+            // compulsory set it if current pattern is negative one
+            isFullyMatch = true;
+
+            // handle regexp negative pattern
+            if ( util.hasBit( this.type , TYPE_REGEXP ) ) {
+                matched = this.regExp.test(string);
+                return new PatternApplicationResult({
+                    matched: matched,
+                    legitimate: !matched
+                });
+            }
+        }
+
         items = boeClone.call( this.items, true );
 
         // extract matches
@@ -1186,11 +1262,6 @@ define('Pattern',[
             if ( item.type == MODE_FUNCTION ) {
                 matches.push( item );
             }
-        }
-
-        if ( util.hasBit( this.type , TYPE_NEGATIVE ) ) {
-            // compulsory set it if current pattern is negative one
-            isFullyMatch = true;
         }
 
         if ( isFullyMatch ) {
@@ -1256,20 +1327,20 @@ define('Pattern',[
             }
         }
 
-        return { 
+        return new PatternApplicationResult({ 
             // the actual string after applied the pattern
             result: result, 
-            // indicate if application is successful
+            // indicate if matched
             matched: matched, 
+            // indicate if application is successful
             legitimate: util.hasBit( this.type, TYPE_POSITIVE ) ? matched : !matched ,
             counts: { 
                 // the number of total match, successful application means a full match
                 total: len, 
                 // the actual number of matched.
                 matched: matchedCount 
-            },
-            toString: resultToString
-        };
+            }
+        });
         
     };
 
@@ -1311,7 +1382,7 @@ define('Pattern',[
                     input: ret + curChar
                 };
 
-                if ( func.call( null, curChar, item.param, context ) == false ) {
+                if ( func.call( null, curChar, item.param, context ) === false ) {
                     throw EX_NOT_FORMATTED;
                 }
 
@@ -1365,12 +1436,12 @@ define('Pattern',[
         'x': pfDuplicate,
         'n': pfNever,
         '?': function(curChar, param, context){
-            return pfDuplicate.call(this, curChar, '?', context)
+            return pfDuplicate.call(this, curChar, '?', context);
         },
         '*': pfEverything,
         'l': pfLuhn,
         'L': function(curChar, param, context){
-            return !pfLuhn.call(this, curChar, param, context)
+            return !pfLuhn.call(this, curChar, param, context);
         }
     };
 
@@ -2094,6 +2165,7 @@ define('Chuanr',[
     './Formatter', 
     './Pattern', 
     './PatternConstant', 
+    './PatternApplicationResult',
     './util', 
     './caret', 
     './differ', 
@@ -2109,6 +2181,7 @@ define('Chuanr',[
         Formatter, 
         Pattern, 
         PatternConstant,
+        PatternApplicationResult,
         util, caretUtil, differUtil,
         bind, trim, clone, boeUtil, 
         emittable, event, 
@@ -2221,7 +2294,7 @@ define('Chuanr',[
         end = extraction.pattern
             .index()
                 .of('function')
-                .by({ pattern: { index: differ.deletion.caret.end }})
+                .by({ pattern: { index: differ.deletion.caret.end }});
 
         if ( isSpaceDeletion || isConstantDeletion ) {
             // quite possibly user deleted constant
@@ -2354,12 +2427,9 @@ define('Chuanr',[
 
     function createFakeFormat(input){
         var me = this;
-        me._untouched = {
-            result: input,
-            toString: function() {
-                return this.result;
-            }
-        };
+        me._untouched = new PatternApplicationResult({
+            result: input
+        });
     }
 
     /*
@@ -2428,15 +2498,6 @@ define('Chuanr',[
             }
         }
 
-        if ( format == null ) {
-            // that probably means there is neither no pattern for formatting
-            // ( user did not define a formatting (positive) pattern )
-            // or no negative pattern matched
-            createFakeFormat.call(me, input);
-
-                        return;
-        }
-
         if ( 
             format && format.result.legitimate == false &&
             me.config.speculation.batchinput == true 
@@ -2445,6 +2506,15 @@ define('Chuanr',[
             // also caret will be adjusted here
             input = speculateBatchInput.call( me, input, format, caret );
             format = me.formatter.reset( input );
+        }
+
+        if ( format == null ) {
+            // that probably means there is neither no pattern for formatting
+            // ( user did not define a formatting (positive) pattern )
+            // or no negative pattern matched
+            createFakeFormat.call(me, input);
+
+                        return;
         }
 
         // revert if match failed

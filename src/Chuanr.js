@@ -9,6 +9,7 @@ define([
     './Formatter', 
     './Pattern', 
     './PatternConstant', 
+    './PatternApplicationResult',
     './util', 
     './caret', 
     './differ', 
@@ -20,13 +21,14 @@ define([
     '../lib/cogs/src/cogs/event',
     './shim/oninput'
     //>>excludeStart("release", pragmas.release);
-    ,'./shim/console'
+    , './shim/console'
     //>>excludeEnd("release");
     ], 
     function ( 
         Formatter, 
         Pattern, 
         PatternConstant,
+        PatternApplicationResult,
         util, caretUtil, differUtil,
         bind, trim, clone, boeUtil, 
         emittable, event, 
@@ -163,7 +165,7 @@ define([
         end = extraction.pattern
             .index()
                 .of('function')
-                .by({ pattern: { index: differ.deletion.caret.end }})
+                .by({ pattern: { index: differ.deletion.caret.end }});
 
         if ( isSpaceDeletion || isConstantDeletion ) {
             // quite possibly user deleted constant
@@ -331,12 +333,9 @@ define([
 
     function createFakeFormat(input){
         var me = this;
-        me._untouched = {
-            result: input,
-            toString: function() {
-                return this.result;
-            }
-        };
+        me._untouched = new PatternApplicationResult({
+            result: input
+        });
     }
 
     /*
@@ -405,6 +404,16 @@ define([
             }
         }
 
+        if ( 
+            format && format.result.legitimate == false &&
+            me.config.speculation.batchinput == true 
+        ) {
+            // get a matched format by trying different type of input
+            // also caret will be adjusted here
+            input = speculateBatchInput.call( me, input, format, caret );
+            format = me.formatter.reset( input );
+        }
+
         if ( format == null ) {
             // that probably means there is neither no pattern for formatting
             // ( user did not define a formatting (positive) pattern )
@@ -415,16 +424,6 @@ define([
             console.log('Exiting with previous format set to ', me._untouched);
             //>>excludeEnd("release");
             return;
-        }
-
-        if ( 
-            format && format.result.legitimate == false &&
-            me.config.speculation.batchinput == true 
-        ) {
-            // get a matched format by trying different type of input
-            // also caret will be adjusted here
-            input = speculateBatchInput.call( me, input, format, caret );
-            format = me.formatter.reset( input );
         }
 
         // revert if match failed

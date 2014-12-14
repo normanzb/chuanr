@@ -33,6 +33,14 @@ describe('Pattern.negative.regexp', function(){
         assert.equal( pattern.regExp.ignoreCase, true );
         assert.equal( pattern.regExp.global, true );
     });
+
+    it('should do a proper RegExp test when apply() gets called', function(){
+        var tester = '~|te\\/st/gi';
+        var pattern = Pattern.parse( tester );
+        var result = pattern.apply('sdfD8zte/sTsdfsdiuyhb8937');
+        assert.equal( result.matched, true );
+        assert.equal( result.legitimate, false );
+    });
 });
     
 }(requirejs, require);

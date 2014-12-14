@@ -7,14 +7,16 @@ This component formats the `<input />` according the declared patterns
 
 There are tons of input formatter out there but the reasons to recreate the wheel are:
 
-* None of existing masking lib supports "multiple patterns"
-* They either failed to work on certain platform (e.g mobile chrome) or do not correctly handling all the different type of inputs (e.g. paste or drag and drop text)
+* ~~None of existing masking lib both supports "multiple patterns" and "Regular Expression realtime match"~~ (Looks like FirstOpinion's formatter supports them since May 2014).
+* They either failed to work on certain platform (e.g mobile chrome) or do not correctly handling all the different type of inputs (e.g. paste or drag and drop text).
 * They do not allow you to use alphabet or digit as part of the format, for example, no matter what the user input I would like to prefix it with +86 since that is the telephone area code of my country.
+* They do not allow custom matching rules that blocks or matches certain input.
 
 #Feature
 
 * Multiple patterns, the formatting and masking changes according to the best matching pattern.
 * Negative patterns, allow you to prevent some of the inputs. Says, 123456 is definitely a fake telephone number, then you can make a negative pattern to prevent user from inputting that.
+* Negative regular expression pattern, use your most familiared regualr expression to filter out inputs.
 * Intuitive pattern syntax and error messages.
 * Positive and negative pattern.
 * Flexible pattern function to match specific characters.
@@ -44,6 +46,8 @@ If you are in an AMD enabled environment, Chuanr will call the define() method s
 Using Chuanr as pre-packed AMD module makes sure Chuanr is self-contained and contamination-free, no pollution your AMD configuration. However to achieve that, Chuanr embedded a piece of [Almond](https://github.com/jrburke/almon) which increased the overall file size and you may not want it. So for some of you who build your own projects or want to get rid off Almond, you can clone this repo and do below: 
 
 ##Use it as unpacked AMD module
+
+If you prefer to pack Chuanr as part of your project and reduce some bytes of overall file size, here is how:
 
     require('path/to/repo/src/Chuanr', function(Chuanr){ 
         new Chuanr();
@@ -77,6 +81,13 @@ Once you gained the access to Chuanr constructor, by doing below you can instant
         "({11}) {d(2345)ddd}-{dddd}"
     ]);
     chuanr.on('prevented', function(){ alert('not allowed!') });
+
+##Use regular expression to block user input
+
+    var elInput = document.getElementById('tester');
+    var chuanr = new Chuanr();
+    
+    chuanr.roast(elInput, ["~|[a-z]/i"]);
 
 ##Options
 
@@ -119,7 +130,7 @@ Once you gained the access to Chuanr constructor, by doing below you can instant
 * Implicit Positive Pattern - Any positive pattern without the pattern type specification ("+|").
 * Negative Pattern - Any pattern whose first 2 characters are "-|", inputs are not accepted if they fully matched a negative pattern.
 * Passive Negative Pattern - A negative pattern which only works when .intact() is called (it doesn't prevent the user from inputting).
-* Paritally Matching Negative Pattern = Any pattern whose first 2 characters are "~|", input is not accepted if any potion of it is matched.
+* Negative Regular Expressoin Pattern = Any pattern whose first 2 characters are "~|", and followed by regular expression in the format of `regexp/switches`.
 * Pattern Matched -
     * When it is positive pattern: testing the input against the pattern from left to right, always consider it is MATCHED unless ANY "out of expectation" is encountered. 
     * When it is negative pattern: test the input against the pattern from left to right, always consider it is UNMATCHED, unless ALL characters are as expected.
@@ -164,9 +175,8 @@ Pattern function is useful for simplify the long pattern list by adding a bit fl
 * *(regexp): match the regexp. 
 * l: match the checksum from luhn algorithm validation, especially useful for creditcard validation.
 
-#Feeling Geeky
 
-##Build
+#Build it
 
 
     npm install
@@ -174,7 +184,7 @@ Pattern function is useful for simplify the long pattern list by adding a bit fl
     grunt
 
 
-##Test
+#Test it
 
     npm test
 
