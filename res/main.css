@@ -4,6 +4,11 @@ html
     font-family: Noto Sans, Arial;
     background:#3C454F;
 }
+a 
+{
+    color: #FFF;
+    text-decoration: underline;
+}
 h1
 {
     margin: 2em auto;

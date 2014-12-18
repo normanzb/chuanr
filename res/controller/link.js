@@ -3,7 +3,7 @@ define(['$'], function ($) {
 
     function init(){
         $('html')
-            .on('click', '#link-to-github', function(evt){
+            .on('click', '.link-to-github', function(evt){
                 evt.preventDefault();
                 var pathname = window.location.pathname;
                 var username = (/(.*)?\.github\..*?$/).exec(window.location.hostname);
