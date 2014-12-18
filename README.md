@@ -3,25 +3,15 @@
 
 This component formats the `<input />` according the declared patterns
 
-#Motivation
-
-There are tons of input formatter out there but the reasons to recreate the wheel are:
-
-* ~~None of existing masking lib both supports "multiple patterns" and "Regular Expression realtime match"~~ (Looks like FirstOpinion's formatter supports them since May 2014).
-* They either failed to work on certain platform (e.g mobile chrome) or do not correctly handling all the different type of inputs (e.g. paste or drag and drop text).
-* They do not allow you to use alphabet or digit as part of the format, for example, no matter what the user input I would like to prefix it with +86 since that is the telephone area code of my country.
-* They do not allow custom matching rules that blocks or matches certain input.
-
 #Feature
 
-* Multiple patterns, the formatting and masking changes according to the best matching pattern.
-* Negative patterns, allow you to prevent some of the inputs. Says, 123456 is definitely a fake telephone number, then you can make a negative pattern to prevent user from inputting that.
+* Multiple patterns, best matching pattern will be selected for formatting and masking.
+* Negative patterns, which prevents or filters out invalid user input. It also enable you to put all the validation and masking rule together in a consolidate place, much easier for maintenance.
 * Negative regular expression pattern, use your most familiared regualr expression to filter out inputs.
 * Intuitive pattern syntax and error messages.
-* Positive and negative pattern.
-* Flexible pattern function to match specific characters.
-* Customizable pattern function.
-* Supports all platforms, including IE6+ and mobile safari and mobile chrome.
+* Allow anything to be part of the format, even digits, that means you can easily prefix the telephone number with area code.
+* Flexible and customizable pattern function which allows you to match only the input you want.
+* (Suppose to) supports all platforms, including IE6+ and mobile safari and mobile chrome.
 * Handling all kinds of input, even text drag and drop.
 
 #Usage
@@ -156,15 +146,8 @@ Pattern function is useful for simplify the long pattern list by adding a bit fl
 * d(-): match digit which is equal to previous digit - 1, if previous digit is 0 then this pattern will never matchif there is no previou digit, consider unmatched.
 * d(-1): same as above
 * d(-n): the counterpart case of d(+n), you can figure it out.
-* D: [WIP] match any non-digit
 * a: match alphabet
 * a(abcd): match alphabet witin the parentheses
-* A: [WIP] match non alphabet
-* w: [WIP] match alphanumeric characters plus underscore (A-Za-z0-9_)
-* w(abcd0-9): [WIP] match any alphabet or number within the parentheses
-* W: [WIP] match any non letter
-* s: [WIP] match any whitespace ( "\t" or " " )
-* S: [WIP] match any non-whitespace
 * x: shortcut to duplicate previous function
     * x(o) to make the match optional 
 * ?: alias of x(o)
