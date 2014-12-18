@@ -3,7 +3,7 @@
 
 This component formats the `<input />` according the declared patterns
 
-#Feature
+#Features
 
 * Multiple patterns, best matching pattern will be selected for formatting and masking.
 * Negative patterns, which prevents or filters out invalid user input. It also enable you to put all the validation and masking rule together in a consolidate place, much easier for maintenance.
