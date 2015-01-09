@@ -306,7 +306,7 @@ define(['require', '$'], function (require, $) {
         createChuanr();
 
         if ( isDebug ) {
-            require(['../../src/util', '../../src/shim/oninput', '../../src/shim/console'], 
+            require(['../../src/util', '../../lib/xinput/XInput', '../../src/shim/console'], 
                 function( util, InputObserver, console ){
                 // for testing
                 var oninput = new InputObserver();
