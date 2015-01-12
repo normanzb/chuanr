@@ -1627,6 +1627,90 @@ define('../lib/boe/src/boe/String/trim',['../global', './trimLeft', './trimRight
         return ret;
     };
 });
+/* 
+    speculation module
+    guess what user really want to input
+*/
+define(
+'speculate',[
+    './differ', 
+    '../lib/boe/src/boe/String/trim'
+    ],
+function 
+(
+    differUtil,
+    trim
+    ) {
+    
+
+    return function speculateBatchInput( chuanr, input, format, caret, tryExtractAndResetCaret ){
+
+        var speculated, prevInput, prevExtraction, differ, curChar, inserted;
+
+                speculated = tryExtractAndResetCaret.call( chuanr, chuanr._el.value, null );
+
+        if ( speculated == null ) {
+
+                        speculated = input;
+
+            if ( speculated != null && trim.call(speculated) !== '' ) {
+                // caret type still unknown, a bit trick here
+                // according to https://github.com/normanzb/chuanr/issues/11
+                                
+                prevInput = chuanr._untouched ? chuanr._untouched.result + '' : '';
+
+                try{
+                    prevExtraction = chuanr.formatter.extract( prevInput );
+                }
+                catch(ex){}
+
+                if (prevExtraction) {
+
+                    differ = differUtil.diff(prevInput, input);
+
+                    
+                    if (prevExtraction.length > 0) {
+
+                        
+                        speculated = '';
+                        inserted = false;
+
+                        // find extracted char who is in vanicity of newly modified content
+                        for(var i = 0; i < prevExtraction.length; i++) {
+                            curChar = prevExtraction[i];
+                            if (inserted === false && curChar.index.formatted === differ.insertion.caret.begin) {
+                                speculated += differ.insertion.text;
+                                inserted = true;
+                            }
+
+                            speculated += curChar.result;
+                        }
+
+                        if (inserted === false) {
+                            speculated += differ.insertion.text;
+                        }
+                    }
+                    else {
+                        speculated = differ.insertion.text;
+                    }
+                }
+            }
+
+        }
+
+        if (speculated == null || speculated === '') {
+                        speculated = input.replace(/\W/g,'');
+        }
+        else {
+            // give up 
+                        
+            // can be extracted without problem mean the original string is formatted
+            caret.type = 1;
+        }
+
+                return trim.call(speculated);
+    };
+});
 define('../lib/cogs/src/cogs/noop',[],function(){
     return function(){};
 });
@@ -2098,31 +2182,33 @@ return XInput;
 
 
 define('Chuanr',[
-    './Formatter', 
-    './Pattern', 
-    './PatternConstant', 
-    './PatternApplicationResult',
-    './util', 
-    './caret', 
-    './differ', 
-    '../lib/boe/src/boe/Function/bind', 
-    '../lib/boe/src/boe/String/trim', 
-    '../lib/boe/src/boe/Object/clone', 
-    '../lib/boe/src/boe/util', 
-    '../lib/cogs/src/cogs/emittable',
-    '../lib/cogs/src/cogs/event',
-    '../lib/xinput/XInput'
-        ], 
-    function ( 
-        Formatter, 
-        Pattern, 
-        PatternConstant,
-        PatternApplicationResult,
-        util, caretUtil, differUtil,
-        bind, trim, clone, boeUtil, 
-        emittable, event, 
-        InputObserver
-             ) {
+'./Formatter', 
+'./Pattern', 
+'./PatternConstant', 
+'./PatternApplicationResult',
+'./util', 
+'./caret', 
+'./differ', 
+'./speculate',
+'../lib/boe/src/boe/Function/bind', 
+'../lib/boe/src/boe/String/trim', 
+'../lib/boe/src/boe/Object/clone', 
+'../lib/boe/src/boe/util', 
+'../lib/cogs/src/cogs/emittable',
+'../lib/cogs/src/cogs/event',
+'../lib/xinput/XInput'
+], 
+function ( 
+    Formatter, 
+    Pattern, 
+    PatternConstant,
+    PatternApplicationResult,
+    util, caretUtil, differUtil, speculateBatchInput,
+    bind, trim, clone, boeUtil, 
+    emittable, event, 
+    InputObserver
+     ) {
+    
 
     // ioc settings
     var ioc = {
@@ -2192,7 +2278,7 @@ define('Chuanr',[
 
     function extraRawData( input, caret ){
         var prev, ret, prevInput, begin, end, isConstantDeletion = false,
-            prefix, postfix, tmp;
+            prefix, postfix, tmp, differ, extraction, isSpaceDeletion;
 
         
         prev = this._untouched ? this._untouched.result + '' : '';
@@ -2257,7 +2343,7 @@ define('Chuanr',[
             else {
                 tmp = end + differ.insertion.text.length - differ.deletion.text.length;
                 if ( tmp >= 0 ) {
-                    caret.begin = tmp
+                    caret.begin = tmp;
                     caret.end = tmp;
                     caret.type = 2;
                 }
@@ -2267,39 +2353,6 @@ define('Chuanr',[
                 ret = input;
 
         return ret;
-    }
-
-    function speculateBatchInput( input, format, caret ){
-
-        var speculated, finalExtraction;
-
-                speculated = tryExtractAndResetCaret.call( this, this._el.value, null );
-
-        if ( speculated == null ) {
-
-                        speculated = input.replace(/\W/g,'');
-
-            if ( speculated != 0 ) {
-                // caret type still unknown, a bit trick here
-                // according to https://github.com/normanzb/chuanr/issues/11
-                                differ = differUtil.diff(
-                    this._untouched ? trim.call( this._untouched.result + '' ) : '', 
-                    input
-                );
-                
-                input = trim.call( speculated );
-            }
-
-            // give up
-            
-        }
-        else {
-                        input = trim.call( speculated );
-            // can be extracted without problem mean the original string is formatted
-            caret.type = 1;
-
-        }
-                return input;
     }
 
     function onKeyDown( evt ) {
@@ -2421,7 +2474,7 @@ define('Chuanr',[
                     me._isFormatted == false && 
                     (
                         me._el.value != false ||
-                        me._el.value === "0"
+                        me._el.value === '0'
                     ) &&
                     caret.begin == 0
                 ) {
@@ -2440,7 +2493,7 @@ define('Chuanr',[
         ) {
             // get a matched format by trying different type of input
             // also caret will be adjusted here
-            input = speculateBatchInput.call( me, input, format, caret );
+            input = speculateBatchInput( me, input, format, caret, tryExtractAndResetCaret );
             format = me.formatter.reset( input );
         }
 
@@ -2460,7 +2513,7 @@ define('Chuanr',[
             }
             
             
-            format = me.formatter.undo()
+            format = me.formatter.undo();
 
             if ( format == null ) {
                                 updateInput.call( me, me._untouched && me._untouched.result || '' );
@@ -2579,7 +2632,7 @@ define('Chuanr',[
         var current;
 
         if ( el == null || el.tagName.toUpperCase() != 'INPUT' ) {
-            throw "Target input element must be specified.";
+            throw 'Target input element must be specified.';
         }
 
         this._el = el;
@@ -2602,7 +2655,7 @@ define('Chuanr',[
         util.addListener(el, 'keydown', this._onKeyDown );
         util.addListener(el, 'focus', this._onFocus );
 
-        if ( this._el.value != "" || this.config.placeholder.always === true ) {
+        if ( this._el.value !== '' || this.config.placeholder.always === true ) {
             // not equal to empty spaces
             onInput.call( this, document.activeElement === el ? 1 : 0 );
         }
