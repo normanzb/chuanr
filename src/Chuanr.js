@@ -6,38 +6,39 @@ if (typeof define !== 'function' && typeof module != 'undefined') {
 //>>excludeEnd("release");
 
 define([
-    './Formatter', 
-    './Pattern', 
-    './PatternConstant', 
-    './PatternApplicationResult',
-    './util', 
-    './caret', 
-    './differ', 
-    './speculate',
-    '../lib/boe/src/boe/Function/bind', 
-    '../lib/boe/src/boe/String/trim', 
-    '../lib/boe/src/boe/Object/clone', 
-    '../lib/boe/src/boe/util', 
-    '../lib/cogs/src/cogs/emittable',
-    '../lib/cogs/src/cogs/event',
-    '../lib/xinput/XInput'
+'./Formatter', 
+'./Pattern', 
+'./PatternConstant', 
+'./PatternApplicationResult',
+'./util', 
+'./caret', 
+'./differ', 
+'./speculate',
+'../lib/boe/src/boe/Function/bind', 
+'../lib/boe/src/boe/String/trim', 
+'../lib/boe/src/boe/Object/clone', 
+'../lib/boe/src/boe/util', 
+'../lib/cogs/src/cogs/emittable',
+'../lib/cogs/src/cogs/event',
+'../lib/xinput/XInput'
+//>>excludeStart("release", pragmas.release);
+, './shim/console'
+//>>excludeEnd("release");
+], 
+function ( 
+    Formatter, 
+    Pattern, 
+    PatternConstant,
+    PatternApplicationResult,
+    util, caretUtil, differUtil, speculateBatchInput,
+    bind, trim, clone, boeUtil, 
+    emittable, event, 
+    InputObserver
     //>>excludeStart("release", pragmas.release);
-    , './shim/console'
+    , console
     //>>excludeEnd("release");
-    ], 
-    function ( 
-        Formatter, 
-        Pattern, 
-        PatternConstant,
-        PatternApplicationResult,
-        util, caretUtil, differUtil, speculateBatchInput,
-        bind, trim, clone, boeUtil, 
-        emittable, event, 
-        InputObserver
-        //>>excludeStart("release", pragmas.release);
-        , console
-        //>>excludeEnd("release");
-     ) {
+ ) {
+    'use strict';
 
     // ioc settings
     var ioc = {
@@ -65,13 +66,13 @@ define([
 
         try{
             //>>excludeStart("release", pragmas.release);
-            console.log( "Do Extraction of '" + value + "'");
+            console.log( 'Do Extraction of \'' + value + '\'');
             //>>excludeEnd("release");
             extraction = this.formatter.extract( value );
             if ( extraction != null ) {
                 original = trim.call( extraction + '' );
                 //>>excludeStart("release", pragmas.release);
-                console.log( "Exracted", original );
+                console.log( 'Exracted', original );
                 //>>excludeEnd("release");
             }
         }
@@ -81,7 +82,7 @@ define([
 
         if ( original == null ) {
             //>>excludeStart("release", pragmas.release);
-            console.log( "Extraction failed " );
+            console.log( 'Extraction failed ' );
             //>>excludeEnd("release");
         }
 
@@ -122,7 +123,7 @@ define([
 
     function extraRawData( input, caret ){
         var prev, ret, prevInput, begin, end, isConstantDeletion = false,
-            prefix, postfix, tmp;
+            prefix, postfix, tmp, differ, extraction, isSpaceDeletion;
 
         //>>excludeStart("release", pragmas.release);
         console.log('Not raw data, need some sophisicated logic to figure out');
@@ -136,7 +137,7 @@ define([
         );
 
         //>>excludeStart("release", pragmas.release);
-        console.log("Differ '" + prev + "':'" + input + "'", differ);
+        console.log('Differ \'' + prev + '\':\'' + input + '\'', differ);
         //>>excludeEnd("release");
 
         extraction = this.formatter.extract( prev );
@@ -171,7 +172,7 @@ define([
         if ( isSpaceDeletion || isConstantDeletion ) {
             // quite possibly user deleted constant
             //>>excludeStart("release", pragmas.release);
-            console.log("User deleted " + differ.deletion.text.length + "space/constant(s)");
+            console.log('User deleted ' + differ.deletion.text.length + 'space/constant(s)');
             //>>excludeEnd("release");
             begin = extraction.pattern
                 .index().of('function').by({ pattern: { index: caret.begin }}) - (isConstantDeletion?1:0);
@@ -196,7 +197,7 @@ define([
             else {
                 tmp = end + differ.insertion.text.length - differ.deletion.text.length;
                 if ( tmp >= 0 ) {
-                    caret.begin = tmp
+                    caret.begin = tmp;
                     caret.end = tmp;
                     caret.type = 2;
                 }
@@ -217,7 +218,7 @@ define([
             // mean user keeps key down 
             // this is not allowed because it causes oninput never happen
             //>>excludeStart("release", pragmas.release);
-            console.log('Continuous Key Down Prevented')
+            console.log('Continuous Key Down Prevented');
             //>>excludeEnd("release");
             util.preventDefault(evt);
             return;
@@ -339,7 +340,7 @@ define([
                     me._isFormatted == false && 
                     (
                         me._el.value != false ||
-                        me._el.value === "0"
+                        me._el.value === '0'
                     ) &&
                     caret.begin == 0
                 ) {
@@ -384,7 +385,7 @@ define([
             console.log('Failed to format, undoing...');
             //>>excludeEnd("release");
 
-            format = me.formatter.undo()
+            format = me.formatter.undo();
 
             if ( format == null ) {
                 //>>excludeStart("release", pragmas.release);
@@ -521,7 +522,7 @@ define([
         var current;
 
         if ( el == null || el.tagName.toUpperCase() != 'INPUT' ) {
-            throw "Target input element must be specified.";
+            throw 'Target input element must be specified.';
         }
 
         this._el = el;
@@ -544,7 +545,7 @@ define([
         util.addListener(el, 'keydown', this._onKeyDown );
         util.addListener(el, 'focus', this._onFocus );
 
-        if ( this._el.value != "" || this.config.placeholder.always === true ) {
+        if ( this._el.value !== '' || this.config.placeholder.always === true ) {
             // not equal to empty spaces
             onInput.call( this, document.activeElement === el ? 1 : 0 );
         }

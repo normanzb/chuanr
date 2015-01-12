@@ -8,5 +8,6 @@
         "window": true,
         "module": true
     },
-    "globalstrict": false
+    "globalstrict": false,
+    "laxcomma": true
 }
