@@ -13,6 +13,7 @@ define([
     './util', 
     './caret', 
     './differ', 
+    './speculate',
     '../lib/boe/src/boe/Function/bind', 
     '../lib/boe/src/boe/String/trim', 
     '../lib/boe/src/boe/Object/clone', 
@@ -29,7 +30,7 @@ define([
         Pattern, 
         PatternConstant,
         PatternApplicationResult,
-        util, caretUtil, differUtil,
+        util, caretUtil, differUtil, speculateBatchInput,
         bind, trim, clone, boeUtil, 
         emittable, event, 
         InputObserver
@@ -210,59 +211,6 @@ define([
         return ret;
     }
 
-    function speculateBatchInput( input, format, caret ){
-
-        var speculated, finalExtraction;
-
-        //>>excludeStart("release", pragmas.release);
-        console.log("Try to be smart, figure out what the user actually want to input");
-        console.log("Speculation Step 1. Try Extract");
-        //>>excludeEnd("release");
-        speculated = tryExtractAndResetCaret.call( this, this._el.value, null );
-
-        if ( speculated == null ) {
-
-            //>>excludeStart("release", pragmas.release);
-            console.log('Failed to extract.');
-            console.log("Speculation Step 2. Try filter out puncuation and spaces.");
-            //>>excludeEnd("release");
-            speculated = input.replace(/\W/g,'');
-
-            if ( speculated != 0 ) {
-                // caret type still unknown, a bit trick here
-                // according to https://github.com/normanzb/chuanr/issues/11
-                //>>excludeStart("release", pragmas.release);
-                console.log("Speculation Step 2.5. Comparing to get differ");
-                //>>excludeEnd("release");
-                differ = differUtil.diff(
-                    this._untouched ? trim.call( this._untouched.result + '' ) : '', 
-                    input
-                );
-                //>>excludeStart("release", pragmas.release);
-                console.log("Differ", differ);
-                //>>excludeEnd("release");
-
-                input = trim.call( speculated );
-            }
-
-            // give up
-            
-        }
-        else {
-            //>>excludeStart("release", pragmas.release);
-            console.log('Extracted, use extracted string.');
-            //>>excludeEnd("release");
-            input = trim.call( speculated );
-            // can be extracted without problem mean the original string is formatted
-            caret.type = 1;
-
-        }
-        //>>excludeStart("release", pragmas.release);
-        console.log('Speculation Done, Result "' + input + '"');
-        //>>excludeEnd("release");
-        return input;
-    }
-
     function onKeyDown( evt ) {
 
         if ( this._requireHandleKeyUp == true && this._keyCode == evt.keyCode) {
@@ -410,7 +358,7 @@ define([
         ) {
             // get a matched format by trying different type of input
             // also caret will be adjusted here
-            input = speculateBatchInput.call( me, input, format, caret );
+            input = speculateBatchInput( me, input, format, caret, tryExtractAndResetCaret );
             format = me.formatter.reset( input );
         }
 
