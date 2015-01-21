@@ -18,7 +18,7 @@ module.exports = function(grunt) {
             dist : {
                 options : {
                     baseUrl: './src',
-                    name: '../lib/amdshim/amdshim',
+                    name: '../lib/amdshim/amdshim.embed',
                     include: FILE_NAME_ENTRY,
                     out: FILE_NAME_OUT_MAX,
                     wrap: {
