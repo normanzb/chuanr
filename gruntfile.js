@@ -28,7 +28,7 @@ module.exports = function(grunt) {
                             "var myDefine = (function(factory){ " + 
                                 "var ret = factory();" +
                                 "typeof module != 'undefined' && (module.exports = ret);" +
-                                "global.define && define(function(){return ret;});" +
+                                "(function(define){define && define(function(){return ret;});})(global.define);" +
                                 "global." + SPACE_NAME + " = ret; });",
                         end: 
                             "myDefine(function() { return require('" + SPACE_NAME + "'); }); \n" + 
