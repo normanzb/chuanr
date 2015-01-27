@@ -1,6 +1,5 @@
 #Chuanr ![travis-build](https://api.travis-ci.org/normanzb/chuanr.png)
 
-
 This component formats the `<input />` according the declared patterns
 
 #Features
@@ -16,15 +15,15 @@ This component formats the `<input />` according the declared patterns
 
 #Usage
 
-There are 3 ways to reference Chuanr:
+Chuanr is exposed both as global object and amd module, pick the one that suits best for you:
 
-##Use it as a global object
+##Global Object
 
-If you are not in a AMD loader environment, Chuanr will set itself as window.Chuanr, so you can access it by:
+Chuanr sets itself as window.Chuanr, if you are not in a AMD loader environment, you can access it by:
 
     new window.Chuanr();
 
-##Use it as pre-packed AMD module
+##Packed AMD Module
 
 If you are in an AMD enabled environment, Chuanr will call the define() method so you can use it as a normal require js module, simply grab a piece of chuanr.js, put it anywhere in your project, and do:
 
@@ -33,16 +32,16 @@ If you are in an AMD enabled environment, Chuanr will call the define() method s
         // ...
     } )
 
-Using Chuanr as pre-packed AMD module makes sure Chuanr is self-contained and contamination-free, no pollution your AMD configuration. However to achieve that, Chuanr embedded a piece of [Almond](https://github.com/jrburke/almon) which increased the overall file size and you may not want it. So for some of you who build your own projects or want to get rid off Almond, you can clone this repo and do below: 
+Using Chuanr as pre-packed AMD module makes sure Chuanr is self-contained and contamination-free, no pollution your AMD configuration. However to achieve that, Chuanr embedded a piece of [amdshim](https://github.com/normanzb/amdshim) which increased the overall file size and you may not want it. So for some of you who build your own projects or want to get rid off Almond, you can clone this repo and do below: 
 
-##Use it as unpacked AMD module
+##Discrete AMD Module
 
-If you prefer to pack Chuanr as part of your project and reduce some bytes of overall file size, here is how:
+If you prefer to pack Chuanr as part of your project and reduce some bytes of overall file size, you may want to clone this project or install it from `bower install chuanr` and then loop it in by:
 
     require('path/to/repo/src/Chuanr', function(Chuanr){ 
         new Chuanr();
         // ...
-    } )
+    } );
 
 ##Hook it up with `<INPUT />`
 
