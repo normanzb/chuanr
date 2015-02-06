@@ -1134,6 +1134,12 @@ define('Pattern',[
                     me.type |= TYPE_REGEXP;
                     return parseRegexPattern.call( me, str.substr(2, str.length - 2) );
                 }
+                else if ( curChar == '≈' ) {
+                    me.type |= TYPE_NEGATIVE;
+                    me.type |= TYPE_REGEXP;
+                    me.type |= TYPE_PASSIVE;
+                    return parseRegexPattern.call( me, str.substr(2, str.length - 2) );
+                }
                 else if ( curChar == '_' ) {
                     me.type |= TYPE_NEGATIVE;
                     me.type |= TYPE_PASSIVE;
