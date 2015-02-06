@@ -81,7 +81,7 @@ Once you gained the access to Chuanr constructor, by doing below you can instant
 ##Options
 
 * speculation
-    * batchinput - (Default to) true to enable automatical speculation on Batch Input, figure out what the user actually want to input by extracting real input from a formatted string or filtering out punctuations. For example, when this option is turned OFF (set to false), for pattern "({dd}) {ddd}", if the user pastes "(23) 456", Chuanr considers it as an incorrect input because it doesn't match the pattern (the pattern doesn't expect the parentheses and space). However if this option is turned ON, we consider it is a acceptable input because we will try to filter it or match with format.
+    * batchinput - (Default value: true) Set it to true to enable speculation on user input, figure out what the user actually want to input by extracting real input from a formatted string. For example, when this option is turned OFF (set to false), for pattern "({dd}) {ddd}", if the user pastes "(23) 456", Chuanr considers it as an incorrect input because it doesn't match the pattern (the pattern doesn't expect the parentheses and space). However if this option is turned ON, chuanr considers it as an acceptable input, because chuanr will try to be smart to filter out punctuations.
 * placeholder
     * empty - Specify the default placeholder for characters that haven't be inputted.
     * always - True to specify always showing the format and placeholders, even before user input.
@@ -110,25 +110,15 @@ Once you gained the access to Chuanr constructor, by doing below you can instant
 #Understanding the Patterns
 
 
-##Terms
+##Pattern Types
 
-
-* Pattern Type - Specify if the pattern matching positively or negatively.
 * Positive Pattern - Inputs are accepted if they matches a positive pattern.
-* Explicit Positive Pattern - Any pattern starts with "+|".
-* Implicit Positive Pattern - Any positive pattern without the pattern type specification ("+|").
+    * Explicit Positive Pattern - Any pattern starts with "+|".
+    * Implicit Positive Pattern - Any positive pattern without the pattern type specification ("+|").
 * Negative Pattern - Any pattern whose first 2 characters are "-|", inputs are not accepted if they fully matched a negative pattern.
-* Passive Negative Pattern - A negative pattern which only works when .intact() is called (it doesn't prevent the user from inputting).
-* Negative Regular Expressoin Pattern = Any pattern whose first 2 characters are "~|", and followed by regular expression in the format of `regexp/switches`.
-* Pattern Matched -
-    * When it is positive pattern: testing the input against the pattern from left to right, always consider it is MATCHED unless ANY "out of expectation" is encountered. 
-    * When it is negative pattern: test the input against the pattern from left to right, always consider it is UNMATCHED, unless ALL characters are as expected.
-    * Says a input which is 8576 can match a positive pattern of "+|{d}{d}{d}{d}{d}" but cannot match the pattern's negative counterpart "-|{d}{d}{d}{d}{d}".
-* Validation Passed - Stop pattern iteration, set property isValid to true and allow further input.
-* Validation Failed - Stop pattern iteration, set property isValid to false and do not allow the number be input.
-* Pattern Function - Its a javascript function which takes 1 char as input and return true/false to indicate the matching result. You can specify the pattern function by wrapping the function name with "{" and "}" in the pattern.
-* Shorthand - Any consecutive set of Pattern Functions can be written within same {}, for example, "{d}{d(5)}" can be written as "{dd(5)}".
-* Batch Input - Means inputting several characters at once, for example, pasting, droping, undo...
+* Passive Negative Pattern - Unlike normal negative pattern, it doesn't block user input, but it causes `.intact()` return false once matched.
+* Negative Regular Expressoin Pattern - Any pattern whose first 2 characters are "~|", and followed by regular expression in the format of `regexp/switches`.
+* Negative Passive Regular Expressoin Pattern - Any pattern whose first 2 characters are "≈|", and followed by regular expression in the format of `regexp/switches`, it doesn't block the inputting but causes `.intact()` returns false. To type `≈` on mac, press `alt/option + x`
 
 ##Pattern Function
 
