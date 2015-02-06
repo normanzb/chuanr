@@ -69,5 +69,14 @@ define(['$'], function($){
         createChuanr();
     }
 
-    return { init:init };
+    return { 
+        init:init, 
+        createInstance: function(){
+            createChuanr();
+            return inst;
+        },
+        getInstance: function(){
+            return inst;
+        }  
+    };
 });
