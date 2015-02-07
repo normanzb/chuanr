@@ -26,7 +26,7 @@ define(['$'], function($){
         patterns = newPatterns.split('\n');
 
         for(var l = patterns.length; l--; ) {
-            if ( patterns[l] === false ) {
+            if ( patterns[l] == false ) {
                 patterns.splice(l, 1);
             }
         }
