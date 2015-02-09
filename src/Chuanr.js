@@ -149,6 +149,14 @@ function (
 
         prevInput = extraction + '';
 
+        if (extraction.pattern.items[caret.begin] == null && extraction.pattern.items[0] != null) {
+            //>>excludeStart("release", pragmas.release);
+            console.log('Caret position seems incorrect or out of sync due to the ios hack... ' +
+                'violently setting it to 0');
+            //>>excludeEnd("release");
+            caret.begin = 0;
+        }
+
         isSpaceDeletion = differ.insertion.caret.begin == differ.insertion.caret.end &&
             (
                 caret.begin < extraction.pattern.items.length &&
