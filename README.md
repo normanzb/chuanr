@@ -116,7 +116,7 @@ Once you gained the access to Chuanr constructor, by doing below you can instant
     * Explicit Positive Pattern - Any pattern starts with "+|".
     * Implicit Positive Pattern - Any positive pattern without the pattern type specification ("+|").
 * Negative Pattern - Any pattern whose first 2 characters are "-|", inputs are not accepted if they fully matched a negative pattern.
-* Passive Negative Pattern - Unlike normal negative pattern, it doesn't block user input, but it causes `.intact()` return false once matched.
+* Passive Negative Pattern - Any pattern whose first 2 characters are "_|", Unlike normal negative pattern, it doesn't block user input, but it causes `.intact()` return false once matched.
 * Negative Regular Expressoin Pattern - Any pattern whose first 2 characters are "~|", and followed by regular expression in the format of `regexp/switches`.
 * Negative Passive Regular Expressoin Pattern - Any pattern whose first 2 characters are "≈|", and followed by regular expression in the format of `regexp/switches`, it doesn't block the inputting but causes `.intact()` returns false. To type `≈` on mac, press `alt/option + x`
 
