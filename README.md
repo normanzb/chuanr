@@ -1,8 +1,8 @@
-#Chuanr ![travis-build](https://api.travis-ci.org/normanzb/chuanr.png)
+# Chuanr ![travis-build](https://api.travis-ci.org/normanzb/chuanr.png)
 
 This component formats the `<input />` according the declared patterns
 
-#Features
+# Features
 
 * Multiple patterns, best matching pattern will be selected for formatting and masking.
 * Negative patterns, which prevents or filters out invalid user input. It also enable you to put all the validation and masking rule together in a consolidate place, much easier for maintenance.
@@ -13,17 +13,17 @@ This component formats the `<input />` according the declared patterns
 * (Suppose to) supports all platforms, including IE6+ and mobile safari and mobile chrome.
 * Handling all kinds of input, even text drag and drop.
 
-#Usage
+# Usage
 
 Chuanr is exposed both as global object and amd module, pick the one that suits best for you:
 
-##Global Object
+## Global Object
 
 Chuanr sets itself as window.Chuanr, if you are not in a AMD loader environment, you can access it by:
 
     new window.Chuanr();
 
-##Packed AMD Module
+## Packed AMD Module
 
 If you are in an AMD enabled environment, Chuanr will call the define() method so you can use it as a normal require js module, simply grab a piece of chuanr.js, put it anywhere in your project, and do:
 
@@ -34,7 +34,7 @@ If you are in an AMD enabled environment, Chuanr will call the define() method s
 
 Using Chuanr as pre-packed AMD module makes sure Chuanr is self-contained and contamination-free, no pollution your AMD configuration. However to achieve that, Chuanr embedded a piece of [amdshim](https://github.com/normanzb/amdshim) which increased the overall file size and you may not want it. So for some of you who build your own projects or want to get rid off Almond, you can clone this repo and do below: 
 
-##Discrete AMD Module
+## Discrete AMD Module
 
 If you prefer to pack Chuanr as part of your project and reduce some bytes of overall file size, you may want to clone this project or install it from `bower install chuanr` and then loop it in by:
 
@@ -43,7 +43,7 @@ If you prefer to pack Chuanr as part of your project and reduce some bytes of ov
         // ...
     } );
 
-##Hook it up with `<INPUT />`
+## Hook it up with `<INPUT />`
 
 Once you gained the access to Chuanr constructor, by doing below you can instantiate it and hook it to the input element and start the magic:
 
@@ -71,14 +71,14 @@ Once you gained the access to Chuanr constructor, by doing below you can instant
     ]);
     chuanr.on('prevented', function(){ alert('not allowed!') });
 
-##Use regular expression to block user input
+## Use regular expression to block user input
 
     var elInput = document.getElementById('tester');
     var chuanr = new Chuanr();
     
     chuanr.roast(elInput, ["~|[a-z]/i"]);
 
-##Options
+## Options
 
 * speculation
     * batchinput - (Default value: true) Set it to true to enable speculation on user input, figure out what the user actually want to input by extracting real input from a formatted string. For example, when this option is turned OFF (set to false), for pattern "({dd}) {ddd}", if the user pastes "(23) 456", Chuanr considers it as an incorrect input because it doesn't match the pattern (the pattern doesn't expect the parentheses and space). However if this option is turned ON, chuanr considers it as an acceptable input, because chuanr will try to be smart to filter out punctuations.
@@ -86,31 +86,31 @@ Once you gained the access to Chuanr constructor, by doing below you can instant
     * empty - Specify the default placeholder for characters that haven't be inputted.
     * always - True to specify always showing the format and placeholders, even before user input.
 
-##Properties
+## Properties
 
 * intact() - Return true if the user input is fully matched with at least one pattern
 
-##Methods
+## Methods
 
 * roast( el, patterns ) - Link Chuanr with specified input element, format it against patterns
 * dispose() - Call it when you don't want the formatting anymore
 
-##Events
+## Events
 
 * prevented - Fire when user input something not accetpable.
 * resumed - Fire no matter when user input is accepted.
 
-###Custom Pattern Function
+### Custom Pattern Function
 
     Chuanr.setting.Pattern.functions['n']=function(){}
 
 - where `n` must be one single char
 
 
-#Understanding the Patterns
+# Understanding the Patterns
 
 
-##Pattern Types
+## Pattern Types
 
 * Positive Pattern - Inputs are accepted if they matches a positive pattern.
     * Explicit Positive Pattern - Any pattern starts with "+|".
@@ -120,7 +120,7 @@ Once you gained the access to Chuanr constructor, by doing below you can instant
 * Negative Regular Expressoin Pattern - Any pattern whose first 2 characters are "~|", and followed by regular expression in the format of `regexp/switches`.
 * Negative Passive Regular Expressoin Pattern - Any pattern whose first 2 characters are "≈|", and followed by regular expression in the format of `regexp/switches`, it doesn't block the inputting but causes `.intact()` returns false. To type `≈` on mac, press `alt/option + x`
 
-##Pattern Function
+## Pattern Function
 
 Pattern function is useful for simplify the long pattern list by adding a bit flavor of regex:
 (Some of below patterns are still WIP)
@@ -148,7 +148,7 @@ Pattern function is useful for simplify the long pattern list by adding a bit fl
 * l: match the checksum from luhn algorithm validation, especially useful for creditcard validation.
 
 
-#Build it
+# Build it
 
 
     npm install
@@ -156,10 +156,10 @@ Pattern function is useful for simplify the long pattern list by adding a bit fl
     grunt
 
 
-#Test it
+# Test it
 
     npm test
 
-##Special Thanks
+## Special Thanks
 
 [FirstOpinion's Formatter.js](https://github.com/firstopinion/formatter.js) - Stolen the pattern concept and the caret controling utility from there.
