@@ -40,6 +40,8 @@ function (
  ) {
     'use strict';
 
+    var promiseOfRefocus;
+
     // ioc settings
     var ioc = {
         Formatter: Formatter,
@@ -469,14 +471,7 @@ function (
             // ios always return the correct caret at this time, it will update the caret to 
             // an incorrect one later... mobile safari sucks
             // TODO: use setImmediate shim to make it faster?
-            setTimeout(function(){
-                if ( caretUtil.get( me._el) != caret.begin ) {
-                    // oh shit, we failed
-                    caretUtil.set( me._el, caret.begin );
-                }
-
-                lockFocus = false;
-            });
+            refocus.call(me, caret);
         }
 
         if ( format.result != 0 ) {
@@ -494,6 +489,26 @@ function (
             me.onResumed.invoke( format );
         }
 
+    }
+
+    function refocus(caret){
+        var me = this;
+        if (promiseOfRefocus) {
+            promiseOfRefocus.then(refocus);
+            return;
+        }
+        promiseOfRefocus = new Promise(function(rs){
+            setTimeout(function(){
+                if ( caretUtil.get( me._el) != caret.begin ) {
+                    // oh shit, we failed
+                    caretUtil.set( me._el, caret.begin );
+                }
+
+                lockFocus = false;
+                promiseOfRefocus = null;
+                rs();
+            });
+        });
     }
 
     /* Public Methods */
