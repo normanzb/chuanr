@@ -20,6 +20,8 @@
     "amdefine": "~0.1.0"
   },
   "scripts": {
+    "build": "grunt",
+    "postversion": "npm run build && git push && git push --tags"
     "test": "./node_modules/.bin/mocha --reporter spec"
   }
 }
