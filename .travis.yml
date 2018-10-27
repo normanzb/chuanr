@@ -3,4 +3,4 @@ before_script:
   - npm install -g grunt-cli bower
   - bower install --config.interactive=0
 node_js:
-  - "0.10"
+  - "8.12"
