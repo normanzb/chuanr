@@ -494,7 +494,9 @@ function (
     function refocus(caret){
         var me = this;
         if (promiseOfRefocus) {
-            promiseOfRefocus.then(refocus);
+            promiseOfRefocus.then(function(){
+                return refocus.call(me, caret);
+            });
             return;
         }
         promiseOfRefocus = new Promise(function(rs){

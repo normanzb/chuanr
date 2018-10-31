@@ -2254,6 +2254,8 @@ function (
      ) {
     
 
+    var promiseOfRefocus;
+
     // ioc settings
     var ioc = {
         Formatter: Formatter,
@@ -2341,6 +2343,10 @@ function (
         }
 
         prevInput = extraction + '';
+
+        if (extraction.pattern.items[caret.begin] == null && extraction.pattern.items[0] != null) {
+                        caret.begin = 0;
+        }
 
         isSpaceDeletion = differ.insertion.caret.begin == differ.insertion.caret.end &&
             (
@@ -2638,7 +2644,9 @@ function (
     function refocus(caret){
         var me = this;
         if (promiseOfRefocus) {
-            promiseOfRefocus.then(refocus);
+            promiseOfRefocus.then(function(){
+                return refocus.call(me, caret);
+            });
             return;
         }
         promiseOfRefocus = new Promise(function(rs){
