@@ -2254,7 +2254,7 @@ function (
      ) {
     
 
-    var promiseOfRefocus;
+    var handleOfRefocusTimeout;
 
     // ioc settings
     var ioc = {
@@ -2643,23 +2643,18 @@ function (
 
     function refocus(caret){
         var me = this;
-        if (promiseOfRefocus) {
-            promiseOfRefocus.then(function(){
-                return refocus.call(me, caret);
-            });
-            return;
+        if (handleOfRefocusTimeout) {
+            clearTimeout(handleOfRefocusTimeout);
+            handleOfRefocusTimeout = null;
         }
-        promiseOfRefocus = new Promise(function(rs){
-            setTimeout(function(){
-                if ( caretUtil.get( me._el) != caret.begin ) {
-                    // oh shit, we failed
-                    caretUtil.set( me._el, caret.begin );
-                }
+        handleOfRefocusTimeout = setTimeout(function(){
+            if ( caretUtil.get( me._el) != caret.begin ) {
+                // oh shit, we failed
+                caretUtil.set( me._el, caret.begin );
+            }
 
-                lockFocus = false;
-                promiseOfRefocus = null;
-                rs();
-            });
+            lockFocus = false;
+            handleOfRefocusTimeout = null;
         });
     }
 
